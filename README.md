@@ -203,23 +203,33 @@ Für alle, die im Camp bleiben oder nach der Tour noch Energie haben:
 
 - **Feiern & Erinnern:** Lasst uns das GMTW 2025 gebührend ausklingen! Wir teilen die schönsten Momente des Wochenendes, erzählen Heldengeschichten vom Trail und genießen die letzte gemeinsame Nacht am Feuer.
 
-## Montag, 21. April: Abbau, Abschied & Auf Wiedersehen!
+## Montag, 21. April: Spiele, Ehrungen & Abschied
 
-### 08:00 – 09:00 Uhr: Letztes Frühstück & Packen (Selbstversorgung)
+### 08:00 – 09:00 Uhr: Gemütliches Frühstück & Pack-Start (Selbstversorgung)
 
-- **Aufbruchstimmung:** Genieße ein letztes Frühstück im Camp und beginne parallel damit, deine persönlichen Sachen und dein Zelt zusammenzupacken.
+- **Letztes gemeinsames Frühstück:** Genieße eine letzte gemeinsame Mahlzeit, während langsam mit dem Zusammenpacken begonnen wird.
 
-### 09:00 – 11:00 Uhr: Gemeinsames Aufräumen – Wir hinterlassen Spuren nur auf den Trails!
+### 09:00 – 09:30 Uhr: Gemeinsames Morgenspiel für ALLE: "Langsamfahr-Rennen & Kreisel-Spaß"
 
-- **Teamwork:** Alle packen mit an! Wir bauen den Trial-Park ab, sammeln Müll ein und sorgen dafür, dass der Campingplatz mindestens so sauber ist, wie wir ihn vorgefunden haben. "Leave No Trace" ist unser Prinzip.
+- **Ein letztes spaßiges Spiel:** Wer ist der langsamste Fahrer auf einer kurzen Strecke? Wer kann sich am längsten auf der Stelle drehen?
 
-### 11:30 Uhr: Abschlussrunde & Offizielle Verabschiedung
+### 09:30 – 10:30 Uhr: Gemeinsames Aufräumen & Abbau
 
-- **Danke & Tschüss:** Ein letztes gemeinsames Treffen. Zeit für ein großes Gruppenfoto, Dankesworte an Helfer und Organisatoren und eine herzliche Verabschiedung. Vielleicht gibt es noch einen kleinen Ausblick auf das nächste GMTW?
 
-### 12:00 – 14:00 Uhr: Individuelle Abreise
+- **Teamwork: Alle packen mit an!** Wir bauen den Trial-Park ab, sammeln Müll ein und sorgen dafür, dass der Campingplatz mindestens so sauber ist, wie wir ihn vorgefunden haben. "Leave No Trace" ist unser Prinzip.
+### 10:30 – 11:30 Uhr: Spaß-Olympiade & Kleine Einrad-Spiele
 
-- **Bis zum nächsten Mal:** Die Teilnehmer treten nach und nach die Heimreise an, mit vielen neuen Eindrücken, Freundschaften und Einrad-Skills im Gepäck.
+- **Lockerer Ausklang:** Verschiedene kleine Spiel-Stationen (z.B. Einrad-Limbo, kleiner Parcours, Pendel-Challenge) – der Spaß steht im Vordergrund.
+
+### 11:30 – 12:00 Uhr: Abschlusskreis & Ehrungen "Helden des Wochenendes"
+
+- **Ein letztes Mal zusammen:** Dank an Helfer und Teilnehmer. Kleine, humorvolle Anerkennungen für besondere Momente oder Teilnehmer (z.B. jüngste/ältester Fahrer, lustigster Moment, größter Kampfgeist).
+
+### 12:00 – 14:00 Uhr: Letztes Packen & individuelle Abreise
+
+- **Abschied:** Verabschiedung von Freunden, Austausch von Kontakten, die letzten Sachen werden verladen.
+
+### Ab 14:00 Uhr: Offizielles Ende des GMTW 2025
 
 ## Packliste – Was du unbedingt dabeihaben solltest:
 
