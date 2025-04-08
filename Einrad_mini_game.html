@@ -195,6 +195,42 @@
             white-space: nowrap;
         }
 
+        #duckButton {
+            position: absolute;
+            bottom: 5%;
+            left: 0%; /* Positioned at the very left edge */
+            width: min(12vw, 60px);
+            height: min(12vw, 60px);
+            background-color: rgba(80, 80, 80, 0.7);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: min(5vw, 24px);
+            z-index: 10;
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #duckButton img {
+            width: 85%;
+            height: 85%;
+            object-fit: contain;
+        }
+
+        #duckButton:active {
+            background-color: rgba(60, 60, 60, 0.9);
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
         /* Double jump effect */
         @keyframes doubleJumpEffect {
             0% { transform: scale(1); opacity: 0.7; }
@@ -274,6 +310,8 @@
             Press SPACE to jump/double jump | DOWN to duck | P to pause
         </div>
 
+        <button id="duckButton">↓</button>
+
         <div id="gameOver">
             <h2>GAME OVER</h2>
             <button id="restartButton">RESTART</button>
@@ -300,6 +338,22 @@
         const backgroundImg = new Image();
         backgroundImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Pixel_BG.png';
         logImageStatus('Background', backgroundImg);
+
+        // Load the duck button image and add error handling
+        const duckButtonImg = new Image();
+        duckButtonImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Muni_logo.png';
+        duckButtonImg.onload = () => {
+            // Once successfully loaded, update the button with the image
+            const duckButton = document.getElementById('duckButton');
+            duckButton.innerHTML = '';
+            duckButton.appendChild(duckButtonImg);
+            console.log("Duck button image loaded successfully");
+        };
+        duckButtonImg.onerror = () => {
+            // If image fails to load, use a fallback downward arrow
+            console.error("Failed to load duck button image, using fallback");
+            document.getElementById('duckButton').textContent = '↓';
+        };
 
         // Canvas setup
         const canvas = document.getElementById('gameCanvas');
@@ -502,6 +556,7 @@
             resetGame();
             isPlaying = true;
             gameOverElement.style.display = 'none';
+            document.getElementById('duckButton').style.display = 'flex';
 
             if (!gameInterval) {
                 gameInterval = setInterval(updateGame, 20);
@@ -514,6 +569,7 @@
             clearInterval(gameInterval);
             gameInterval = null;
             gameOverElement.style.display = 'block';
+            document.getElementById('duckButton').style.display = 'none';
 
             // Update high score
             if (score > highScore) {
@@ -1106,6 +1162,9 @@
             initCanvas();
             highScoreElement.textContent = highScore;
 
+            // Hide duck button initially
+            document.getElementById('duckButton').style.display = 'none';
+
             // Event listeners
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
@@ -1115,6 +1174,45 @@
             restartButton.addEventListener('click', startGame);
             document.getElementById('startButton').addEventListener('click', startGame);
             quitButton.addEventListener('click', quitGame);
+
+            // Duck button functionality
+            const duckButton = document.getElementById('duckButton');
+
+            // Style the duck button image if successfully loaded
+            if (duckButtonImg.complete && duckButtonImg.naturalWidth > 0) {
+                duckButton.innerHTML = '';
+                duckButtonImg.style.width = '85%';
+                duckButtonImg.style.height = '85%';
+                duckButtonImg.style.objectFit = 'contain';
+                duckButton.appendChild(duckButtonImg);
+            }
+
+            duckButton.addEventListener('mousedown', () => {
+                if (isPlaying && !isPaused) {
+                    isDucking = true;
+                    duck(true);
+                }
+            });
+            duckButton.addEventListener('mouseup', () => {
+                if (isPlaying && !isPaused) {
+                    isDucking = false;
+                    duck(false);
+                }
+            });
+            duckButton.addEventListener('touchstart', (e) => {
+                if (isPlaying && !isPaused) {
+                    isDucking = true;
+                    duck(true);
+                    e.preventDefault();
+                }
+            });
+            duckButton.addEventListener('touchend', (e) => {
+                if (isPlaying && !isPaused) {
+                    isDucking = false;
+                    duck(false);
+                    e.preventDefault();
+                }
+            });
 
             // Character selection
             fuchsSelect.addEventListener('click', () => {
