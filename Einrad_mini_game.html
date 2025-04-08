@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Pixel Runner Game</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * {
             margin: 0;
@@ -10,28 +10,25 @@
             box-sizing: border-box;
         }
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            width: 100%;
+        html, body {
+            height: 100%;
+            overflow: hidden;
             background-color: #f0f0f0;
             font-family: 'Courier New', monospace;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Ausrichtung am unteren Rand */
         }
 
         #gameContainer {
             position: relative;
-            width: 95vw;
-            max-width: 1200px;
-            height: 56.25vw; /* 16:9 aspect ratio */
-            max-height: 675px; /* max-width * 9/16 */
-            border: 2px solid #333;
-            border-radius: 10px;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 Seitenverhältnis */
+            max-height: 80vh; /* Beschränkung der Höhe auf 80% der Bildschirmhöhe */
             overflow: hidden;
             background-color: #fff;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            border-top: 2px solid #333;
         }
 
         #gameCanvas {
@@ -198,6 +195,20 @@
             white-space: nowrap;
         }
 
+        /* Double jump effect */
+        @keyframes doubleJumpEffect {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .doubleJumpEffect {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            animation: doubleJumpEffect 0.5s forwards;
+        }
+
         /* Blink animation for player invulnerability */
         @keyframes blink {
             0% { opacity: 1; }
@@ -215,6 +226,14 @@
                 white-space: normal;
                 text-align: center;
                 max-width: 90%;
+            }
+        }
+
+        /* Landscape-spezifische Anpassungen */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #gameContainer {
+                height: 100vh;
+                max-height: 100vh;
             }
         }
     </style>
@@ -252,7 +271,7 @@
         </div>
 
         <div id="instructions">
-            Press SPACE to jump | DOWN to duck | P to pause
+            Press SPACE to jump/double jump | DOWN to duck | P to pause
         </div>
 
         <div id="gameOver">
@@ -297,6 +316,7 @@
         const quitButton = document.getElementById('quitButton');
         const livesDisplay = document.getElementById('livesDisplay');
         const heartElements = livesDisplay.querySelectorAll('.heart');
+        const gameContainer = document.getElementById('gameContainer');
 
         // Game variables
         let gameInterval;
@@ -344,6 +364,8 @@
             gravity: 1,
             jumpStrength: -16,
             jumping: false,
+            canDoubleJump: false, // New property for double jump
+            hasDoubleJumped: false, // Track if double jump has been used
             image: fuchsImg
         };
 
@@ -355,6 +377,24 @@
         // Obstacle types
         const CACTUS = 0;
         const FLYING = 1;
+
+        // Create double jump effect
+        function createDoubleJumpEffect() {
+            const effectSize = player.width * 1.5;
+            const effect = document.createElement('div');
+            effect.className = 'doubleJumpEffect';
+            effect.style.width = effectSize + 'px';
+            effect.style.height = effectSize + 'px';
+            effect.style.left = (player.x + player.width/2 - effectSize/2) + 'px';
+            effect.style.top = (player.y + player.height/2 - effectSize/2) + 'px';
+
+            gameContainer.appendChild(effect);
+
+            // Remove the effect after animation completes
+            setTimeout(() => {
+                effect.remove();
+            }, 500);
+        }
 
         // Update lives display
         function updateLivesDisplay() {
@@ -418,6 +458,8 @@
                 gravity: 1 * scaleFactor,
                 jumpStrength: -16 * scaleFactor,
                 jumping: false,
+                canDoubleJump: false,
+                hasDoubleJumped: false,
                 image: (character === 'fuchs' ? fuchsImg : waschbaerImg)
             };
 
@@ -546,11 +588,25 @@
             }
         }
 
-        // Jump function
+        // Jump function - now with double jump support
         function jump() {
-            if (isPlaying && !isPaused && !player.jumping) {
+            if (!isPlaying || isPaused) return;
+
+            // First jump from the ground
+            if (!player.jumping) {
                 player.vy = player.jumpStrength;
                 player.jumping = true;
+                player.canDoubleJump = true; // Enable double jump after first jump
+                player.hasDoubleJumped = false;
+                console.log("First jump");
+            }
+            // Double jump while in the air
+            else if (player.canDoubleJump && !player.hasDoubleJumped) {
+                player.vy = player.jumpStrength * 0.8; // Slightly weaker double jump
+                player.canDoubleJump = false;
+                player.hasDoubleJumped = true;
+                createDoubleJumpEffect(); // Visual effect for double jump
+                console.log("Double jump");
             }
         }
 
@@ -613,6 +669,8 @@
                 player.y = canvas.height - groundHeight - player.height;
                 player.vy = 0;
                 player.jumping = false;
+                player.canDoubleJump = false;
+                player.hasDoubleJumped = false;
             }
         }
 
@@ -745,6 +803,14 @@
                 ctx.beginPath();
                 ctx.arc(player.x + player.width * 0.5, player.y + player.height * 0.6, player.width * 0.2, 0, Math.PI);
                 ctx.stroke();
+            }
+
+            // Show double jump availability (small indicator)
+            if (player.jumping && player.canDoubleJump && !player.hasDoubleJumped) {
+                ctx.fillStyle = "#fff";
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, player.y - 10 * scaleFactor, 5 * scaleFactor, 0, Math.PI * 2);
+                ctx.fill();
             }
 
             // Reset global alpha
@@ -913,6 +979,47 @@
             }
         }
 
+        let touchStartY = 0;
+
+        function handleTouchStart(e) {
+            touchStartY = e.touches[0].clientY;
+
+            if (isPaused) {
+                togglePause();
+                e.preventDefault();
+                return;
+            }
+
+            if (!isPlaying) {
+                startGame();
+            } else if (!isPaused) {
+                jump();
+            }
+            e.preventDefault();
+        }
+
+        function handleTouchMove(e) {
+            if (!isPlaying || isPaused) return;
+
+            const touchY = e.touches[0].clientY;
+            const diffY = touchY - touchStartY;
+
+            // If swiped down
+            if (diffY > 50) {
+                isDucking = true;
+                duck(true);
+                e.preventDefault();
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (isDucking) {
+                isDucking = false;
+                duck(false);
+                e.preventDefault();
+            }
+        }
+
         function handleResize() {
             // Re-initialize canvas when window size changes
             initCanvas();
@@ -923,6 +1030,9 @@
                 const currentLives = lives;
                 const currentScore = score;
                 const wasInvulnerable = isInvulnerable;
+                const wasJumping = player.jumping;
+                const couldDoubleJump = player.canDoubleJump;
+                const hasUsedDoubleJump = player.hasDoubleJumped;
 
                 // Reset game with new scaling
                 resetGame();
@@ -931,10 +1041,70 @@
                 lives = currentLives;
                 score = currentScore;
                 isInvulnerable = wasInvulnerable;
+                player.jumping = wasJumping;
+                player.canDoubleJump = couldDoubleJump;
+                player.hasDoubleJumped = hasUsedDoubleJump;
 
                 updateLivesDisplay();
                 scoreElement.textContent = Math.floor(score / 10);
             }
+        }
+
+        // Verbesserte Touch-Steuerung
+        function setupTouchControls() {
+            let touchStartX = 0;
+            let touchStartTime = 0;
+
+            canvas.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+
+                if (isPaused) {
+                    togglePause();
+                    e.preventDefault();
+                    return;
+                }
+
+                if (!isPlaying) {
+                    startGame();
+                    e.preventDefault();
+                    return;
+                }
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isPlaying || isPaused) return;
+
+                const touchY = e.touches[0].clientY;
+                const diffY = touchY - touchStartY;
+
+                // Wenn nach unten gewischt (Ducken)
+                if (diffY > 30) {
+                    isDucking = true;
+                    duck(true);
+                    e.preventDefault();
+                }
+            });
+
+            canvas.addEventListener('touchend', (e) => {
+                if (!isPlaying || isPaused) return;
+
+                const touchEndTime = Date.now();
+                const touchDuration = touchEndTime - touchStartTime;
+
+                // Ende des Ducken-Zustands
+                if (isDucking) {
+                    isDucking = false;
+                    duck(false);
+                }
+                // Sprung bei kurzem Tippen
+                else if (touchDuration < 300) {
+                    jump();
+                }
+
+                e.preventDefault();
+            });
         }
 
         // Initialize the game
@@ -946,7 +1116,7 @@
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
             canvas.addEventListener('mousedown', handleCanvasClick);
-            canvas.addEventListener('touchstart', handleCanvasClick);
+            setupTouchControls();
             window.addEventListener('resize', handleResize);
             restartButton.addEventListener('click', startGame);
             document.getElementById('startButton').addEventListener('click', startGame);
