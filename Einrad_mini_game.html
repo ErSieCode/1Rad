@@ -805,13 +805,7 @@
                 ctx.stroke();
             }
 
-            // Show double jump availability (small indicator)
-            if (player.jumping && player.canDoubleJump && !player.hasDoubleJumped) {
-                ctx.fillStyle = "#fff";
-                ctx.beginPath();
-                ctx.arc(player.x + player.width / 2, player.y - 10 * scaleFactor, 5 * scaleFactor, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            // White dot indicator for double jump removed
 
             // Reset global alpha
             ctx.globalAlpha = 1;
