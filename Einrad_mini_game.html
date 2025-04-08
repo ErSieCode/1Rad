@@ -2,22 +2,31 @@
 <html>
 <head>
     <title>Pixel Runner Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            width: 100%;
             background-color: #f0f0f0;
             font-family: 'Courier New', monospace;
+            overflow: hidden;
         }
 
         #gameContainer {
             position: relative;
-            width: 800px;
-            height: 400px;
+            width: 95vw;
+            max-width: 1200px;
+            height: 56.25vw; /* 16:9 aspect ratio */
+            max-height: 675px; /* max-width * 9/16 */
             border: 2px solid #333;
             border-radius: 10px;
             overflow: hidden;
@@ -35,8 +44,8 @@
 
         #gameControls {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 2%;
+            left: 1%;
             z-index: 10;
             display: flex;
             gap: 10px;
@@ -45,10 +54,10 @@
 
         #gameInfo {
             position: absolute;
-            top: 10px;
-            right: 40px;
+            top: 2%;
+            right: 5%;
             text-align: right;
-            font-size: 18px;
+            font-size: min(3vw, 18px);
             color: #333;
             z-index: 10;
             background-color: rgba(255, 255, 255, 0.7);
@@ -58,8 +67,8 @@
 
         #livesDisplay {
             position: absolute;
-            top: 70px;
-            right: 40px;
+            top: 15%;
+            right: 5%;
             z-index: 10;
             background-color: rgba(255, 255, 255, 0.7);
             padding: 5px 10px;
@@ -70,17 +79,17 @@
 
         .heart {
             color: #ff0000;
-            font-size: 24px;
+            font-size: min(4vw, 24px);
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         #quitButton {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 24px;
-            height: 24px;
+            top: 2%;
+            right: 1%;
+            width: min(4vw, 24px);
+            height: min(4vw, 24px);
             background-color: #ff3333;
             color: white;
             font-weight: bold;
@@ -92,7 +101,7 @@
             z-index: 30;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             border: none;
-            font-size: 14px;
+            font-size: min(2.5vw, 14px);
         }
 
         #quitButton:hover {
@@ -114,14 +123,14 @@
 
         #pauseOverlay h2 {
             color: white;
-            font-size: 36px;
+            font-size: min(6vw, 36px);
             text-align: center;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         #pauseOverlay p {
             color: white;
-            font-size: 18px;
+            font-size: min(3vw, 18px);
             text-align: center;
             margin-top: 20px;
         }
@@ -135,19 +144,19 @@
             display: none;
             z-index: 20;
             background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
+            padding: min(4vw, 20px);
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
 
         #gameOver h2 {
-            font-size: 30px;
+            font-size: min(5vw, 30px);
             margin-bottom: 10px;
         }
 
         #startButton, #restartButton {
             padding: 8px 15px;
-            font-size: 16px;
+            font-size: min(3vw, 16px);
             cursor: pointer;
             background-color: #333;
             color: white;
@@ -163,8 +172,8 @@
         }
 
         #characterSelect img {
-            width: 40px;
-            height: 40px;
+            width: min(7vw, 40px);
+            height: min(7vw, 40px);
             cursor: pointer;
             border: 2px solid transparent;
             border-radius: 5px;
@@ -177,11 +186,11 @@
 
         #instructions {
             position: absolute;
-            bottom: 10px;
+            bottom: 2%;
             left: 50%;
             transform: translateX(-50%);
             color: #333;
-            font-size: 14px;
+            font-size: min(2.5vw, 14px);
             z-index: 10;
             background-color: rgba(255, 255, 255, 0.7);
             padding: 5px 10px;
@@ -198,6 +207,15 @@
 
         .invulnerable {
             animation: blink 0.3s infinite;
+        }
+
+        /* Media queries for responsive adjustments */
+        @media (max-width: 768px) {
+            #instructions {
+                white-space: normal;
+                text-align: center;
+                max-width: 90%;
+            }
         }
     </style>
 </head>
@@ -297,6 +315,10 @@
         let invulnerabilityTimer = null;
         const invulnerabilityDuration = 2000; // 2 seconds
 
+        // Responsive scaling
+        let scaleFactor = 1;
+        let baseWidth = 800; // Base design width
+
         // Try to get high score from localStorage with error handling
         try {
             const savedHighScore = localStorage.getItem('dinoHighScore');
@@ -307,12 +329,17 @@
             console.log("localStorage not available, using in-memory high score");
         }
 
+        // Calculate responsive scale factor
+        function calculateScaleFactor() {
+            return canvas.width / baseWidth;
+        }
+
         // Player properties
         let player = {
             x: 50,
             y: 0,
-            width: 50,
-            height: 50,
+            width: 70, // Increased size from 50
+            height: 70, // Increased size from 50
             vy: 0,
             gravity: 1,
             jumpStrength: -16,
@@ -335,10 +362,8 @@
             for (let i = 0; i < heartElements.length; i++) {
                 if (i < lives) {
                     heartElements[i].style.visibility = 'visible';
-                    console.log("Heart " + (i+1) + " set to visible");
                 } else {
                     heartElements[i].style.visibility = 'hidden';
-                    console.log("Heart " + (i+1) + " set to hidden");
                 }
             }
         }
@@ -366,36 +391,50 @@
             // Set canvas size to match container
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
+
+            // Calculate new scale factor
+            scaleFactor = calculateScaleFactor();
+
+            // Scale ground height
+            groundHeight = 30 * scaleFactor;
+
+            // Update player position
             player.y = canvas.height - groundHeight - player.height;
+
+            console.log(`Canvas resized: ${canvas.width}x${canvas.height}, Scale factor: ${scaleFactor}`);
         }
 
         // Reset game state
         function resetGame() {
+            // Adjust player size based on scale factor
+            const playerSize = 70 * scaleFactor;
+
             player = {
-                x: 50,
-                y: canvas.height - groundHeight - player.height,
-                width: 50,
-                height: 50,
+                x: 50 * scaleFactor,
+                y: canvas.height - groundHeight - playerSize,
+                width: playerSize,
+                height: playerSize,
                 vy: 0,
-                gravity: 1,
-                jumpStrength: -16,
+                gravity: 1 * scaleFactor,
+                jumpStrength: -16 * scaleFactor,
                 jumping: false,
                 image: (character === 'fuchs' ? fuchsImg : waschbaerImg)
             };
 
             console.log(`Character selected: ${character}`);
-            console.log(`Player image set to:`, player.image);
+            console.log(`Player size: ${playerSize}px, Position: (${player.x}, ${player.y})`);
 
             obstacles = [];
             clouds = [];
             score = 0;
             scoreElement.textContent = '0';
-            speed = 5;
+            speed = 5 * scaleFactor;
             isNight = false;
             isDucking = false;
             isPaused = false;
             lives = 3;
             isInvulnerable = false;
+
             if (invulnerabilityTimer) {
                 clearTimeout(invulnerabilityTimer);
                 invulnerabilityTimer = null;
@@ -476,7 +515,7 @@
             if (!isPlaying) return;
 
             isPaused = !isPaused;
-            console.log("Game paused:", isPaused); // Debug log
+            console.log("Game paused:", isPaused);
 
             if (isPaused) {
                 pauseOverlay.style.display = 'flex';
@@ -519,10 +558,10 @@
         function duck(isDucking) {
             if (!isPaused && !player.jumping) {
                 if (isDucking) {
-                    player.height = 25; // Half height when ducking
+                    player.height = 35 * scaleFactor; // Half height when ducking (adjusted for scale)
                     player.y = canvas.height - groundHeight - player.height;
                 } else {
-                    player.height = 50; // Normal height
+                    player.height = 70 * scaleFactor; // Normal height (adjusted for scale)
                     player.y = canvas.height - groundHeight - player.height;
                 }
             }
@@ -534,17 +573,17 @@
             let height, y;
 
             if (type === CACTUS) {
-                height = 40 + Math.random() * 30;
+                height = (40 + Math.random() * 30) * scaleFactor;
                 y = canvas.height - groundHeight - height;
             } else {
-                height = 30;
-                y = canvas.height - groundHeight - height - 40 - Math.random() * 40;
+                height = 30 * scaleFactor;
+                y = canvas.height - groundHeight - height - 40 * scaleFactor - Math.random() * 40 * scaleFactor;
             }
 
             obstacles.push({
                 x: canvas.width,
                 y: y,
-                width: 30,
+                width: 30 * scaleFactor,
                 height: height,
                 type: type
             });
@@ -554,10 +593,10 @@
         function createCloud() {
             clouds.push({
                 x: canvas.width,
-                y: 50 + Math.random() * 100,
-                width: 60,
-                height: 30,
-                speed: 1 + Math.random() * 2
+                y: 50 * scaleFactor + Math.random() * 100 * scaleFactor,
+                width: 60 * scaleFactor,
+                height: 30 * scaleFactor,
+                speed: (1 + Math.random() * 2) * scaleFactor
             });
         }
 
@@ -659,7 +698,7 @@
             scoreElement.textContent = Math.floor(score / 10);
 
             // Increase speed over time
-            speed += speedIncrement;
+            speed += speedIncrement * scaleFactor;
 
             // Toggle day/night every 1000 points
             if (score % 1000 === 0) {
@@ -681,7 +720,7 @@
 
             // Draw ground line
             ctx.fillStyle = isNight ? '#555' : '#999';
-            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 2);
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 2 * scaleFactor);
         }
 
         // Draw player
@@ -722,19 +761,19 @@
                     ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                     // Cactus details
-                    if (obstacle.height > 50) {
+                    if (obstacle.height > 50 * scaleFactor) {
                         // Add branches to taller cacti
-                        ctx.fillRect(obstacle.x - 8, obstacle.y + 15, 8, 10);
-                        ctx.fillRect(obstacle.x + obstacle.width, obstacle.y + 25, 8, 10);
+                        ctx.fillRect(obstacle.x - 8 * scaleFactor, obstacle.y + 15 * scaleFactor, 8 * scaleFactor, 10 * scaleFactor);
+                        ctx.fillRect(obstacle.x + obstacle.width, obstacle.y + 25 * scaleFactor, 8 * scaleFactor, 10 * scaleFactor);
                     }
                 } else {
                     // Draw flying obstacle (pterodactyl)
                     ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                     // Wings
-                    const wingHeight = Math.sin(Date.now() / 100) * 10 + 10;
-                    ctx.fillRect(obstacle.x - 10, obstacle.y - wingHeight, 20, wingHeight);
-                    ctx.fillRect(obstacle.x + 20, obstacle.y - wingHeight, 20, wingHeight);
+                    const wingHeight = Math.sin(Date.now() / 100) * 10 * scaleFactor + 10 * scaleFactor;
+                    ctx.fillRect(obstacle.x - 10 * scaleFactor, obstacle.y - wingHeight, 20 * scaleFactor, wingHeight);
+                    ctx.fillRect(obstacle.x + 20 * scaleFactor, obstacle.y - wingHeight, 20 * scaleFactor, wingHeight);
                 }
             }
         }
@@ -751,12 +790,12 @@
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.ellipse(cloud.x + cloud.width/2 - 15, cloud.y + cloud.height/2 - 5, cloud.width/3, cloud.height/3, 0, 0, Math.PI * 2);
+                ctx.ellipse(cloud.x + cloud.width/2 - 15 * scaleFactor, cloud.y + cloud.height/2 - 5 * scaleFactor, cloud.width/3, cloud.height/3, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.ellipse(cloud.x + cloud.width/2 + 15, cloud.y + cloud.height/2 - 5, cloud.width/3, cloud.height/3, 0, 0, Math.PI * 2);
+                ctx.ellipse(cloud.x + cloud.width/2 + 15 * scaleFactor, cloud.y + cloud.height/2 - 5 * scaleFactor, cloud.width/3, cloud.height/3, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
             }
@@ -874,6 +913,30 @@
             }
         }
 
+        function handleResize() {
+            // Re-initialize canvas when window size changes
+            initCanvas();
+
+            // If game is in progress, reset game elements with new scaling
+            if (isPlaying) {
+                // Preserve current game state
+                const currentLives = lives;
+                const currentScore = score;
+                const wasInvulnerable = isInvulnerable;
+
+                // Reset game with new scaling
+                resetGame();
+
+                // Restore game state
+                lives = currentLives;
+                score = currentScore;
+                isInvulnerable = wasInvulnerable;
+
+                updateLivesDisplay();
+                scoreElement.textContent = Math.floor(score / 10);
+            }
+        }
+
         // Initialize the game
         function init() {
             initCanvas();
@@ -884,7 +947,7 @@
             document.addEventListener('keyup', handleKeyUp);
             canvas.addEventListener('mousedown', handleCanvasClick);
             canvas.addEventListener('touchstart', handleCanvasClick);
-            window.addEventListener('resize', initCanvas);
+            window.addEventListener('resize', handleResize);
             restartButton.addEventListener('click', startGame);
             document.getElementById('startButton').addEventListener('click', startGame);
             quitButton.addEventListener('click', quitGame);
@@ -918,7 +981,6 @@
             gameOverElement.style.display = 'block';
 
             // Explicitly create and show the hearts
-            console.log("Initial heart display setup");
             updateLivesDisplay();
         }
 
