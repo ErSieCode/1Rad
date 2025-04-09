@@ -136,7 +136,7 @@
         .doubleJumpEffect { position: absolute; border-radius: 50%; background-color: rgba(255, 215, 0, 0.6); pointer-events: none; z-index: 15; animation: doubleJumpEffect 0.4s ease-out forwards; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* Settings Panel Styles */
+        /* Settings Panel Styles - UPDATED FOR MOBILE RESPONSIVENESS */
         #settingsPanel {
             position: absolute;
             top: 0;
@@ -148,19 +148,56 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: 20px;
             color: white;
             overflow-y: auto;
         }
 
-        #settingsPanel h2 {
-            font-size: max(3vmin, 20px);
+        /* Added settings header container to hold title and back button */
+        .settings-header {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            position: relative;
             margin-bottom: 20px;
-            color: #4CAF50;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            padding-top: 10px;
         }
 
+        /* Settings back button styling */
+        #settingsBackButton {
+            position: absolute;
+            left: 0;
+            width: max(4.5vmin, 30px);
+            height: max(4.5vmin, 30px);
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: none;
+            font-size: max(2.2vmin, 16px);
+            line-height: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #settingsBackButton:hover,
+        #settingsBackButton:active {
+            background-color: #45a049;
+        }
+
+        #settingsPanel h2 {
+            font-size: max(3vmin, 20px);
+            color: #4CAF50;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        /* Updated settings grid for better mobile responsiveness */
         .settings-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -170,25 +207,49 @@
             margin-bottom: 20px;
         }
 
+        /* On small screens, make the grid 1 column */
+        @media (max-width: 500px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+                width: 95%;
+            }
+
+            /* Increase touch target sizes on mobile */
+            .setting-item input[type="range"] {
+                height: 30px;
+            }
+
+            .checkbox-container input[type="checkbox"] {
+                width: 24px;
+                height: 24px;
+            }
+        }
+
         .setting-item {
             display: flex;
             flex-direction: column;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
         }
 
         .setting-item label {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: max(1.8vmin, 14px);
+            font-weight: bold;
         }
 
         .setting-item input[type="range"] {
             width: 100%;
             margin-bottom: 5px;
+            cursor: pointer;
         }
 
         .value-display {
             font-size: max(1.6vmin, 12px);
             text-align: center;
             color: #4CAF50;
+            font-weight: bold;
         }
 
         /* Checkbox styling for hitbox toggle */
@@ -197,24 +258,41 @@
             align-items: center;
             margin-top: 10px;
             margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
         }
 
         .checkbox-container input[type="checkbox"] {
             margin-right: 10px;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
         }
 
         .checkbox-container label {
             font-size: max(1.8vmin, 14px);
             cursor: pointer;
+            font-weight: bold;
         }
 
         .settings-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Make buttons bigger on mobile for better touch targets */
+        @media (max-width: 500px) {
+            #settingsResetButton, #settingsCloseButton {
+                padding: 12px 20px;
+                font-size: 18px;
+                margin: 5px;
+            }
         }
 
         /* Debug overlay for hitboxes */
@@ -264,9 +342,12 @@
             <button id="restartButton">RESTART</button>
         </div>
 
-        <!-- Settings Panel -->
+        <!-- Settings Panel - UPDATED WITH BACK BUTTON AND BETTER MOBILE LAYOUT -->
         <div id="settingsPanel">
-            <h2>Game Settings</h2>
+            <div class="settings-header">
+                <button id="settingsBackButton">⬅</button>
+                <h2>Game Settings</h2>
+            </div>
             <div class="settings-grid">
                 <div class="setting-item">
                     <label for="speedSetting">Game Speed:</label>
@@ -414,7 +495,7 @@
         let canvas, ctx, scoreElement, highScoreElement, finalScoreElement, gameOverElement, restartButton, startButton,
             fuchsSelect, waschbaerSelect, characterSelectContainer, pauseOverlay, quitButton, livesDisplay, gameContainer,
             duckButton, backButton, settingsButton, settingsPanel, settingsCloseButton, settingsResetButton, debugOverlay,
-            showHitboxSetting;
+            showHitboxSetting, settingsBackButton;
 
         // Frühe Initialisierung der Variablen
         canvas = document.getElementById('gameCanvas');
@@ -440,6 +521,7 @@
         settingsResetButton = document.getElementById('settingsResetButton');
         debugOverlay = document.getElementById('debugOverlay');
         showHitboxSetting = document.getElementById('showHitboxSetting');
+        settingsBackButton = document.getElementById('settingsBackButton');
 
         if (!canvas || !ctx) {
              console.error("CRITICAL: Canvas or Context not available immediately!");
@@ -1272,7 +1354,7 @@
             }
         }
 
-        // --- UI Update --- Updated for settings panel
+        // --- UI Update --- Updated for settings panel and back button
         function updateUI() {
             try {
                 const pl = currentState === GameState.PLAYING;
@@ -1447,6 +1529,9 @@
                 if(settingsButton) settingsButton.addEventListener('click', toggleSettingsPanel);
                 if(settingsCloseButton) settingsCloseButton.addEventListener('click', toggleSettingsPanel);
                 if(settingsResetButton) settingsResetButton.addEventListener('click', resetGameSettings);
+
+                // Add event listener for the new settings back button
+                if(settingsBackButton) settingsBackButton.addEventListener('click', toggleSettingsPanel);
 
                 if(duckButton) {
                     duckButton.addEventListener('pointerdown', handleDuckButtonPointerDown);
