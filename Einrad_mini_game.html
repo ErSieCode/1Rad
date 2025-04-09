@@ -86,8 +86,30 @@
         #characterSelect img:hover { transform: scale(1.1); }
         #characterSelect img.selected { border-color: #ff9800; transform: scale(1.05); }
         #instructions { width: 90%; max-width: 600px; text-align: center; color: #444; font-size: max(1.7vmin, 14px); z-index: 5; background-color: rgba(210, 210, 210, 0.8); padding: max(0.7vmin, 5px) max(1.2vmin, 9px); border-radius: 5px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        /* Duck Button CSS - Angepasst für kleiner und weiter links */
-        #duckButton { bottom: 3%; left: 0.5%; width: max(5vmin, 40px); height: max(5vmin, 40px); background-color: rgba(80, 80, 80, 0.6); border: none; border-radius: 50%; color: white; font-weight: bold; font-size: max(3.5vmin, 18px); z-index: 10; cursor: pointer; display: none; justify-content: center; align-items: center; -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); touch-action: manipulation; padding: 0; overflow: hidden; transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s; }
+        /* Duck Button CSS - Modified to be on the right side */
+        #duckButton {
+            bottom: 3%;
+            right: 0.5%; /* Changed from left to right to move to right side */
+            width: max(5vmin, 40px);
+            height: max(5vmin, 40px);
+            background-color: rgba(80, 80, 80, 0.6);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: max(3.5vmin, 18px);
+            z-index: 10;
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+            padding: 0;
+            overflow: hidden;
+            transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s;
+        }
         #duckButton img { width: 65%; height: 65%; object-fit: contain; pointer-events: none; }
         #duckButton:active { background-color: rgba(60, 60, 60, 0.8); transform: translateY(1px); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
         @keyframes doubleJumpEffect { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.5); opacity: 0; } }
@@ -400,7 +422,7 @@
                     // --- HIER DIE ÄNDERUNG FÜR FLIEGENDE OBJEKTE ---
                     const minTopMargin = 170 * scaleFactor; // << GEÄNDERT: Erhöht, um Objekte tiefer zu positionieren
                     // --- ENDE ÄNDERUNG ---
-                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 100 * scaleFactor; // Sicherheitsabstand über Spieler
+                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 90 * scaleFactor; // Sicherheitsabstand über Spieler
                     const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze für Himmelsobjekte
                     const availableHeight = Math.max(20 * scaleFactor, safeSkyBottom - minTopMargin - scaledHeight); // Verfügbarer Bereich
                     yPos = minTopMargin + Math.random() * availableHeight;
