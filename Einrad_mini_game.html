@@ -3,6 +3,10 @@
 <head>
     <title>Pixel Runner Adventure</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#333333">
     <meta charset="UTF-8">
     <!-- Preload the loading image first -->
     <link rel="preload" href="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" as="image">
@@ -36,20 +40,65 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* UI Styles */
-        #gameControls, #gameInfo, #livesDisplay, #quitButton, #pauseOverlay, #gameOver, #duckButton { position: absolute; z-index: 10; font-size: max(1.7vmin, 14px); }
+        /* UI Styles - VERBESSERT FÜR SMARTPHONES */
+        #gameControls, #gameInfo, #livesDisplay, #quitButton, #pauseOverlay, #gameOver, #duckButton { position: absolute; z-index: 10; font-size: max(2.2vmin, 16px); } /* Größere Schrift */
         #gameControls {
             top: 2%;
             left: 2%;
             display: flex;
-            gap: 10px;
+            gap: 12px; /* Größerer Abstand für Touch */
             align-items: center;
         }
-        #gameInfo { top: 2%; right: 10%; text-align: right; color: #eee; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
-        #gameInfo div { margin-bottom: 2px; }
-        #livesDisplay { top: calc(2% + 60px); right: 10%; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; display: flex; gap: 5px; }
-        .heart { color: #ff4d4d; font-size: max(3vmin, 18px); font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); transition: transform 0.2s ease-out, opacity 0.2s ease-out; }
-        .heart.hidden { visibility: hidden; transform: scale(0.5); opacity: 0; }
+        #gameInfo {
+            top: 2%;
+            right: 10%;
+            text-align: right;
+            color: #fff; /* Besserer Kontrast */
+            background-color: rgba(0, 0, 0, 0.7); /* Dunklerer Hintergrund für bessere Lesbarkeit */
+            padding: max(0.8vmin, 5px) max(1.4vmin, 8px); /* Größerer Padding */
+            border-radius: 8px; /* Abgerundete Ecken */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Schatten für bessere Sichtbarkeit */
+        }
+        #gameInfo div { margin-bottom: 3px; font-weight: bold; } /* Fetter Text */
+
+        /* Stark verbesserte Herz-Anzeige für bessere Sichtbarkeit */
+        #livesDisplay {
+            top: calc(2% + 60px);
+            right: 10%;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: max(0.8vmin, 5px) max(1.4vmin, 8px);
+            border-radius: 8px;
+            display: flex;
+            gap: 8px; /* Größerer Abstand zwischen Herzen */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Schatten für bessere Sichtbarkeit */
+            border: 1px solid rgba(255,255,255,0.3); /* Subtiler Rand */
+        }
+
+        /* Deutlich verbesserte, größere und auffälligere Herz-Anzeige */
+        .heart {
+            color: #ff3333; /* Kräftigeres Rot */
+            font-size: max(4vmin, 22px); /* Deutlich größer */
+            font-weight: bold;
+            text-shadow:
+                0 0 5px rgba(255,0,0,0.7), /* Rotes Leuchten */
+                1px 1px 2px rgba(0,0,0,0.9); /* Dunkler Schatten */
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s; /* Längere Animation */
+            display: inline-block;
+            visibility: visible;
+            opacity: 1;
+            transform: scale(1);
+            line-height: 1; /* Besseres Zentrieren */
+            -webkit-text-stroke: 1px rgba(0,0,0,0.5); /* Schwarzer Umriss für besseren Kontrast */
+        }
+
+        /* Animierte Herz-Ausblendung */
+        .heart.hidden {
+            visibility: hidden;
+            opacity: 0;
+            transform: scale(0.2) rotate(180deg); /* Dreht sich und schrumpft */
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out, visibility 0s 0.5s;
+        }
         #quitButton { top: 2%; right: 2%; width: max(4vmin, 24px); height: max(4vmin, 24px); background-color: #ff3333; color: white; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 30; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); border: none; font-size: max(2vmin, 12px); line-height: 1; }
         #quitButton:hover { background-color: #cc0000; }
         /* Back Button Styling - Moved to far left and changed to green */
@@ -106,32 +155,55 @@
         #characterSelect img:hover { transform: scale(1.1); }
         #characterSelect img.selected { border-color: #ff9800; transform: scale(1.05); }
         #instructions { width: 90%; max-width: 600px; text-align: center; color: #444; font-size: max(1.7vmin, 14px); z-index: 5; background-color: rgba(210, 210, 210, 0.8); padding: max(0.7vmin, 5px) max(1.2vmin, 9px); border-radius: 5px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        /* Duck Button CSS - Modified to be on the right side */
+        /* Duck Button CSS - OPTIMIERT FÜR MOBILE UND TOUCH */
         #duckButton {
-            bottom: 3%;
-            right: 0.5%; /* Changed from left to right to move to right side */
-            width: max(5vmin, 40px);
-            height: max(5vmin, 40px);
-            background-color: rgba(80, 80, 80, 0.6);
-            border: none;
+            bottom: 5%; /* Höher positioniert für bessere Erreichbarkeit */
+            right: 5%; /* Weiter nach innen für bessere Erreichbarkeit */
+            width: max(10vmin, 60px); /* DEUTLICH größer für mobile Touch */
+            height: max(10vmin, 60px); /* DEUTLICH größer für mobile Touch */
+            background-color: rgba(80, 80, 80, 0.8); /* Dunklerer Hintergrund */
+            border: 2px solid rgba(255, 255, 255, 0.5); /* Weißer Rand für bessere Sichtbarkeit */
             border-radius: 50%;
             color: white;
             font-weight: bold;
-            font-size: max(3.5vmin, 18px);
-            z-index: 10;
+            font-size: max(5vmin, 24px); /* Größerer Text */
+            z-index: 100; /* Höherer z-index, um Überdeckung zu vermeiden */
             cursor: pointer;
             display: none;
             justify-content: center;
             align-items: center;
             -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stärkerer Schatten */
             touch-action: manipulation;
             padding: 0;
             overflow: hidden;
-            transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s;
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            /* Aktives Feedback-Leuchten für bessere Sichtbarkeit */
+            animation: pulse-button 1.5s infinite alternate;
         }
-        #duckButton img { width: 65%; height: 65%; object-fit: contain; pointer-events: none; }
-        #duckButton:active { background-color: rgba(60, 60, 60, 0.8); transform: translateY(1px); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+
+        /* Duck-Button-Bild anpassen */
+        #duckButton img {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); /* Schatten für das Bild */
+        }
+
+        /* Stärkeres visuelles Feedback bei Berührung */
+        #duckButton:active {
+            background-color: rgba(100, 100, 100, 0.9);
+            transform: translateY(4px) scale(0.95);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Pulsier-Animation für den Duck-Button */
+        @keyframes pulse-button {
+            0% { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); }
+            100% { box-shadow: 0 4px 12px rgba(100, 255, 185, 0.7); }
+        }
         @keyframes doubleJumpEffect { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.5); opacity: 0; } }
         .doubleJumpEffect { position: absolute; border-radius: 50%; background-color: rgba(255, 215, 0, 0.6); pointer-events: none; z-index: 15; animation: doubleJumpEffect 0.4s ease-out forwards; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -458,16 +530,16 @@
                 </div>
             </div>
 
-            <!-- Flying Objects Height Setting -->
+            // Flying Objects Height Setting - Default auf "Easy" gesetzt
             <div class="difficulty-selection">
                 <div class="difficulty-title">Flying Objects Height</div>
                 <div class="difficulty-options">
                     <div class="difficulty-option">
-                        <input type="radio" id="flyingHeightEasy" name="flyingHeightSetting" value="easy">
+                        <input type="radio" id="flyingHeightEasy" name="flyingHeightSetting" value="easy" checked>
                         <label for="flyingHeightEasy">Einfach</label>
                     </div>
                     <div class="difficulty-option">
-                        <input type="radio" id="flyingHeightNormal" name="flyingHeightSetting" value="normal" checked>
+                        <input type="radio" id="flyingHeightNormal" name="flyingHeightSetting" value="normal">
                         <label for="flyingHeightNormal">Normal</label>
                     </div>
                     <div class="difficulty-option">
@@ -609,7 +681,7 @@
         logImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baum_liegend.png';
         stumpImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baumstumpf.png';
         owlImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Eule_v1_L.png';
-        flyingUniImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Flug_Einrad_grun.png';
+        flyingUniImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fulg_Einrad_orange.png';
 
         console.log("Assets: Defined.");
 
@@ -653,7 +725,6 @@
              console.log("DOM: Elements retrieved.");
              window.addEventListener('load', init); // Add listener only if canvas is okay
         }
-
 
         // --- Game State ---
         const GameState = {
@@ -709,63 +780,106 @@
         const globalSizeFactor = 1.25; // 25% größer
         const playerWidthRatio = 0.9; // Character width is 90% of normal to make it slightly slimmer
 
-        // Difficulty level constants for ground and air obstacles
-        const GroundObstacleMode = {
-            EASY: { timer: 3.5, independent: false },
-            NORMAL: { timer: 2.5, independent: false },
-            HARD: { timer: 1.8, independent: true },
-            VERY_HARD: { timer: 1.0, independent: true }
+        // --- Verbesserte 4-stufige Spawnregeln, ÜBERARBEITET für bessere Progression ---
+        const SpawnRules = {
+            // Einfach: Wie früher "normal" - moderate Hindernisse mit etwas Vorhersehbarkeit
+            EASY: {
+                groundInterval: 2.5,    // Alle 2.5 Sekunden ein Bodenhindernis (wie altes NORMAL)
+                skyInterval: 2.5,       // Alle 2.5 Sekunden ein Lufthindernis
+                randomVariation: 0.3,   // ±30% Variation für gute Vorhersehbarkeit
+                independent: false,     // Boden und Luft alternieren
+                staggered: true,        // Versetzter Start
+                randomTriggerChance: 0.001 // Sehr geringe Chance für zufällige Spawns
+            },
+            // Normal: Zwischen altem "normal" und "hard"
+            NORMAL: {
+                groundInterval: 2.2,    // Etwas häufiger als EASY
+                skyInterval: 2.2,       // Etwas häufiger als EASY
+                randomVariation: 0.4,   // ±40% Variation für etwas mehr Unvorhersehbarkeit
+                independent: false,     // Immer noch alternierend
+                staggered: true,        // Versetzter Start
+                randomTriggerChance: 0.002 // Etwas mehr zufällige Spawns
+            },
+            // Schwer: Wie früher "very hard" - viele Hindernisse, unvorhersehbar
+            HARD: {
+                groundInterval: 1.6,    // Häufige Hindernisse (zwischen altem HARD und VERY_HARD)
+                skyInterval: 1.8,       // Häufige Hindernisse
+                randomVariation: 0.5,   // ±50% Variation für mehr Unvorhersehbarkeit
+                independent: true,      // Boden und Luft unabhängig
+                staggered: true,        // Versetzter Start
+                randomTriggerChance: 0.004 // Mehr zufällige Spawns
+            },
+            // Sehr Schwer: Noch schwieriger als zuvor
+            VERY_HARD: {
+                groundInterval: 0.8,    // Extrem häufige Hindernisse (früher 1.0)
+                skyInterval: 1.0,       // Extrem häufige Hindernisse (früher 1.2)
+                randomVariation: 0.6,   // ±60% Variation für maximale Unvorhersehbarkeit
+                independent: true,      // Boden und Luft völlig unabhängig
+                staggered: false,       // Kein versetzter Start mehr für noch mehr Schwierigkeit
+                randomTriggerChance: 0.008 // Häufige zufällige Spawns
+            }
         };
 
-        const SkyObstacleMode = {
-            EASY: { timer: 3.5, independent: false },
-            NORMAL: { timer: 2.5, independent: false },
-            HARD: { timer: 1.8, independent: true },
-            VERY_HARD: { timer: 1.0, independent: true }
+        // --- Konsistente Hitbox-Größen für alle Schwierigkeitsstufen ---
+        const HitboxSizes = {
+            // Für alle Schwierigkeitsstufen sind die Hitboxen konsistent
+            EASY: 0.65,       // 65% der visuellen Größe (sehr großzügig)
+            NORMAL: 0.75,     // 75% der visuellen Größe (normal)
+            HARD: 0.85,       // 85% der visuellen Größe (anspruchsvoll)
+            VERY_HARD: 0.95   // 95% der visuellen Größe (sehr schwer)
+        };
+
+        // --- Flughöhen für fliegende Hindernisse ---
+        // GEÄNDERT: Niedrigere Höhen für alle Schwierigkeitsgrade
+        const FlyingHeights = {
+            EASY: {
+                heightFactor: 0.5,    // Mittlere Höhe (ursprünglich 0.3, jetzt tiefer)
+                randomness: 0.3       // ±30% Zufallsvarianz
+            },
+            NORMAL: {
+                heightFactor: 0.65,    // Etwas tiefer (ursprünglich 0.5, jetzt tiefer)
+                randomness: 0.3       // ±30% Zufallsvarianz
+            },
+            HARD: {
+                heightFactor: 0.8,    // Ziemlich tief (ursprünglich 0.7, jetzt tiefer)
+                randomness: 0.2       // ±20% Zufallsvarianz
+            },
+            VERY_HARD: {
+                heightFactor: 0.95,   // Sehr tief (nur durch Ducken zu vermeiden)
+                randomness: 0.1       // ±10% Zufallsvarianz (konsistente Höhe)
+            }
         };
 
         // --- Game Settings with difficulty levels ---
         let gameSettings = {
-            // Changed from multipliers to difficulty levels
-            speedLevel: 'normal',           // easy, normal, hard, veryHard
-            jumpHeightLevel: 'normal',      // easy, normal, hard, veryHard
-            spawnRateLevel: 'normal',       // easy, normal, hard, veryHard
-            flyingHeightLevel: 'normal',    // easy, normal, hard, veryHard
-            hitboxSizeLevel: 'normal',      // easy, normal, hard, veryHard
-            showHitboxes: false             // Toggle for hitbox visualization
+            // Standardeinstellungen, angepasst für besseres Spielerlebnis
+            speedLevel: 'easy',           // Auf einfach gesetzt (vormals normal)
+            jumpHeightLevel: 'easy',      // Auf einfach gesetzt (vormals normal)
+            spawnRateLevel: 'easy',       // Auf einfach gesetzt (vormals normal)
+            flyingHeightLevel: 'easy',    // Auf einfach gesetzt (vormals normal)
+            hitboxSizeLevel: 'normal',    // Unverändert
+            showHitboxes: false           // Toggle für Hitbox-Visualisierung
         };
 
-        // Difficulty level values
+        // Difficulty level values - ÜBERARBEITET für bessere Stufenverteilung
         const difficultyValues = {
             speed: {
-                easy: 0.7,      // Very slow
-                normal: 1.0,    // Normal speed
-                hard: 1.3,      // Fast
-                veryHard: 1.6   // Very fast
+                easy: 1.0,      // War vorher 'normal' (1.0), jetzt 'easy'
+                normal: 1.3,    // War vorher 'hard' (1.3), jetzt 'normal'
+                hard: 1.6,      // War vorher 'veryHard' (1.6), jetzt 'hard'
+                veryHard: 2.0   // Neue noch höhere Schwierigkeit
             },
             jumpHeight: {
-                easy: 1.3,      // Very high jump
-                normal: 1.0,    // Normal jump
-                hard: 0.8,      // Low jump
-                veryHard: 0.7   // Very low jump (just enough to clear objects)
+                easy: 1.0,      // War vorher 'normal', jetzt 'easy'
+                normal: 0.85,   // Zwischen dem alten 'normal' und 'hard'
+                hard: 0.75,     // Etwas leichter als das alte 'veryHard'
+                veryHard: 0.65  // Noch schwieriger als zuvor
             },
             gravity: {
-                easy: 0.8,      // Less gravity for easier control
-                normal: 1.0,    // Normal gravity
-                hard: 1.2,      // More gravity
-                veryHard: 1.3   // Very strong gravity
-            },
-            flyingHeight: {
-                easy: 0.3,      // Flying objects very high (easier)
-                normal: 0.5,    // Flying objects normal height
-                hard: 0.7,      // Flying objects low (harder)
-                veryHard: 0.95  // Flying objects extremely low (ducking required)
-            },
-            hitboxSize: {
-                easy: 0.7,      // Smaller hitbox (more forgiving)
-                normal: 0.75,   // Normal hitbox
-                hard: 0.8,      // Larger hitbox
-                veryHard: 0.85  // Very large hitbox
+                easy: 1.0,      // War vorher 'normal', jetzt 'easy'
+                normal: 1.15,   // Zwischen dem alten 'normal' und 'hard'
+                hard: 1.3,      // Was vorher 'veryHard' war
+                veryHard: 1.5   // Noch schwieriger als zuvor
             }
         };
 
@@ -834,11 +948,11 @@
 
         function resetGameSettings() {
             gameSettings = {
-                speedLevel: 'normal',
-                jumpHeightLevel: 'normal',
-                spawnRateLevel: 'normal',
-                flyingHeightLevel: 'normal',
-                hitboxSizeLevel: 'normal',
+                speedLevel: 'easy',          // Auf einfach gesetzt (vormals normal)
+                jumpHeightLevel: 'easy',     // Auf einfach gesetzt (vormals normal)
+                spawnRateLevel: 'easy',      // Auf einfach gesetzt (vormals normal)
+                flyingHeightLevel: 'easy',   // Auf einfach gesetzt (vormals normal)
+                hitboxSizeLevel: 'normal',   // Unverändert
                 showHitboxes: false
             };
 
@@ -849,11 +963,11 @@
             const flyingHeightRadios = document.querySelectorAll('input[name="flyingHeightSetting"]');
             const hitboxSizeRadios = document.querySelectorAll('input[name="hitboxSizeSetting"]');
 
-            setRadioByValue(speedRadios, 'normal');
-            setRadioByValue(jumpRadios, 'normal');
-            setRadioByValue(spawnRadios, 'normal');
-            setRadioByValue(flyingHeightRadios, 'normal');
-            setRadioByValue(hitboxSizeRadios, 'normal');
+            setRadioByValue(speedRadios, 'easy');          // Geändert von 'normal'
+            setRadioByValue(jumpRadios, 'easy');           // Geändert von 'normal'
+            setRadioByValue(spawnRadios, 'easy');          // Geändert von 'normal'
+            setRadioByValue(flyingHeightRadios, 'easy');   // Geändert von 'normal'
+            setRadioByValue(hitboxSizeRadios, 'normal');   // Unverändert
 
             // Update hitbox checkbox
             if (showHitboxSetting) {
@@ -982,10 +1096,70 @@
         // --- High Score, Hearts ---
         function loadHighScore() { try{const s=localStorage.getItem('pixelRunnerHighScore');highScore=s?parseInt(s):0;}catch(e){highScore=0;} }
         function saveHighScore() { const fs=Math.floor(score/10);if(fs>highScore){highScore=fs;try{localStorage.setItem('pixelRunnerHighScore',highScore);if(highScoreElement)highScoreElement.textContent=highScore;}catch(e){}} }
-        function createHearts() { if(!livesDisplay) return; livesDisplay.innerHTML=''; for (let i = 0; i < maxLives; i++) { const h = document.createElement('span'); h.classList.add('heart'); h.innerHTML = '♥'; livesDisplay.appendChild(h); } }
-        function updateLivesDisplay() { if(!livesDisplay) return; livesDisplay.querySelectorAll('.heart').forEach((h, i) => h.classList.toggle('hidden', i >= lives)); }
 
-        // --- resetGame - Updated for settings and slimmer character
+        // --- Verbesserte Herz-Anzeige ---
+        function createHearts() {
+            if(!livesDisplay) return;
+
+            // Container leeren
+            livesDisplay.innerHTML = '';
+            console.log("Herzen werden erstellt, maxLives:", maxLives);
+
+            // Herzen mit korrekter Initialisierung erstellen
+            for (let i = 0; i < maxLives; i++) {
+                const h = document.createElement('span');
+                h.classList.add('heart');
+                h.innerHTML = '♥';
+                h.setAttribute('data-index', i); // Index für Debugging hinzufügen
+
+                // Herzen standardmäßig sichtbar machen
+                h.style.visibility = 'visible';
+                h.style.opacity = '1';
+                h.style.transform = 'scale(1)';
+
+                livesDisplay.appendChild(h);
+                console.log(`Herz ${i} erstellt`);
+            }
+
+            // Anzeige sofort aktualisieren
+            updateLivesDisplay();
+        }
+
+        // --- DEUTLICH VERBESSERTE Lebenanzeigeaktualisierung ---
+        function updateLivesDisplay() {
+            if(!livesDisplay) {
+                console.error("Fehler: livesDisplay Element nicht gefunden!");
+                return;
+            }
+
+            console.log("Herz-Anzeige wird aktualisiert, aktuelle Leben:", lives);
+
+            // Container zuerst leeren und dann neu aufbauen für konsistenten Zustand
+            livesDisplay.innerHTML = '';
+
+            // Herzen neu erstellen, um eine zuverlässige Anzeige zu garantieren
+            for (let i = 0; i < maxLives; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'heart';
+                heart.innerHTML = '♥';
+                heart.setAttribute('data-index', i);
+
+                // Herz sofort korrekt anzeigen oder verstecken
+                if (i >= lives) {
+                    heart.classList.add('hidden');
+                    console.log(`Herz ${i} direkt versteckt erstellt`);
+                } else {
+                    console.log(`Herz ${i} sichtbar erstellt`);
+                }
+
+                livesDisplay.appendChild(heart);
+            }
+
+            // Feedback zu den aktuellen Herzen in der Konsole
+            console.log(`Herzanzeige aktualisiert: ${lives}/${maxLives} Leben`);
+        }
+
+        // --- resetGame - Verbessert für Timer und Einstellungen ---
         function resetGame() {
             console.log("resetGame: Running...");
             if (!canvas || !ctx) { console.error("resetGame: Canvas/Context missing."); return; }
@@ -1000,22 +1174,29 @@
             lives=maxLives;
             isDucking=false;
             isNight=false;
-            isInvulnerable=false;
-            clearTimeout(invulnerabilityTimer);
-            invulnerabilityTimer=null;
+
+            // FIXED: Reset invulnerability properly
+            resetInvulnerability();
+
             obstacles=[];
             clouds=[];
 
-            // Initialize spawn timers based on difficulty with randomly staggered starts
+            // --- Verbesserte Timer-Initialisierung mit 4-Stufen-System ---
+            const spawnRules = getSpawnRules(gameSettings.spawnRateLevel);
+
+            // Haupt-Timer
             obstacleTimer = initialObstacleCooldown;
 
-            // Primary timers with random starting values
-            groundObstacleTimer = initialObstacleCooldown * (0.8 + Math.random() * 0.4); // 80-120% of base time
-            skyObstacleTimer = initialObstacleCooldown * (0.7 + Math.random() * 0.5);   // 70-120% of base time
+            // Zufällige Startzeiten für alle Timer basierend auf Regelwerk
+            const baseGround = initialObstacleCooldown * (0.8 + Math.random() * 0.4);
+            const baseSky = initialObstacleCooldown * (0.7 + Math.random() * 0.5);
 
-            // Secondary offset timers - completely random offsets
-            groundObstacleTimerOffset = initialObstacleCooldown * (0.3 + Math.random() * 0.5); // 30-80% of base time
-            skyObstacleTimerOffset = initialObstacleCooldown * (0.2 + Math.random() * 0.6);    // 20-80% of base time
+            groundObstacleTimer = baseGround;
+            skyObstacleTimer = spawnRules.staggered ? baseGround + (spawnRules.groundInterval / 2) : baseSky;
+
+            // Sekundäre Timer mit weiteren zufälligen Offsets
+            groundObstacleTimerOffset = baseGround * 0.5 + Math.random() * baseGround * 0.5;
+            skyObstacleTimerOffset = baseSky * 0.5 + Math.random() * baseSky * 0.5;
 
             cloudTimer = (2 + Math.random() * 3);
 
@@ -1053,7 +1234,74 @@
                 debugOverlay.innerHTML = '';
             }
 
-            console.log("resetGame: Finished.");
+            // Leben-Anzeige aktualisieren
+            updateLivesDisplay();
+
+            console.log("resetGame: Finished. Lives:", lives, "Invulnerable:", isInvulnerable);
+        }
+
+        // --- NEUE FUNKTION: Setzt die Unverwundbarkeit zurück ---
+        // --- ROBUSTE FUNKTION zum Zurücksetzen der Unverwundbarkeit ---
+        function resetInvulnerability() {
+            console.log("### UNVERWUNDBARKEIT WIRD VOLLSTÄNDIG ZURÜCKGESETZT ###");
+
+            // Status eindeutig setzen
+            isInvulnerable = false;
+
+            // Timer sauber entfernen
+            if (invulnerabilityTimer) {
+                console.log("Bestehender Unverwundbarkeits-Timer wird gelöscht");
+                clearTimeout(invulnerabilityTimer);
+                invulnerabilityTimer = null;
+            }
+
+            // Alle visuellen Indikatoren entfernen
+            if (gameContainer) {
+                const indicators = gameContainer.querySelectorAll('.player-invulnerable-indicator');
+                if (indicators.length > 0) {
+                    console.log(`${indicators.length} Unverwundbarkeits-Indikatoren werden entfernt`);
+                    indicators.forEach(indicator => {
+                        if (indicator.parentNode) {
+                            indicator.parentNode.removeChild(indicator);
+                        }
+                    });
+                }
+            }
+
+            console.log("Unverwundbarkeit erfolgreich zurückgesetzt");
+        }
+
+        // --- Hilfsfunktion für Spawn-Regeln basierend auf Schwierigkeitsgrad ---
+        function getSpawnRules(difficultyLevel) {
+            switch(difficultyLevel) {
+                case 'easy': return SpawnRules.EASY;
+                case 'normal': return SpawnRules.NORMAL;
+                case 'hard': return SpawnRules.HARD;
+                case 'veryHard': return SpawnRules.VERY_HARD;
+                default: return SpawnRules.NORMAL;
+            }
+        }
+
+        // --- Hilfsfunktion für Hitbox-Größen basierend auf Schwierigkeitsgrad ---
+        function getHitboxSize(difficultyLevel) {
+            switch(difficultyLevel) {
+                case 'easy': return HitboxSizes.EASY;
+                case 'normal': return HitboxSizes.NORMAL;
+                case 'hard': return HitboxSizes.HARD;
+                case 'veryHard': return HitboxSizes.VERY_HARD;
+                default: return HitboxSizes.NORMAL;
+            }
+        }
+
+        // --- Hilfsfunktion für Flughöhen basierend auf Schwierigkeitsgrad ---
+        function getFlyingHeight(difficultyLevel) {
+            switch(difficultyLevel) {
+                case 'easy': return FlyingHeights.EASY;
+                case 'normal': return FlyingHeights.NORMAL;
+                case 'hard': return FlyingHeights.HARD;
+                case 'veryHard': return FlyingHeights.VERY_HARD;
+                default: return FlyingHeights.NORMAL;
+            }
         }
 
         // --- Game Logic ---
@@ -1067,26 +1315,36 @@
             if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop);
         }
 
-        // --- FIXED loseLife Function ---
+        // --- VERBESSERTE loseLife-Funktion mit zuverlässiger Animation ---
         function loseLife() {
-            // Debug log to troubleshoot
-            console.log("loseLife called! Current lives:", lives, "Invulnerable:", isInvulnerable, "State:", currentState);
+            // Ausführliche Debug-Ausgabe
+            console.log("### loseLife AUFGERUFEN ###");
+            console.log("Leben:", lives, "Unverwundbar:", isInvulnerable, "Status:", currentState);
 
+            // Nichts tun, wenn bereits unverwundbar oder nicht im Spiel
             if(isInvulnerable || currentState !== GameState.PLAYING) {
-                console.log("No life lost - player is invulnerable or not playing");
+                console.log("Kein Leben verloren - Spieler ist unverwundbar oder nicht im Spiel");
                 return;
             }
 
-            lives--;
-            console.log("Life lost! Remaining lives:", lives);
+            // Leben reduzieren
+            lives = Math.max(0, lives - 1); // Verhindert negative Leben
+            console.log("LEBEN VERLOREN! Verbleibende Leben:", lives);
 
+            // Herzen-Anzeige sofort aktualisieren - VERBESSERT
             updateLivesDisplay();
+
+            // Spieler unverwundbar machen
             makePlayerInvulnerable();
 
+            // Visuelles Feedback für Treffer
             if(gameContainer) {
+                // Spielcontainer-Rand rot färben
                 gameContainer.style.borderColor='#ff0000';
-                // Flash the screen red for better feedback
+
+                // Bildschirm rot aufblitzen lassen
                 const flashEffect = document.createElement('div');
+                flashEffect.className = 'damage-flash'; // Klasse für einfachere Identifikation
                 flashEffect.style.position = 'absolute';
                 flashEffect.style.top = '0';
                 flashEffect.style.left = '0';
@@ -1097,7 +1355,7 @@
                 flashEffect.style.zIndex = '20';
                 flashEffect.style.animation = 'fadeOut 0.5s forwards';
 
-                // Add fadeOut animation if it doesn't exist
+                // fadeOut-Animation hinzufügen, falls nicht vorhanden
                 if (!document.getElementById('flashAnimation')) {
                     const style = document.createElement('style');
                     style.id = 'flashAnimation';
@@ -1105,8 +1363,16 @@
                     document.head.appendChild(style);
                 }
 
+                // Alte Flash-Effekte entfernen
+                const oldFlashes = gameContainer.querySelectorAll('.damage-flash');
+                oldFlashes.forEach(flash => {
+                    if (flash.parentNode) flash.parentNode.removeChild(flash);
+                });
+
+                // Neuen Flash-Effekt hinzufügen
                 gameContainer.appendChild(flashEffect);
 
+                // Nach kurzer Zeit zurücksetzen
                 setTimeout(() => {
                     if(gameContainer) {
                         gameContainer.style.borderColor = '#333';
@@ -1117,8 +1383,9 @@
                 }, 200);
             }
 
+            // Game Over, wenn keine Leben mehr übrig
             if(lives <= 0) {
-                console.log("Game over triggered!");
+                console.log("GAME OVER ausgelöst! Keine Leben mehr übrig.");
                 gameOver();
             }
         }
@@ -1132,22 +1399,81 @@
             animationFrameId=null;
         }
 
-        // --- Improved makePlayerInvulnerable function ---
+        // --- KOMPLETT ÜBERARBEITETE ZUVERLÄSSIGE Unverwundbarkeits-Funktion ---
         function makePlayerInvulnerable() {
-            console.log("Making player invulnerable");
-            isInvulnerable = true;
-            clearTimeout(invulnerabilityTimer);
+            console.log("### SPIELER WIRD UNVERWUNDBAR GEMACHT ###");
 
-            // Visual indicator for invulnerability (player will blink)
-            if (player) {
-                console.log("Invulnerability visual effects applied");
+            // Status eindeutig setzen
+            isInvulnerable = true;
+
+            // Alten Timer sauber entfernen
+            if (invulnerabilityTimer) {
+                console.log("Alter Unverwundbarkeits-Timer wird gelöscht");
+                clearTimeout(invulnerabilityTimer);
+                invulnerabilityTimer = null;
             }
 
-            invulnerabilityTimer = setTimeout(() => {
+            // Visuellen Indikator aktivieren
+            if (player) {
+                // Zusätzliche visuelle Anzeige direkt am Spieler
+                const playerFlash = document.createElement('div');
+                playerFlash.className = 'player-invulnerable-indicator';
+                playerFlash.style.position = 'absolute';
+                playerFlash.style.left = `${player.x}px`;
+                playerFlash.style.top = `${player.y}px`;
+                playerFlash.style.width = `${player.width}px`;
+                playerFlash.style.height = `${player.height}px`;
+                playerFlash.style.border = '2px solid yellow';
+                playerFlash.style.borderRadius = '50%';
+                playerFlash.style.boxShadow = '0 0 10px yellow';
+                playerFlash.style.animation = 'pulsate 0.5s infinite alternate';
+                playerFlash.style.pointerEvents = 'none';
+                playerFlash.style.zIndex = '11';
+
+                // Pulsier-Animation für Unverwundbarkeit
+                if (!document.getElementById('pulsateAnimation')) {
+                    const style = document.createElement('style');
+                    style.id = 'pulsateAnimation';
+                    style.textContent = '@keyframes pulsate { 0% { opacity: 0.3; } 100% { opacity: 0.7; } }';
+                    document.head.appendChild(style);
+                }
+
+                if (gameContainer) {
+                    // Alten Indikator entfernen falls vorhanden
+                    const oldIndicator = gameContainer.querySelector('.player-invulnerable-indicator');
+                    if (oldIndicator && oldIndicator.parentNode) {
+                        oldIndicator.parentNode.removeChild(oldIndicator);
+                    }
+
+                    gameContainer.appendChild(playerFlash);
+                }
+
+                console.log("Unverwundbarkeits-Effekte angewendet");
+            }
+
+            // Neuen Timer setzen - mit Darstellung der verbleibenden Zeit
+            console.log(`Starte Unverwundbarkeit für ${invulnerabilityDuration/1000} Sekunden`);
+            let timeLeft = invulnerabilityDuration;
+
+            // Erstelle eine Funktion, die die Unverwundbarkeit beendet
+            const endInvulnerability = () => {
+                console.log("### UNVERWUNDBARKEIT BEENDET ###");
                 isInvulnerable = false;
                 invulnerabilityTimer = null;
-                console.log("Invulnerability ended");
-            }, invulnerabilityDuration);
+
+                // Entferne den visuellen Indikator
+                if (gameContainer) {
+                    const indicator = gameContainer.querySelector('.player-invulnerable-indicator');
+                    if (indicator && indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }
+            };
+
+            // Verwende einen robusten Timer
+            invulnerabilityTimer = setTimeout(endInvulnerability, invulnerabilityDuration);
+
+            console.log(`Unverwundbarkeits-Timer gesetzt für ${invulnerabilityDuration}ms`);
         }
 
         function togglePause() {
@@ -1236,7 +1562,7 @@
             }catch(err){}
         }
 
-        // --- createObstacle - Updated for difficulty settings
+        // --- createObstacle - Verbessert für verschiedene Schwierigkeitsgrade und tiefere Flughöhe ---
         function createObstacle(category = null) {
             try {
                 let chosenType = null;
@@ -1247,7 +1573,7 @@
                     availableGroundTypes.push(ObstacleType.STUMP_HIGH);
                 }
 
-                // If category is not specified, decide randomly (this is for backward compatibility)
+                // Wenn keine Kategorie angegeben ist, zufällig entscheiden
                 if (category === null) {
                     category = Math.random() < 0.70 ? 'ground' : 'sky';
                 }
@@ -1271,46 +1597,43 @@
                     yPos = canvas.height - groundHeight - scaledHeight;
                     // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
                     if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
-                } else { // Sky obstacle positioning
-                    // Base values
-                    const minTopMargin = 120 * scaleFactor; // Minimum distance from top
-                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 100 * scaleFactor; // Minimum clearance above player
-                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Bottom limit for sky objects
-                    const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
-                    const duckClearance = duckHeight * 1.3; // Space needed for ducking
+                } else { // Positionierung von Flug-Hindernissen
+                    // Flughöhen-Einstellungen abrufen
+                    const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
 
-                    // Calculate the total available height space
+                    // Basiswerte - VOLLSTÄNDIG ANGEPASST für deutlich tiefere Flugobjekte
+                    const minTopMargin = 30 * scaleFactor; // STARK REDUZIERT: Von 120 auf 80, dann auf 50, jetzt auf 30 für extrem tiefe Flughöhen
+                    const playerClearance = player.baseHeight ? player.baseHeight * 0.7 : 40 * scaleFactor; // NOCHMALS REDUZIERT: von 1.3 auf 1.1, dann auf 0.9, jetzt auf 0.7
+                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze noch tiefer angesetzt
+                    const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
+
+                    // Gesamthöhenbereich berechnen
                     const totalHeight = safeSkyBottom - minTopMargin;
 
-                    // Apply the difficulty setting for flying objects from the flying height setting
-                    // Harder = lower flying objects that are harder to jump over
-                    const flyingHeightValue = difficultyValues.flyingHeight[gameSettings.flyingHeightLevel];
+                    // Höhenfaktor und Zufallsbereich anwenden
+                    const heightFactor = flyingHeightSettings.heightFactor;
+                    const randomness = flyingHeightSettings.randomness;
 
-                    // If very hard level, spawn at ducking height
+                    // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
                     if (gameSettings.flyingHeightLevel === 'veryHard') {
-                        // For the hardest level, spawn objects at a height where ducking is necessary
-                        // Calculate a position that requires ducking (near player head height when standing)
+                        // Höhe berechnen, die Ducken erforderlich macht
                         const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
-                        yPos = duckRequiredY - (scaledHeight / 2); // Center the object at duck-required height
+                        yPos = duckRequiredY - (scaledHeight / 2); // Objekt in Duck-Höhe zentrieren
                     } else {
-                        // Normal height calculation for other difficulties
-                        yPos = minTopMargin + (totalHeight * flyingHeightValue);
+                        // Normale Höhenberechnung für andere Schwierigkeitsgrade
+                        yPos = minTopMargin + (totalHeight * heightFactor);
                     }
 
-                    // Add some randomness to prevent predictable patterns
-                    // Less randomness for very hard mode to ensure ducking is required
-                    const randomRange = gameSettings.flyingHeightLevel === 'veryHard'
-                        ? totalHeight * 0.1  // 10% randomness for very hard
-                        : totalHeight * 0.3; // 30% randomness for other levels
-
+                    // Zufälligkeit hinzufügen, umgekehrt proportional zum Schwierigkeitsgrad
+                    const randomRange = totalHeight * randomness;
                     yPos += (Math.random() - 0.5) * randomRange;
 
-                    // Ensure we stay within safe bounds
+                    // Sicherstellen, dass wir im sicheren Bereich bleiben
                     yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos));
                 }
 
-                // Create the obstacle with all necessary information
-                console.log(`Creating ${chosenType} obstacle at position ${yPos}`);
+                // Hindernis mit allen erforderlichen Informationen erstellen
+                console.log(`Erstelle ${chosenType} Hindernis auf Position ${yPos}`);
                 obstacles.push({
                     x: canvas.width, // Start rechts außerhalb
                     y: yPos,
@@ -1318,10 +1641,10 @@
                     height: scaledHeight,
                     type: chosenType,
                     image: data.img, // Referenz auf das Image-Objekt speichern
-                    category: data.category // Kategorie speichern für evtl. spätere Logik
+                    category: data.category // Kategorie speichern für spätere Logik
                 });
             } catch(err) {
-                 console.error("Error in createObstacle:", err);
+                 console.error("Fehler in createObstacle:", err);
             }
         }
 
@@ -1353,8 +1676,8 @@
             updateBackground(dt);
             updateDifficulty(dt);
 
-            // We now call checkCollision in the updateObstacles function
-            // instead of here, to ensure it's called after obstacle positions update
+            // Kollisionsprüfung am Ende des Update-Zyklus
+            checkCollision();
         }
 
         function updatePlayer(dt) {
@@ -1374,114 +1697,38 @@
             }
         }
 
-        // --- updateObstacles - Super randomized version with properly placed collision detection
+        // --- updateObstacles - Verbessert mit 4-Stufen-System ---
         function updateObstacles(dt) {
-            // First update existing obstacles position and remove any that are off-screen
+            // Erst die bestehenden Hindernisse aktualisieren
             for(let i=obstacles.length-1; i>=0; i--){
-                // Apply speed based on difficulty
+                // Geschwindigkeit basierend auf Schwierigkeitsgrad anwenden
                 obstacles[i].x -= speed * dt;
                 if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
             }
 
-            // Get difficulty settings for obstacle spawning
-            const spawnSetting = gameSettings.spawnRateLevel;
-            const spawnMode = getSpawnMode(spawnSetting);
+            // Spawn-Regeln für aktuellen Schwierigkeitsgrad abrufen
+            const spawnRules = getSpawnRules(gameSettings.spawnRateLevel);
 
-            // Run collision checks after updating positions
-            checkCollision();
+            // --- Je nach Schwierigkeitsgrad unterschiedliche Spawn-Logik verwenden ---
 
-            // Super random spawning for hard and very hard difficulties
-            if (spawnMode.independent) {
-                // Process all timers but with random chance of skipping updates
-                // This makes the timer pattern itself unpredictable
-                if (Math.random() < 0.9) groundObstacleTimer -= dt;
-                if (Math.random() < 0.85) groundObstacleTimerOffset -= dt;
-                if (Math.random() < 0.87) skyObstacleTimer -= dt;
-                if (Math.random() < 0.83) skyObstacleTimerOffset -= dt;
-
-                // Random chance to spawn even if timer isn't exactly 0
-                // This creates completely unpredictable timing
-                const randomTriggerChance = spawnSetting === 'veryHard' ? 0.005 : 0.003;
-
-                // When any ground timer reaches 0 or random trigger, spawn a ground obstacle
-                if (groundObstacleTimer <= 0 || groundObstacleTimerOffset <= 0 || Math.random() < randomTriggerChance) {
-                    // Random chance to NOT spawn even when timer hits 0 (makes patterns less predictable)
-                    if (Math.random() < 0.9) {
-                        createObstacle('ground');
-                    }
-
-                    // Calculate random new times with wider ranges for more chaos
-                    let minTime, maxTime;
-                    switch (spawnSetting) {
-                        case 'hard':
-                            minTime = 1.5 + Math.random() * 0.6; // 1.5-2.1s
-                            maxTime = 2.0 + Math.random() * 0.5; // 2.0-2.5s
-                            break;
-                        case 'veryHard':
-                            minTime = 0.8 + Math.random() * 0.4; // 0.8-1.2s
-                            maxTime = 1.3 + Math.random() * 0.6; // 1.3-1.9s
-                            break;
-                        default:
-                            minTime = 1.8;
-                            maxTime = 2.0;
-                    }
-
-                    // Reset the timer that triggered the spawn with complete randomness
-                    if (groundObstacleTimer <= 0) {
-                        groundObstacleTimer = minTime + Math.random() * (maxTime - minTime);
-                    }
-                    if (groundObstacleTimerOffset <= 0) {
-                        groundObstacleTimerOffset = minTime + Math.random() * (maxTime - minTime);
-                    }
-                }
-
-                // When any sky timer reaches 0 or random trigger, spawn a sky obstacle
-                if (skyObstacleTimer <= 0 || skyObstacleTimerOffset <= 0 || Math.random() < randomTriggerChance) {
-                    // Random chance to NOT spawn even when timer hits 0
-                    if (Math.random() < 0.9) {
-                        createObstacle('sky');
-                    }
-
-                    // Calculate random new times
-                    let minTime, maxTime;
-                    switch (spawnSetting) {
-                        case 'hard':
-                            minTime = 1.6 + Math.random() * 0.5; // 1.6-2.1s
-                            maxTime = 2.1 + Math.random() * 0.4; // 2.1-2.5s
-                            break;
-                        case 'veryHard':
-                            minTime = 0.9 + Math.random() * 0.3; // 0.9-1.2s
-                            maxTime = 1.4 + Math.random() * 0.5; // 1.4-1.9s
-                            break;
-                        default:
-                            minTime = 1.8;
-                            maxTime = 2.0;
-                    }
-
-                    // Reset the timer that triggered the spawn
-                    if (skyObstacleTimer <= 0) {
-                        skyObstacleTimer = minTime + Math.random() * (maxTime - minTime);
-                    }
-                    if (skyObstacleTimerOffset <= 0) {
-                        skyObstacleTimerOffset = minTime + Math.random() * (maxTime - minTime);
-                    }
-                }
-
-            } else {
-                // Even easier difficulty modes get more randomness
+            // Gemeinsamer Timer für einfache Schwierigkeitsgrade
+            if (!spawnRules.independent) {
+                // Für leichtere Schwierigkeitsgrade: alternierendes System mit etwas Zufall
                 obstacleTimer -= dt;
 
-                // Random chance to spawn regardless of timer (small chance)
-                if (obstacleTimer <= 0 || Math.random() < 0.002) {
-                    // 70% chance of pure randomness, 30% chance of alternating pattern
+                // Kleine Zufallschance für Spawns unabhängig vom Timer
+                const randomSpawn = Math.random() < spawnRules.randomTriggerChance;
+
+                if (obstacleTimer <= 0 || randomSpawn) {
+                    // Bei einfacheren Levels ist die Auswahl halbwegs vorhersehbar
                     let nextType;
 
-                    if (Math.random() < 0.7) {
-                        // Pure random selection with variable probability
-                        // Make ground obstacles slightly more common to avoid too many flying obstacles
+                    // Manchmal Zufall, manchmal Alternieren
+                    if (Math.random() < 0.3) {
+                        // Zufällige Auswahl mit Tendenz zu mehr Boden-Hindernissen
                         nextType = Math.random() < 0.6 ? 'ground' : 'sky';
                     } else {
-                        // Alternating pattern for some predictability
+                        // Alternierendes Muster für etwas Vorhersehbarkeit
                         if (obstacles.length > 0) {
                             const lastObstacle = obstacles[obstacles.length-1];
                             nextType = lastObstacle.category === 'ground' ? 'sky' : 'ground';
@@ -1490,40 +1737,68 @@
                         }
                     }
 
+                    // Hindernis erstellen
                     createObstacle(nextType);
 
-                    // Set spawn rate based on difficulty with much more randomness
-                    let baseInterval;
-                    switch (spawnSetting) {
-                        case 'easy':
-                            baseInterval = 3.5;
-                            break;
-                        case 'normal':
-                            baseInterval = 2.5;
-                            break;
-                        default:
-                            baseInterval = 2.5;
-                    }
+                    // Interval basierend auf Schwierigkeitsgrad setzen
+                    let baseInterval = nextType === 'ground' ? spawnRules.groundInterval : spawnRules.skyInterval;
 
-                    // Much wider random range (±40% of base interval)
-                    obstacleTimer = baseInterval * (0.8 + Math.random() * 0.8); // 80-160% of base interval
+                    // Zufallsvarianz hinzufügen
+                    const variance = baseInterval * spawnRules.randomVariation;
+                    obstacleTimer = baseInterval + ((Math.random() * 2 - 1) * variance);
                 }
             }
-        }
+            // Unabhängige Timer für schwerere Schwierigkeitsgrade
+            else {
+                // Unabhängige Timer für Boden- und Flug-Hindernisse
 
-        // Helper function to get spawn mode based on difficulty setting
-        function getSpawnMode(difficulty) {
-            switch (difficulty) {
-                case 'easy':
-                    return { timer: 3.5, independent: false };
-                case 'normal':
-                    return { timer: 2.5, independent: false };
-                case 'hard':
-                    return { timer: 1.8, independent: true };
-                case 'veryHard':
-                    return { timer: 1.0, independent: true };
-                default:
-                    return { timer: 2.5, independent: false };
+                // Boden-Hindernis-Timer
+                groundObstacleTimer -= dt;
+                groundObstacleTimerOffset -= dt;
+
+                // Wenn ein Boden-Timer 0 erreicht, ein Boden-Hindernis spawnen
+                if (groundObstacleTimer <= 0 || groundObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
+                    // Manchmal kein Spawn trotz Timer-Auslösung (für mehr Unvorhersehbarkeit)
+                    if (Math.random() < 0.9) {
+                        createObstacle('ground');
+                    }
+
+                    // Zufällige neue Zeiten berechnen
+                    const baseTime = spawnRules.groundInterval;
+                    const variance = baseTime * spawnRules.randomVariation;
+
+                    // Den ausgelösten Timer zurücksetzen
+                    if (groundObstacleTimer <= 0) {
+                        groundObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
+                    }
+                    if (groundObstacleTimerOffset <= 0) {
+                        groundObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
+                    }
+                }
+
+                // Flug-Hindernis-Timer
+                skyObstacleTimer -= dt;
+                skyObstacleTimerOffset -= dt;
+
+                // Wenn ein Flug-Timer 0 erreicht, ein Flug-Hindernis spawnen
+                if (skyObstacleTimer <= 0 || skyObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
+                    // Manchmal kein Spawn trotz Timer-Auslösung
+                    if (Math.random() < 0.9) {
+                        createObstacle('sky');
+                    }
+
+                    // Zufällige neue Zeiten berechnen
+                    const baseTime = spawnRules.skyInterval;
+                    const variance = baseTime * spawnRules.randomVariation;
+
+                    // Den ausgelösten Timer zurücksetzen
+                    if (skyObstacleTimer <= 0) {
+                        skyObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
+                    }
+                    if (skyObstacleTimerOffset <= 0) {
+                        skyObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
+                    }
+                }
             }
         }
 
@@ -1548,21 +1823,129 @@
             scoreElement.textContent = Math.floor(score/10);
         }
 
-        // --- updateDifficulty - Mit konsistenter Hitbox
-        function updateDifficulty(dt) {
-            // Get the speed multiplier from settings
-            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+        // --- updateDifficulty - Mit konsistenter Hitbox und dynamischer Geschwindigkeit ---
+function updateDifficulty(dt) {
+    // Get the speed multiplier from settings
+    const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
 
-            // Apply speed increment based on speed setting and game progress
-            speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
+    // Apply speed increment based on speed setting and game progress
+    speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
 
-            const tier = Math.floor(Math.floor(score/10)/100);
-            const night = tier % 2 !== 0;
-            if(night !== isNight) {
-                isNight = night;
-                if(document.body) document.body.style.backgroundColor = isNight ? '#3a3a4a' : '#e0e0e0';
-            }
+    // Flughöhen-Logik für fliegende Hindernisse
+    const tier = Math.floor(Math.floor(score/10)/100);
+    const night = tier % 2 !== 0;
+    if(night !== isNight) {
+        isNight = night;
+        if(document.body) document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
+    }
+
+    // Flughöhen-Logik basierend auf Spielzeit
+    const timeInGame = gameTime;
+    const timeInMinutes = timeInGame / 60;
+
+    // Flughöhen-Einstellungen basierend auf Schwierigkeitsgrad
+    const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
+
+    // 30% Variation ab 30 Sekunden
+    if (timeInMinutes >= 0.5) {
+        const heightVariation = 0.3;
+        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (heightVariation * (timeInMinutes - 0.5) * 2));
+    }
+
+    // 64% Wahrscheinlichkeit bei 1 Minute
+    if (timeInMinutes >= 1.0) {
+        const targetHeight = 0.64;
+        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (targetHeight * (timeInMinutes - 1.0)));
+    }
+
+    // Duck-Logik für fliegende Hindernisse
+    if (gameSettings.flyingHeightLevel === 'veryHard') {
+        // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
+        const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - player.duckHeight) / 2;
+        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (timeInMinutes * 0.1));
+    }
+}
+
+// --- createObstacle - Verbessert für verschiedene Schwierigkeitsgrade und tiefere Flughöhe ---
+function createObstacle(category = null) {
+    try {
+        let chosenType = null;
+        let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
+
+        // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
+        if (gameTime > highStumpMinTime) {
+            availableGroundTypes.push(ObstacleType.STUMP_HIGH);
         }
+
+        // Wenn keine Kategorie angegeben ist, zufällig entscheiden
+        if (category === null) {
+            category = Math.random() < 0.70 ? 'ground' : 'sky';
+        }
+
+        if (category === 'ground') {
+            const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
+            chosenType = availableGroundTypes[randIdx];
+        } else {
+            const randIdx = Math.floor(Math.random() * skyObstacleTypes.length);
+            chosenType = skyObstacleTypes[randIdx];
+        }
+
+        const data = obstacleData[chosenType];
+        if (!data) { console.error("Obstacle data missing for type:", chosenType); return; } // Sicherheitscheck
+
+        const scaledWidth = data.baseWidth * scaleFactor;
+        const scaledHeight = data.baseHeight * scaleFactor;
+        let yPos;
+
+        if (data.category === 'ground') {
+            yPos = canvas.height - groundHeight - scaledHeight;
+            // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
+            if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
+        } else { // Positionierung von Flug-Hindernissen
+            // Basiswerte - VOLLSTÄNDIG ANGEPASST für deutlich tiefere Flugobjekte
+            const minTopMargin = 30 * scaleFactor; // STARK REDUZIERT: Von 120 auf 80, dann auf 50, jetzt auf 30 für extrem tiefe Flughöhen
+            const playerClearance = player.baseHeight ? player.baseHeight * 0.7 : 40 * scaleFactor; // NOCHMALS REDUZIERT: von 1.3 auf 1.1, dann auf 0.9, jetzt auf 0.7
+            const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze noch tiefer angesetzt
+            const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
+
+            // Gesamthöhenbereich berechnen
+            const totalHeight = safeSkyBottom - minTopMargin;
+
+            // Höhenfaktor und Zufallsbereich anwenden
+            const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
+            const heightFactor = flyingHeightSettings.heightFactor;
+            const randomness = flyingHeightSettings.randomness;
+
+            // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
+            if (gameSettings.flyingHeightLevel === 'veryHard') {
+                // Höhe berechnen, die Ducken erforderlich macht
+                const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
+                yPos = duckRequiredY - (scaledHeight / 2); // Objekt in Duck-Höhe zentrieren
+            } else {
+                // Normale Höhenberechnung für andere Schwierigkeitsgrade
+                yPos = minTopMargin + (totalHeight * heightFactor);
+            }
+
+            // Zufälligkeit hinzufügen, umgekehrt proportional zum Schwierigkeitsgrad
+            const randomRange = totalHeight * randomness;
+            yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos + (Math.random() - 0.5) * randomRange));
+        }
+
+        // Hindernis mit allen erforderlichen Informationen erstellen
+        console.log(`Erstelle ${chosenType} Hindernis auf Position ${yPos}`);
+        obstacles.push({
+            x: canvas.width, // Start rechts außerhalb
+            y: yPos,
+            width: scaledWidth,
+            height: scaledHeight,
+            type: chosenType,
+            image: data.img, // Referenz auf das Image-Objekt speichern
+            category: data.category // Kategorie speichern für spätere Logik
+        });
+    } catch(err) {
+         console.error("Fehler in createObstacle:", err);
+    }
+}
 
         // --- updateBackground - Nutzt neue BG Logik ---
         function updateBackground(dt) {
@@ -1579,31 +1962,46 @@
             if(backgroundX <= -sw) backgroundX += sw;
         }
 
-        // --- FIXED checkCollision - Simpler and more reliable
+        // --- KOMPLETT ÜBERARBEITETE checkCollision mit zuverlässigerer Erkennung ---
         function checkCollision() {
-            // Debug indicator - remove in production
-            // console.log("Checking collisions...");
+            // Debug-Ausgabe für Kollisionsprüfung
+            if (gameSettings.showHitboxes) {
+                console.log("Prüfe Kollisionen. Unverwundbar:", isInvulnerable);
+            }
 
-            // Skip collision check entirely if invulnerable or not in gameplay
-            if (isInvulnerable || currentState !== GameState.PLAYING || !player) {
+            // Sicherheitsüberprüfungen
+            if (!player) {
+                console.error("Kollisionsprüfung: Player-Objekt fehlt!");
                 return;
             }
 
-            // Use a simplified, reliable collision detection with pixel margins
-            // Apply a consistent hitbox size for the player based on difficulty
-            const hitboxReduction = 0.25; // 25% smaller hitbox than visual size
+            // Status-Check
+            if (currentState !== GameState.PLAYING) {
+                return;
+            }
 
-            // Calculate player hitbox with some margin for better gameplay
-            const pLeft = player.x + player.width * hitboxReduction / 2;
-            const pTop = player.y + player.height * hitboxReduction / 2;
-            const pWidth = player.width * (1 - hitboxReduction);
-            const pHeight = player.height * (1 - hitboxReduction);
+            // Kollisionsprüfung überspringen, wenn unverwundbar
+            if (isInvulnerable) {
+                if (gameSettings.showHitboxes) {
+                    console.log("Kollisionsprüfung übersprungen - Spieler ist unverwundbar");
+                }
+                return;
+            }
 
-            // Visualize hitboxes if enabled
+            // Konsistente Hitbox-Größe basierend auf Schwierigkeitsgrad verwenden
+            const hitboxSize = getHitboxSize(gameSettings.hitboxSizeLevel);
+
+            // Spieler-Hitbox mit einheitlicher Verkleinerung berechnen
+            const pLeft = player.x + player.width * (1-hitboxSize) / 2;
+            const pTop = player.y + player.height * (1-hitboxSize) / 2;
+            const pWidth = player.width * hitboxSize;
+            const pHeight = player.height * hitboxSize;
+
+            // Hitboxen visualisieren, wenn aktiviert
             if (gameSettings.showHitboxes && debugOverlay) {
-                debugOverlay.innerHTML = ''; // Clear previous hitboxes
+                debugOverlay.innerHTML = ''; // Vorherige Hitboxen löschen
 
-                // Draw player hitbox
+                // Spieler-Hitbox zeichnen
                 const playerBox = document.createElement('div');
                 playerBox.style.position = 'absolute';
                 playerBox.style.left = pLeft + 'px';
@@ -1616,18 +2014,18 @@
                 debugOverlay.appendChild(playerBox);
             }
 
-            // Check each obstacle
+            // Jedes Hindernis prüfen
             for (const obstacle of obstacles) {
-                // Apply obstacle hitbox reduction for better gameplay
-                const obstacleHitboxReduction = 0.2; // 20% smaller than visual
+                // Hindernis-Hitbox-Verkleinerung konsistent halten
+                const obstacleHitboxReduction = 0.2; // 20% kleiner als visuelle Größe
 
-                // Calculate obstacle hitbox
+                // Hindernis-Hitbox berechnen
                 const oLeft = obstacle.x + obstacle.width * obstacleHitboxReduction / 2;
                 const oTop = obstacle.y + obstacle.height * obstacleHitboxReduction / 2;
                 const oWidth = obstacle.width * (1 - obstacleHitboxReduction);
                 const oHeight = obstacle.height * (1 - obstacleHitboxReduction);
 
-                // Visualize obstacle hitboxes if enabled
+                // Hindernis-Hitboxen visualisieren, wenn aktiviert
                 if (gameSettings.showHitboxes && debugOverlay) {
                     const obstacleBox = document.createElement('div');
                     obstacleBox.style.position = 'absolute';
@@ -1641,18 +2039,18 @@
                     debugOverlay.appendChild(obstacleBox);
                 }
 
-                // AABB collision detection (Axis-Aligned Bounding Box)
-                // This is the most reliable method for rectangle collision
+                // AABB-Kollisionserkennung (Axis-Aligned Bounding Box)
+                // Dies ist die zuverlässigste Methode für Rechteck-Kollisionen
                 if (
                     pLeft < oLeft + oWidth &&
                     pLeft + pWidth > oLeft &&
                     pTop < oTop + oHeight &&
                     pTop + pHeight > oTop
                 ) {
-                    // Collision detected!
-                    console.log("COLLISION DETECTED with:", obstacle.type);
+                    // Kollision erkannt!
+                    console.log("KOLLISION ERKANNT mit:", obstacle.type);
                     loseLife();
-                    return; // Exit after processing collision
+                    return; // Nach Kollisionsverarbeitung beenden
                 }
             }
         }
@@ -1745,7 +2143,7 @@
                         ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                     }
                 } catch (drawErr) {
-                    console.error("Error drawing obstacle:", obstacle.type, drawErr);
+                    console.error("Fehler beim Zeichnen des Hindernisses:", obstacle.type, drawErr);
                     ctx.fillStyle = 'red';
                     ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 } finally {
@@ -1797,35 +2195,80 @@
                 if(fuchsSelect) fuchsSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
                 if(waschbaerSelect) waschbaerSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
             } catch(err) {
-                console.error("Error in updateUI:", err);
+                console.error("Fehler in updateUI:", err);
             }
         }
 
-        // --- Game Loop ---
+        // --- ROBUSTERE GAME LOOP mit besserer Fehlerbehandlung ---
         function gameLoop(timestamp) {
+            // Sicherheitsüberprüfung für lastTime und timestamp
             if(typeof lastTime === 'undefined' || isNaN(timestamp)){
-                console.error("Loop Error TS/LT");
+                console.error("Loop Error: Ungültiger Timestamp oder lastTime", { timestamp, lastTime });
                 lastTime = performance.now();
-                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                if(animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                // Neustart der Animation nach einer kurzen Verzögerung
+                setTimeout(() => {
+                    console.log("Loop wird nach Fehler neu gestartet");
+                    lastTime = performance.now();
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }, 100);
                 return;
             }
+
+            // Berechnung der Zeitdifferenz mit Sicherheitsbegrenzung
             const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
             lastTime = timestamp;
+
+            // Hauptspiellogik mit Fehlerbehandlung
             try {
-                if (currentState === GameState.PLAYING) update(dt);
+                // Update nur im PLAYING-Zustand
+                if (currentState === GameState.PLAYING) {
+                    update(dt);
+
+                    // Regelmäßige Überprüfung der Herz-Anzeige
+                    if (Math.random() < 0.02) { // Etwa alle 50 Frames
+                        updateLivesDisplay();
+                    }
+                }
+
+                // Zeichnen in allen Zuständen
                 draw();
+
+                // Anzeigedebug für mobile Geräte
+                if (currentState === GameState.PLAYING && Math.random() < 0.005) {
+                    console.log(`Spielstatus: ${lives} Leben, Unverwundbar: ${isInvulnerable}`);
+                }
             } catch (error) {
-                console.error("!!! Runtime Error in Loop:", error);
-                if(animationFrameId) cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
+                console.error("!!! KRITISCHER LAUFZEIT-FEHLER IN DER SPIELSCHLEIFE:", error);
+                console.error("Fehlerdetails:", error.message, error.stack);
+
+                // Fehlerbehandlung für den Spieler
+                if(currentState === GameState.PLAYING) {
+                    alert("Es ist ein Fehler aufgetreten. Das Spiel wird zurückgesetzt.");
+                }
+
+                if(animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+
                 currentState = GameState.GAMEOVER;
                 updateUI();
                 return;
             }
-            if (currentState === GameState.PLAYING || currentState === GameState.READY || currentState === GameState.INIT)
+
+            // Animation fortsetzen, wenn wir in einem aktiven Zustand sind
+            if (currentState === GameState.PLAYING || currentState === GameState.READY || currentState === GameState.INIT) {
                 animationFrameId = requestAnimationFrame(gameLoop);
-            else
-                animationFrameId = null;
+            } else {
+                if(animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            }
         }
 
         // --- Event Handlers ---
@@ -1863,16 +2306,60 @@
             } catch(err){}
         }
 
+        // --- VERBESSERTE Touch-Behandlung für Mobilgeräte ---
         function handleCanvasPointerDown(e) {
-            try{
-                if(currentState === GameState.PAUSED)
+            try {
+                // Visuelle Rückmeldung für Touch-Ereignisse hinzufügen
+                if (gameContainer && currentState === GameState.PLAYING) {
+                    const touchFeedback = document.createElement('div');
+                    touchFeedback.className = 'touch-feedback';
+                    touchFeedback.style.position = 'absolute';
+                    touchFeedback.style.left = `${e.clientX - 20}px`;
+                    touchFeedback.style.top = `${e.clientY - 20}px`;
+                    touchFeedback.style.width = '40px';
+                    touchFeedback.style.height = '40px';
+                    touchFeedback.style.borderRadius = '50%';
+                    touchFeedback.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+                    touchFeedback.style.pointerEvents = 'none';
+                    touchFeedback.style.zIndex = '50';
+                    touchFeedback.style.animation = 'touch-ripple 0.6s forwards';
+
+                    // Animation hinzufügen
+                    if (!document.getElementById('touchRippleAnimation')) {
+                        const style = document.createElement('style');
+                        style.id = 'touchRippleAnimation';
+                        style.textContent = '@keyframes touch-ripple { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }';
+                        document.head.appendChild(style);
+                    }
+
+                    document.body.appendChild(touchFeedback);
+
+                    // Touch-Feedback nach Animation entfernen
+                    setTimeout(() => {
+                        if (touchFeedback.parentNode) {
+                            touchFeedback.parentNode.removeChild(touchFeedback);
+                        }
+                    }, 600);
+                }
+
+                // Spielzustandslogik
+                if (currentState === GameState.PAUSED) {
                     togglePause();
-                else if(currentState === GameState.READY || currentState === GameState.GAMEOVER)
+                    console.log("Spiel fortgesetzt durch Touch");
+                }
+                else if (currentState === GameState.READY || currentState === GameState.GAMEOVER) {
                     startGame();
-                else if(currentState === GameState.PLAYING)
+                    console.log("Spiel gestartet durch Touch");
+                }
+                else if (currentState === GameState.PLAYING) {
                     jump();
+                    console.log("Sprung ausgelöst durch Touch");
+                }
+
                 e.preventDefault();
-            } catch(err){}
+            } catch(err) {
+                console.error("Fehler bei Touch-Verarbeitung:", err);
+            }
         }
 
         function handleDuckButtonPointerDown(e) {
@@ -1946,7 +2433,7 @@
                 if(settingsCloseButton) settingsCloseButton.addEventListener('click', toggleSettingsPanel);
                 if(settingsResetButton) settingsResetButton.addEventListener('click', resetGameSettings);
 
-                // Add event listener for the new settings back button
+                // Event-Listener für den Settings-Zurück-Button
                 if(settingsBackButton) settingsBackButton.addEventListener('click', toggleSettingsPanel);
 
                 if(duckButton) {
