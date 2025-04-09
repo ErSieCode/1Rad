@@ -159,21 +159,21 @@
         #duckButton {
             bottom: 5%; /* Höher positioniert für bessere Erreichbarkeit */
             right: 5%; /* Weiter nach innen für bessere Erreichbarkeit */
-            width: max(10vmin, 60px); /* DEUTLICH größer für mobile Touch */
-            height: max(10vmin, 60px); /* DEUTLICH größer für mobile Touch */
+            width: max(7vmin, 42px); /* DEUTLICH größer für mobile Touch */
+            height: max(7vmin, 42px); /* DEUTLICH größer für mobile Touch */
             background-color: rgba(80, 80, 80, 0.8); /* Dunklerer Hintergrund */
-            border: 2px solid rgba(255, 255, 255, 0.5); /* Weißer Rand für bessere Sichtbarkeit */
+            border: 1.4px solid rgba(255, 255, 255, 0.5); /* Weißer Rand für bessere Sichtbarkeit */
             border-radius: 50%;
             color: white;
             font-weight: bold;
-            font-size: max(5vmin, 24px); /* Größerer Text */
+            font-size: max(3.5vmin, 16.8px); /* Größerer Text */
             z-index: 100; /* Höherer z-index, um Überdeckung zu vermeiden */
             cursor: pointer;
             display: none;
             justify-content: center;
             align-items: center;
             -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stärkerer Schatten */
+            box-shadow: 0 2.8px 5.6px rgba(0, 0, 0, 0.5); /* Stärkerer Schatten */
             touch-action: manipulation;
             padding: 0;
             overflow: hidden;
@@ -530,7 +530,7 @@
                 </div>
             </div>
 
-            // Flying Objects Height Setting - Default auf "Easy" gesetzt
+            <!-- Flying Objects Height Setting - Default auf "Easy" gesetzt -->
             <div class="difficulty-selection">
                 <div class="difficulty-title">Flying Objects Height</div>
                 <div class="difficulty-options">
@@ -1064,12 +1064,24 @@
             if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
         }
 
-        // --- Resize Canvas ---
+        // --- ENHANCED: Resize Canvas with better orientation handling ---
         function resizeCanvas() {
             if (!gameContainer || !canvas) { return; }
-            const cw = gameContainer.clientWidth; const ch = gameContainer.clientHeight; if (cw === 0 || ch === 0) return;
-            canvas.width = cw; canvas.height = ch; scaleFactor = (cw / baseWidth) * globalSizeFactor; groundHeight = 30 * scaleFactor;
 
+            // Get new container dimensions
+            const cw = gameContainer.clientWidth;
+            const ch = gameContainer.clientHeight;
+            if (cw === 0 || ch === 0) return;
+
+            // Update canvas dimensions
+            canvas.width = cw;
+            canvas.height = ch;
+
+            // Recalculate scale factor - crucial for correct hitbox positioning
+            scaleFactor = (cw / baseWidth) * globalSizeFactor;
+            groundHeight = 30 * scaleFactor;
+
+            // Update player dimensions and position
             if (player && player.width) {
                 const ps = 70; // Base player size
                 const ss = ps * scaleFactor; // Scaled size
@@ -1080,6 +1092,7 @@
                 player.duckHeight = (ps/2) * scaleFactor;
                 player.height = isDucking ? player.duckHeight : player.baseHeight;
 
+                // IMPORTANT: Recalculate player X and Y position based on new dimensions
                 player.x = 50 * scaleFactor;
                 player.y = ch - groundHeight - player.height;
 
@@ -1091,6 +1104,71 @@
                 const jumpMultiplier = difficultyValues.jumpHeight[gameSettings.jumpHeightLevel];
                 player.jumpStrength = baseJumpStrength * scaleFactor * jumpMultiplier;
             }
+
+            // Update all obstacle positions and dimensions
+            updateObstacleScaling();
+
+            // Clear hitbox debug overlay
+            if (debugOverlay) {
+                debugOverlay.innerHTML = '';
+            }
+
+            // Force redraw
+            if (currentState !== GameState.PLAYING) {
+                draw();
+            }
+        }
+
+        // --- NEW FUNCTION: Update obstacle scaling when orientation/size changes ---
+        function updateObstacleScaling() {
+            // Update existing obstacles to match new scale
+            for (const obstacle of obstacles) {
+                const data = obstacleData[obstacle.type];
+                if (!data) continue;
+
+                // Recalculate scaled dimensions
+                const scaledWidth = data.baseWidth * scaleFactor;
+                const scaledHeight = data.baseHeight * scaleFactor;
+
+                // Calculate position ratio (how far across screen, as percentage)
+                const positionRatio = obstacle.x / canvas.width;
+
+                // Update obstacle with new dimensions
+                obstacle.width = scaledWidth;
+                obstacle.height = scaledHeight;
+
+                // Calculate Y position based on category
+                if (data.category === 'ground') {
+                    obstacle.y = canvas.height - groundHeight - scaledHeight;
+                    // Optional height adjustment for special types
+                    if (data.isHigh) {
+                        obstacle.y -= 20 * scaleFactor;
+                    }
+                } else {
+                    // For flying obstacles, maintain their relative height position
+                    const heightRatio = (canvas.height - obstacle.y - obstacle.height) / canvas.height;
+                    obstacle.y = canvas.height - (heightRatio * canvas.height) - scaledHeight;
+                }
+            }
+        }
+
+        // --- NEW FUNCTION: Orientation change handler ---
+        function handleOrientationChange(e) {
+            // Log orientation change for debugging
+            console.log("Orientation changed!");
+
+            // Add small delay to ensure dimensions are updated after rotation completes
+            setTimeout(() => {
+                console.log("Applying orientation change adjustments");
+
+                // Do a full resize with complete recalculation
+                resizeCanvas();
+
+                // Force collision check after resize
+                if(currentState === GameState.PLAYING) {
+                    checkCollision();
+                }
+            }, 100);
         }
 
         // --- High Score, Hearts ---
@@ -1681,23 +1759,23 @@
         }
 
         function updatePlayer(dt) {
-            if(!player||typeof player.vy==='undefined') return;
-            player.vy += player.gravity * dt;
-            player.y += player.vy * dt;
-            const gl = canvas.height - groundHeight - player.height;
-            if(player.y >= gl){
-                player.y = gl;
-                player.vy = 0;
-                if(player.jumping){
-                    player.jumping = false;
-                    player.canDoubleJump = false;
-                    player.hasDoubleJumped = false;
-                    setDucking(isDucking);
-                }
-            }
+    if(!player||typeof player.vy==='undefined') return;
+    player.vy += player.gravity * dt;
+    player.y += player.vy * dt;
+    const gl = canvas.height - groundHeight - player.height;
+    if(player.y >= gl){
+        player.y = gl;
+        player.vy = 0;
+        if(player.jumping){
+            player.jumping = false;
+            player.canDoubleJump = false;
+            player.hasDoubleJumped = false;
+            setDucking(isDucking);
         }
+    }
+}
 
-        // --- updateObstacles - Verbessert mit 4-Stufen-System ---
+// --- updateObstacles - Verbessert mit 4-Stufen-System ---
         function updateObstacles(dt) {
             // Erst die bestehenden Hindernisse aktualisieren
             for(let i=obstacles.length-1; i>=0; i--){
@@ -1824,128 +1902,47 @@
         }
 
         // --- updateDifficulty - Mit konsistenter Hitbox und dynamischer Geschwindigkeit ---
-function updateDifficulty(dt) {
-    // Get the speed multiplier from settings
-    const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+        function updateDifficulty(dt) {
+            // Get the speed multiplier from settings
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
 
-    // Apply speed increment based on speed setting and game progress
-    speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
+            // Apply speed increment based on speed setting and game progress
+            speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
 
-    // Flughöhen-Logik für fliegende Hindernisse
-    const tier = Math.floor(Math.floor(score/10)/100);
-    const night = tier % 2 !== 0;
-    if(night !== isNight) {
-        isNight = night;
-        if(document.body) document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
-    }
-
-    // Flughöhen-Logik basierend auf Spielzeit
-    const timeInGame = gameTime;
-    const timeInMinutes = timeInGame / 60;
-
-    // Flughöhen-Einstellungen basierend auf Schwierigkeitsgrad
-    const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
-
-    // 30% Variation ab 30 Sekunden
-    if (timeInMinutes >= 0.5) {
-        const heightVariation = 0.3;
-        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (heightVariation * (timeInMinutes - 0.5) * 2));
-    }
-
-    // 64% Wahrscheinlichkeit bei 1 Minute
-    if (timeInMinutes >= 1.0) {
-        const targetHeight = 0.64;
-        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (targetHeight * (timeInMinutes - 1.0)));
-    }
-
-    // Duck-Logik für fliegende Hindernisse
-    if (gameSettings.flyingHeightLevel === 'veryHard') {
-        // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
-        const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - player.duckHeight) / 2;
-        flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (timeInMinutes * 0.1));
-    }
-}
-
-// --- createObstacle - Verbessert für verschiedene Schwierigkeitsgrade und tiefere Flughöhe ---
-function createObstacle(category = null) {
-    try {
-        let chosenType = null;
-        let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
-
-        // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
-        if (gameTime > highStumpMinTime) {
-            availableGroundTypes.push(ObstacleType.STUMP_HIGH);
-        }
-
-        // Wenn keine Kategorie angegeben ist, zufällig entscheiden
-        if (category === null) {
-            category = Math.random() < 0.70 ? 'ground' : 'sky';
-        }
-
-        if (category === 'ground') {
-            const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
-            chosenType = availableGroundTypes[randIdx];
-        } else {
-            const randIdx = Math.floor(Math.random() * skyObstacleTypes.length);
-            chosenType = skyObstacleTypes[randIdx];
-        }
-
-        const data = obstacleData[chosenType];
-        if (!data) { console.error("Obstacle data missing for type:", chosenType); return; } // Sicherheitscheck
-
-        const scaledWidth = data.baseWidth * scaleFactor;
-        const scaledHeight = data.baseHeight * scaleFactor;
-        let yPos;
-
-        if (data.category === 'ground') {
-            yPos = canvas.height - groundHeight - scaledHeight;
-            // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
-            if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
-        } else { // Positionierung von Flug-Hindernissen
-            // Basiswerte - VOLLSTÄNDIG ANGEPASST für deutlich tiefere Flugobjekte
-            const minTopMargin = 30 * scaleFactor; // STARK REDUZIERT: Von 120 auf 80, dann auf 50, jetzt auf 30 für extrem tiefe Flughöhen
-            const playerClearance = player.baseHeight ? player.baseHeight * 0.7 : 40 * scaleFactor; // NOCHMALS REDUZIERT: von 1.3 auf 1.1, dann auf 0.9, jetzt auf 0.7
-            const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze noch tiefer angesetzt
-            const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
-
-            // Gesamthöhenbereich berechnen
-            const totalHeight = safeSkyBottom - minTopMargin;
-
-            // Höhenfaktor und Zufallsbereich anwenden
-            const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
-            const heightFactor = flyingHeightSettings.heightFactor;
-            const randomness = flyingHeightSettings.randomness;
-
-            // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
-            if (gameSettings.flyingHeightLevel === 'veryHard') {
-                // Höhe berechnen, die Ducken erforderlich macht
-                const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
-                yPos = duckRequiredY - (scaledHeight / 2); // Objekt in Duck-Höhe zentrieren
-            } else {
-                // Normale Höhenberechnung für andere Schwierigkeitsgrade
-                yPos = minTopMargin + (totalHeight * heightFactor);
+            // Flughöhen-Logik für fliegende Hindernisse
+            const tier = Math.floor(Math.floor(score/10)/100);
+            const night = tier % 2 !== 0;
+            if(night !== isNight) {
+                isNight = night;
+                if(document.body) document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
             }
 
-            // Zufälligkeit hinzufügen, umgekehrt proportional zum Schwierigkeitsgrad
-            const randomRange = totalHeight * randomness;
-            yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos + (Math.random() - 0.5) * randomRange));
-        }
+            // Flughöhen-Logik basierend auf Spielzeit
+            const timeInGame = gameTime;
+            const timeInMinutes = timeInGame / 60;
 
-        // Hindernis mit allen erforderlichen Informationen erstellen
-        console.log(`Erstelle ${chosenType} Hindernis auf Position ${yPos}`);
-        obstacles.push({
-            x: canvas.width, // Start rechts außerhalb
-            y: yPos,
-            width: scaledWidth,
-            height: scaledHeight,
-            type: chosenType,
-            image: data.img, // Referenz auf das Image-Objekt speichern
-            category: data.category // Kategorie speichern für spätere Logik
-        });
-    } catch(err) {
-         console.error("Fehler in createObstacle:", err);
-    }
-}
+            // Flughöhen-Einstellungen basierend auf Schwierigkeitsgrad
+            const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
+
+            // 30% Variation ab 30 Sekunden
+            if (timeInMinutes >= 0.5) {
+                const heightVariation = 0.3;
+                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (heightVariation * (timeInMinutes - 0.5) * 2));
+            }
+
+            // 64% Wahrscheinlichkeit bei 1 Minute
+            if (timeInMinutes >= 1.0) {
+                const targetHeight = 0.64;
+                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (targetHeight * (timeInMinutes - 1.0)));
+            }
+
+            // Duck-Logik für fliegende Hindernisse
+            if (gameSettings.flyingHeightLevel === 'veryHard') {
+                // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
+                const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - player.duckHeight) / 2;
+                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (timeInMinutes * 0.1));
+            }
+        }
 
         // --- updateBackground - Nutzt neue BG Logik ---
         function updateBackground(dt) {
@@ -1962,46 +1959,46 @@ function createObstacle(category = null) {
             if(backgroundX <= -sw) backgroundX += sw;
         }
 
-        // --- KOMPLETT ÜBERARBEITETE checkCollision mit zuverlässigerer Erkennung ---
+        // --- ENHANCED FUNCTION: Improved collision detection for orientation changes ---
         function checkCollision() {
-            // Debug-Ausgabe für Kollisionsprüfung
+            // Debug output if hitbox visualization is enabled
             if (gameSettings.showHitboxes) {
-                console.log("Prüfe Kollisionen. Unverwundbar:", isInvulnerable);
+                console.log("Checking collisions. Invulnerable:", isInvulnerable);
             }
 
-            // Sicherheitsüberprüfungen
+            // Safety checks
             if (!player) {
-                console.error("Kollisionsprüfung: Player-Objekt fehlt!");
+                console.error("Collision check: Player object missing!");
                 return;
             }
 
-            // Status-Check
+            // Status check
             if (currentState !== GameState.PLAYING) {
                 return;
             }
 
-            // Kollisionsprüfung überspringen, wenn unverwundbar
+            // Skip collision check if invulnerable
             if (isInvulnerable) {
                 if (gameSettings.showHitboxes) {
-                    console.log("Kollisionsprüfung übersprungen - Spieler ist unverwundbar");
+                    console.log("Collision check skipped - player is invulnerable");
                 }
                 return;
             }
 
-            // Konsistente Hitbox-Größe basierend auf Schwierigkeitsgrad verwenden
+            // Get consistent hitbox size based on difficulty level
             const hitboxSize = getHitboxSize(gameSettings.hitboxSizeLevel);
 
-            // Spieler-Hitbox mit einheitlicher Verkleinerung berechnen
+            // Calculate player hitbox with consistent reduction
             const pLeft = player.x + player.width * (1-hitboxSize) / 2;
             const pTop = player.y + player.height * (1-hitboxSize) / 2;
             const pWidth = player.width * hitboxSize;
             const pHeight = player.height * hitboxSize;
 
-            // Hitboxen visualisieren, wenn aktiviert
+            // Visualize hitboxes if enabled
             if (gameSettings.showHitboxes && debugOverlay) {
-                debugOverlay.innerHTML = ''; // Vorherige Hitboxen löschen
+                debugOverlay.innerHTML = ''; // Clear previous hitboxes
 
-                // Spieler-Hitbox zeichnen
+                // Draw player hitbox
                 const playerBox = document.createElement('div');
                 playerBox.style.position = 'absolute';
                 playerBox.style.left = pLeft + 'px';
@@ -2014,18 +2011,18 @@ function createObstacle(category = null) {
                 debugOverlay.appendChild(playerBox);
             }
 
-            // Jedes Hindernis prüfen
+            // Check each obstacle
             for (const obstacle of obstacles) {
-                // Hindernis-Hitbox-Verkleinerung konsistent halten
-                const obstacleHitboxReduction = 0.2; // 20% kleiner als visuelle Größe
+                // Use consistent hitbox reduction for obstacles
+                const obstacleHitboxReduction = 0.2; // 20% smaller than visual size
 
-                // Hindernis-Hitbox berechnen
+                // Calculate obstacle hitbox
                 const oLeft = obstacle.x + obstacle.width * obstacleHitboxReduction / 2;
                 const oTop = obstacle.y + obstacle.height * obstacleHitboxReduction / 2;
                 const oWidth = obstacle.width * (1 - obstacleHitboxReduction);
                 const oHeight = obstacle.height * (1 - obstacleHitboxReduction);
 
-                // Hindernis-Hitboxen visualisieren, wenn aktiviert
+                // Visualize obstacle hitboxes if enabled
                 if (gameSettings.showHitboxes && debugOverlay) {
                     const obstacleBox = document.createElement('div');
                     obstacleBox.style.position = 'absolute';
@@ -2039,18 +2036,17 @@ function createObstacle(category = null) {
                     debugOverlay.appendChild(obstacleBox);
                 }
 
-                // AABB-Kollisionserkennung (Axis-Aligned Bounding Box)
-                // Dies ist die zuverlässigste Methode für Rechteck-Kollisionen
+                // AABB collision detection (Axis-Aligned Bounding Box)
                 if (
                     pLeft < oLeft + oWidth &&
                     pLeft + pWidth > oLeft &&
                     pTop < oTop + oHeight &&
                     pTop + pHeight > oTop
                 ) {
-                    // Kollision erkannt!
-                    console.log("KOLLISION ERKANNT mit:", obstacle.type);
+                    // Collision detected!
+                    console.log("COLLISION DETECTED with:", obstacle.type);
                     loseLife();
-                    return; // Nach Kollisionsverarbeitung beenden
+                    return; // Exit after collision processing
                 }
             }
         }
@@ -2412,16 +2408,22 @@ function createObstacle(category = null) {
             } catch(err){}
         }
 
+        // --- ENHANCED FUNCTION: Improved resize handler that calls orientation handler ---
         function handleResize() {
-            try{
-                resizeCanvas();
-                if(currentState !== GameState.PLAYING) draw();
-            } catch(err){}
+            try {
+                console.log("Window resized");
+                // Delegate to orientation handler for consistent behavior
+                handleOrientationChange();
+            } catch(err) {
+                console.error("Error in resize handler:", err);
+            }
         }
 
+        // --- ENHANCED FUNCTION: Event listeners with orientation change handler ---
         function addEventListeners() {
             console.log("Listeners: Adding...");
             try {
+                // Existing event listeners
                 document.addEventListener('keydown', handleKeyDown);
                 document.addEventListener('keyup', handleKeyUp);
                 if(canvas) canvas.addEventListener('pointerdown', handleCanvasPointerDown);
@@ -2442,8 +2444,15 @@ function createObstacle(category = null) {
                     duckButton.addEventListener('pointercancel', handleDuckButtonPointerCancel);
                     duckButton.addEventListener('contextmenu', (e) => e.preventDefault());
                 }
+
                 if(characterSelectContainer) characterSelectContainer.addEventListener('click', handleCharacterSelect);
+
+                // ADD THIS: Orientation change handler - IMPORTANT FOR RELIABLE HITBOXES
+                window.addEventListener('orientationchange', handleOrientationChange);
+
+                // Keep the resize listener as a backup
                 window.addEventListener('resize', handleResize);
+
                 console.log("Listeners: Added.");
             } catch(e) {
                 console.error("Listener Add Error", e);
