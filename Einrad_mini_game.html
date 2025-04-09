@@ -157,7 +157,7 @@
         #instructions { width: 90%; max-width: 600px; text-align: center; color: #444; font-size: max(1.7vmin, 14px); z-index: 5; background-color: rgba(210, 210, 210, 0.8); padding: max(0.7vmin, 5px) max(1.2vmin, 9px); border-radius: 5px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         /* Duck Button CSS - OPTIMIERT FÜR MOBILE UND TOUCH */
         #duckButton {
-            bottom: 5%; /* Höher positioniert für bessere Erreichbarkeit */
+            bottom: 10%; /* Höher positioniert für bessere Erreichbarkeit */
             right: 5%; /* Weiter nach innen für bessere Erreichbarkeit */
             width: max(7.7vmin, 46.2px); /* DEUTLICH größer für mobile Touch */
             height: max(7.7vmin, 46.2px); /* DEUTLICH größer für mobile Touch */
@@ -1735,7 +1735,7 @@
             clouds.push({
                 x: canvas.width,
                 // --- HIER DIE ÄNDERUNG FÜR WOLKEN ---
-                y: (100 + Math.random() * 100) * scaleFactor, // << GEÄNDERT: Startet tiefer und hat größeren Bereich nach unten
+                y: (30 + Math.random() * 80) * scaleFactor, // << GEÄNDERT: Startet tiefer und hat größeren Bereich nach unten
                 // --- ENDE ÄNDERUNG ---
                 width: sw,
                 height: sh,
