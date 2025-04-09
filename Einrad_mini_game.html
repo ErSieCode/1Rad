@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixel Runner Adventure</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <!-- Preload the loading image first -->
+    <link rel="preload" href="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" as="image">
+    <style>
+        /* Reset and Base Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100vh; overflow: hidden; background-color: #e0e0e0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        #gameContainer { position: relative; width: 95vw; max-width: 800px; aspect-ratio: 16 / 9; max-height: 85vh; overflow: hidden; border: 2px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.2); background-color: #87CEEB; /* Himmelsblau als Fallback */ }
+        #gameCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        /* Loading Spinner Styles */
+        #loadingOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #loadingSpinner {
+            width: 100px;
+            height: 100px;
+            animation: spin 2s linear infinite;
+            display: block;
+            object-fit: contain;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* UI Styles */
+        #gameControls, #gameInfo, #livesDisplay, #quitButton, #pauseOverlay, #gameOver, #duckButton { position: absolute; z-index: 10; font-size: max(1.7vmin, 14px); }
+        #gameControls { top: 2%; left: 2%; display: flex; gap: 10px; align-items: center; }
+        #gameInfo { top: 2%; right: 10%; text-align: right; color: #eee; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+        #gameInfo div { margin-bottom: 2px; }
+        #livesDisplay { top: calc(2% + 60px); right: 10%; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; display: flex; gap: 5px; }
+        .heart { color: #ff4d4d; font-size: max(3vmin, 18px); font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); transition: transform 0.2s ease-out, opacity 0.2s ease-out; }
+        .heart.hidden { visibility: hidden; transform: scale(0.5); opacity: 0; }
+        #quitButton { top: 2%; right: 2%; width: max(4vmin, 24px); height: max(4vmin, 24px); background-color: #ff3333; color: white; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 30; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); border: none; font-size: max(2vmin, 12px); line-height: 1; }
+        #quitButton:hover { background-color: #cc0000; }
+        /* Back Button Styling - Moved to far left and changed to green */
+        #backButton {
+            top: 2%;
+            left: 2%;
+            width: max(4vmin, 24px);
+            height: max(4vmin, 24px);
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 30;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: none;
+            font-size: max(2vmin, 12px);
+            line-height: 1;
+            position: absolute;
+        }
+        #backButton:hover {
+            background-color: #45a049;
+        }
+        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
+        #pauseOverlay h2 { color: #ffffff; font-size: max(4.5vmin, 26px); text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); margin-bottom: 10px; }
+        #pauseOverlay p { color: #f0f0f0; font-size: max(2.2vmin, 16px); text-align: center; margin-top: 15px; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); }
+        /* Game Over mit Banner */
+        #gameOver { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; background-image: url('https://raw.githubusercontent.com/ErSieCode/1Rad/main/Banner.png'); background-size: contain; background-repeat: no-repeat; background-position: center center; background-color: rgba(0, 0, 0, 0.6); text-align: center; }
+        #gameOver h2 { color: #ffffff; font-size: max(4.5vmin, 26px); text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); margin-bottom: 10px; margin-top: -10%; }
+        #gameOver div { color: #f0f0f0; margin-bottom: 15px; font-size: max(2.5vmin, 17px); background-color: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); }
+        /* Buttons */
+        #startButton, #restartButton { padding: max(1.4vmin, 10px) max(2.8vmin, 20px); font-size: max(2.3vmin, 16px); cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; margin-top: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); text-shadow: 1px 1px 1px rgba(0,0,0,0.4); transition: background-color 0.2s; }
+        #startButton:hover, #restartButton:hover { background-color: #45a049; }
+        #startButton { margin-right: 5px; }
+        #characterSelect { display: flex; gap: 10px; align-items: center; }
+        #characterSelect img { width: max(6vmin, 35px); height: max(6vmin, 35px); cursor: pointer; border: 3px solid transparent; border-radius: 5px; background-color: rgba(255, 255, 255, 0.7); padding: 1px; transition: border-color 0.2s, transform 0.2s; }
+        #characterSelect img:hover { transform: scale(1.1); }
+        #characterSelect img.selected { border-color: #ff9800; transform: scale(1.05); }
+        #instructions { width: 90%; max-width: 600px; text-align: center; color: #444; font-size: max(1.7vmin, 14px); z-index: 5; background-color: rgba(210, 210, 210, 0.8); padding: max(0.7vmin, 5px) max(1.2vmin, 9px); border-radius: 5px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        /* Duck Button CSS - Angepasst für kleiner und weiter links */
+        #duckButton { bottom: 3%; left: 0.5%; width: max(5vmin, 40px); height: max(5vmin, 40px); background-color: rgba(80, 80, 80, 0.6); border: none; border-radius: 50%; color: white; font-weight: bold; font-size: max(3.5vmin, 18px); z-index: 10; cursor: pointer; display: none; justify-content: center; align-items: center; -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); touch-action: manipulation; padding: 0; overflow: hidden; transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s; }
+        #duckButton img { width: 65%; height: 65%; object-fit: contain; pointer-events: none; }
+        #duckButton:active { background-color: rgba(60, 60, 60, 0.8); transform: translateY(1px); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+        @keyframes doubleJumpEffect { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.5); opacity: 0; } }
+        .doubleJumpEffect { position: absolute; border-radius: 50%; background-color: rgba(255, 215, 0, 0.6); pointer-events: none; z-index: 15; animation: doubleJumpEffect 0.4s ease-out forwards; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+    <!-- HTML Struktur -->
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="loadingOverlay">
+            <img id="loadingSpinner" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" alt="Loading..."
+                 onerror="this.onerror=null; console.error('Loading image failed to load'); this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIHN0cm9rZT0iIzRDQUY1MCIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSIxNTAgMTgwIiAvPjwvc3ZnPg==';"
+                 onload="console.log('Loading spinner image loaded successfully!');">
+        </div>
+        <div id="gameControls"> <button id="startButton">START</button> <div id="characterSelect"> <img id="fuchs" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png" alt="Fuchs"> <img id="waschbaer" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png" alt="Waschbär"> </div> </div>
+        <div id="gameInfo"> <div>SCORE: <span id="score">0</span></div> <div>HI: <span id="highScore">0</span></div> </div>
+        <div id="livesDisplay"></div>
+        <button id="quitButton">✕</button>
+        <button id="backButton">⬅</button>
+        <div id="pauseOverlay"> <div><h2>GAME PAUSED</h2><p>Press 'P' or ESC or Tap to resume</p></div> </div>
+        <button id="duckButton">↓</button>
+        <div id="gameOver"> <h2>GAME OVER</h2> <div>Final Score: <span id="finalScore">0</span></div> <button id="restartButton">RESTART</button> </div>
+    </div>
+    <div id="instructions"> Press SPACE/UP/Tap to jump/double jump | DOWN/Button to duck | P/ESC to pause </div>
+
+    <script>
+        'use strict';
+        console.log("--- Script Start ---");
+
+        // --- Debug Utility ---
+        function logImageStatus(name, img) {
+            img.onload = () => console.log(`✓ ${name} loaded.`);
+            img.onerror = (e) => console.error(`✗ ${name} FAILED loading from ${img.src}`, e);
+        }
+
+        // Initialize loading spinner first
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            // Make sure the loading overlay is visible
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+
+            // Check if the image is loading correctly
+            if (loadingSpinner) {
+                if (!loadingSpinner.complete) {
+                    console.log("Loading spinner image is still loading...");
+                    loadingSpinner.onload = function() {
+                        console.log("Loading spinner image has loaded successfully!");
+                    };
+                } else {
+                    console.log("Loading spinner image was already loaded!");
+                }
+            }
+        });
+
+        // --- Asset Loading with progress tracking ---
+        console.log("Assets: Defining...");
+        // Track loading progress
+        let totalAssets = 12; // Total number of images to load
+        let loadedAssets = 0;
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        function checkAllAssetsLoaded() {
+            loadedAssets++;
+            console.log(`Loaded ${loadedAssets}/${totalAssets} assets`);
+            if (loadedAssets >= totalAssets) {
+                // Hide loading overlay when all assets are loaded
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                console.log("All assets loaded successfully!");
+            }
+        }
+
+        function enhancedLogImageStatus(name, img) {
+            img.onload = () => {
+                console.log(`✓ ${name} loaded.`);
+                checkAllAssetsLoaded();
+            };
+            img.onerror = (e) => {
+                console.error(`✗ ${name} FAILED loading from ${img.src}`, e);
+                checkAllAssetsLoaded(); // Count errors too, to avoid spinner getting stuck
+            };
+        }
+
+        const fuchsImg = new Image(); enhancedLogImageStatus('Fuchs', fuchsImg);
+        const waschbaerImg = new Image(); enhancedLogImageStatus('Waschbär', waschbaerImg);
+        const duckButtonImg = new Image(); enhancedLogImageStatus('Duck Icon', duckButtonImg);
+        // Backgrounds
+        const dayBgImg = new Image(); enhancedLogImageStatus('BG Day', dayBgImg);
+        const nightBgImg = new Image(); enhancedLogImageStatus('BG Night', nightBgImg);
+        const gameOverBannerImg = new Image(); enhancedLogImageStatus('Game Over Banner', gameOverBannerImg);
+        // Obstacles - Ground
+        const pallet4Img = new Image(); enhancedLogImageStatus('Obstacle Pallet 4', pallet4Img);
+        const pallet6Img = new Image(); enhancedLogImageStatus('Obstacle Pallet 6', pallet6Img);
+        const logImg = new Image(); enhancedLogImageStatus('Obstacle Log', logImg);
+        const stumpImg = new Image(); enhancedLogImageStatus('Obstacle Stump', stumpImg);
+        // Obstacles - Sky
+        const owlImg = new Image(); enhancedLogImageStatus('Obstacle Owl', owlImg);
+        const flyingUniImg = new Image(); enhancedLogImageStatus('Obstacle Flying Uni', flyingUniImg);
+
+        // Set sources after setting up handlers
+        fuchsImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png';
+        waschbaerImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png';
+        duckButtonImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Muni_logo.png';
+        dayBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Tag_BG.png';
+        nightBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Nacht_BG.png';
+        gameOverBannerImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Banner.png';
+        pallet4Img.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Paletten_4_IMG.png';
+        pallet6Img.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Paletten_6_IMG.png';
+        logImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baum_liegend.png';
+        stumpImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baumstumpf.png';
+        owlImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Eule_v1_L.png';
+        flyingUniImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Flug_Einrad_grun.png';
+
+        console.log("Assets: Defined.");
+
+        // --- DOM Elements ---
+        console.log("DOM: Getting elements...");
+        let canvas, ctx, scoreElement, highScoreElement, finalScoreElement, gameOverElement, restartButton, startButton, fuchsSelect, waschbaerSelect, characterSelectContainer, pauseOverlay, quitButton, livesDisplay, gameContainer, duckButton, backButton;
+        // Frühe Initialisierung der Variablen
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas ? canvas.getContext('2d') : null;
+        scoreElement = document.getElementById('score'); highScoreElement = document.getElementById('highScore'); finalScoreElement = document.getElementById('finalScore'); gameOverElement = document.getElementById('gameOver'); restartButton = document.getElementById('restartButton'); startButton = document.getElementById('startButton'); fuchsSelect = document.getElementById('fuchs'); waschbaerSelect = document.getElementById('waschbaer'); characterSelectContainer = document.getElementById('characterSelect'); pauseOverlay = document.getElementById('pauseOverlay'); quitButton = document.getElementById('quitButton'); livesDisplay = document.getElementById('livesDisplay'); gameContainer = document.getElementById('gameContainer'); duckButton = document.getElementById('duckButton'); backButton = document.getElementById('backButton');
+        if (!canvas || !ctx) {
+             console.error("CRITICAL: Canvas or Context not available immediately!");
+             document.addEventListener('DOMContentLoaded', () => { alert("Fehler: Spiel-Canvas konnte nicht initialisiert werden!"); });
+        } else {
+             console.log("DOM: Elements retrieved.");
+             window.addEventListener('load', init); // Add listener only if canvas is okay
+        }
+
+
+        // --- Game State --- (Identisch)
+        const GameState = { INIT: 'INIT', READY: 'READY', PLAYING: 'PLAYING', PAUSED: 'PAUSED', GAMEOVER: 'GAMEOVER' }; let currentState = GameState.INIT; let character = 'fuchs'; let score = 0; let highScore = 0; let lives = 3; const maxLives = 3; let speed = 0; let speedIncrement = 0.0005; let backgroundX = 0; let isDucking = false; let isNight = false; let isInvulnerable = false; let invulnerabilityTimer = null; const invulnerabilityDuration = 2000;
+
+        // --- Physics & Scaling --- (Angepasst für größere Elemente)
+        let scaleFactor = 1; const baseWidth = 800; let baseSpeed = 250; let baseGravity = 1200; let baseJumpStrength = -550; let groundHeight = 0; let player = {}; let obstacles = []; let clouds = []; let obstacleTimer = 0; let cloudTimer = 0; let minObstacleTime = 1.4; let maxObstacleTime = 2.8; const initialObstacleCooldown = 3.0; const highStumpMinTime = 45;
+
+        // Skalierungsfaktor für alle Spielelemente - Charakter etwas schmaler machen
+        const globalSizeFactor = 1.25; // 25% größer
+        const playerWidthRatio = 0.9; // Character width is 90% of normal to make it slightly slimmer
+
+        // --- Obstacle Definitions --- (Angepasst für größere Elemente)
+        console.log("Defining obstacle data...");
+        const ObstacleType = { PALLET_4: 'PALLET_4', PALLET_6: 'PALLET_6', LOG: 'LOG', STUMP: 'STUMP', STUMP_HIGH: 'STUMP_HIGH', OWL: 'OWL', FLYING_UNI: 'FLYING_UNI' };
+        const obstacleData = { // Sorgfältig geprüft, korrekte Variablennamen verwendet
+            [ObstacleType.PALLET_4]:   { img: pallet4Img,   baseWidth: 90 * globalSizeFactor,  baseHeight: 40 * globalSizeFactor, category: 'ground', level: 'LOW', hitboxOffsetX: 35 * globalSizeFactor },
+            [ObstacleType.PALLET_6]:   { img: pallet6Img,   baseWidth: 90 * globalSizeFactor,  baseHeight: 60 * globalSizeFactor, category: 'ground', level: 'MED', hitboxOffsetX: 35 * globalSizeFactor },
+            [ObstacleType.LOG]:        { img: logImg,       baseWidth: 100 * globalSizeFactor, baseHeight: 35 * globalSizeFactor, category: 'ground', level: 'LOW', hitboxOffsetX: 45 * globalSizeFactor },
+            [ObstacleType.STUMP]:      { img: stumpImg,     baseWidth: 45 * globalSizeFactor,  baseHeight: 55 * globalSizeFactor, category: 'ground', level: 'MED', hitboxOffsetX: 10 * globalSizeFactor },
+            [ObstacleType.STUMP_HIGH]: { img: stumpImg,     baseWidth: 45 * globalSizeFactor,  baseHeight: 55 * globalSizeFactor, category: 'ground', level: 'HIGH', isHigh: true, hitboxOffsetX: 10 * globalSizeFactor },
+            [ObstacleType.OWL]:        { img: owlImg,       baseWidth: 60 * globalSizeFactor,  baseHeight: 50 * globalSizeFactor, category: 'sky', hitboxOffsetX: 10 * globalSizeFactor },
+            [ObstacleType.FLYING_UNI]: { img: flyingUniImg, baseWidth: 70 * globalSizeFactor,  baseHeight: 65 * globalSizeFactor, category: 'sky', hitboxOffsetX: 15 * globalSizeFactor }
+        }; // Syntax OK.
+        const groundObstacleTypes = [ObstacleType.PALLET_4, ObstacleType.PALLET_6, ObstacleType.LOG, ObstacleType.STUMP];
+        const skyObstacleTypes = [ObstacleType.OWL, ObstacleType.FLYING_UNI];
+        console.log("Obstacle data defined.");
+
+        // --- Game Loop --- (Identisch)
+        let lastTime = 0; let animationFrameId = null; let gameTime = 0;
+
+        // --- Initialization --- (Identisch)
+        function init() {
+            console.log(">>> init() started");
+            if (!canvas || !ctx) { console.error("Init aborted: Canvas/Context missing."); return; }
+            try { loadHighScore(); setupDOM(); resizeCanvas(); createHearts(); resetGame(); addEventListeners(); currentState = GameState.READY; updateUI(); lastTime = performance.now(); if (!animationFrameId) animationFrameId = requestAnimationFrame(gameLoop); console.log("init: Animation loop started"); } catch (error) { console.error("##### CRITICAL ERROR IN INIT #####", error); alert("Game Initialization Failed!"); }
+            console.log(">>> init() finished");
+        }
+
+        // --- Setup DOM --- (Identisch)
+        function setupDOM() {
+            if(highScoreElement) highScoreElement.textContent = highScore;
+            if (duckButton) {
+                 if (duckButtonImg.complete && duckButtonImg.naturalWidth > 0) { duckButton.innerHTML = ''; duckButton.appendChild(duckButtonImg.cloneNode()); }
+                 else { duckButton.textContent = '↓'; if (!duckButtonImg.hasAttribute('data-onload-set')) { duckButtonImg.onload = () => { const btn = document.getElementById('duckButton'); if (btn) { btn.innerHTML = ''; btn.appendChild(duckButtonImg.cloneNode()); }}; duckButtonImg.setAttribute('data-onload-set', 'true'); } }
+            }
+            if(fuchsSelect) fuchsSelect.classList.toggle('selected', character === 'fuchs');
+            if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
+        }
+
+        // --- Resize Canvas --- (Angepasst für schmalere Player-Modelle)
+        function resizeCanvas() {
+            if (!gameContainer || !canvas) { return; }
+            const cw = gameContainer.clientWidth; const ch = gameContainer.clientHeight; if (cw === 0 || ch === 0) return;
+            canvas.width = cw; canvas.height = ch; scaleFactor = (cw / baseWidth) * globalSizeFactor; groundHeight = 30 * scaleFactor;
+
+            if (player && player.width) {
+                const ps = 70; // Base player size
+                const ss = ps * scaleFactor; // Scaled size
+
+                // Make player width slimmer while keeping the height the same
+                player.width = ss * playerWidthRatio;  // Slimmer width (80% of normal)
+                player.baseHeight = ss;  // Normal height
+                player.duckHeight = (ps/2) * scaleFactor;
+                player.height = isDucking ? player.duckHeight : player.baseHeight;
+
+                player.x = 50 * scaleFactor;
+                player.y = ch - groundHeight - player.height;
+                player.gravity = baseGravity * scaleFactor;
+                player.jumpStrength = baseJumpStrength * scaleFactor;
+            }
+        }
+
+        // --- High Score, Hearts --- (Identisch)
+        function loadHighScore() { try{const s=localStorage.getItem('pixelRunnerHighScore');highScore=s?parseInt(s):0;}catch(e){highScore=0;} }
+        function saveHighScore() { const fs=Math.floor(score/10);if(fs>highScore){highScore=fs;try{localStorage.setItem('pixelRunnerHighScore',highScore);if(highScoreElement)highScoreElement.textContent=highScore;}catch(e){}} }
+        function createHearts() { if(!livesDisplay) return; livesDisplay.innerHTML=''; for (let i = 0; i < maxLives; i++) { const h = document.createElement('span'); h.classList.add('heart'); h.innerHTML = '♥'; livesDisplay.appendChild(h); } }
+        function updateLivesDisplay() { if(!livesDisplay) return; livesDisplay.querySelectorAll('.heart').forEach((h, i) => h.classList.toggle('hidden', i >= lives)); }
+
+        // --- resetGame - Updated for slimmer character
+        function resetGame() {
+            console.log("resetGame: Running...");
+            if (!canvas || !ctx) { console.error("resetGame: Canvas/Context missing."); return; }
+            score=0; gameTime=0; speed=baseSpeed*scaleFactor; backgroundX=0; lives=maxLives; isDucking=false; isNight=false; isInvulnerable=false; clearTimeout(invulnerabilityTimer); invulnerabilityTimer=null;
+            obstacles=[]; clouds=[];
+            obstacleTimer=initialObstacleCooldown; // Verwende Cooldown hier
+            cloudTimer=2+Math.random()*3;
+
+            const ps = 70 * globalSizeFactor; // Base player size
+            const ss = ps * scaleFactor; // Scaled size
+            const ch = canvas.height || 0;
+            if (ch <= 0) return;
+
+            player = {
+                x: 50 * scaleFactor,
+                y: ch - groundHeight - ss,
+                width: ss * playerWidthRatio, // Slimmer width (80% of normal)
+                height: ss,
+                baseHeight: ss,
+                duckHeight: (ps/2) * scaleFactor,
+                vy: 0,
+                gravity: baseGravity * scaleFactor,
+                jumpStrength: baseJumpStrength * scaleFactor,
+                jumping: false,
+                canDoubleJump: false,
+                hasDoubleJumped: false,
+                image: (character === 'fuchs' ? fuchsImg : waschbaerImg)
+            };
+
+            if(!(player.image && player.image.complete && player.image.naturalWidth>0)) { /* Warnung möglich */ }
+            if(document.body) document.body.style.backgroundColor = '#e0e0e0'; // Start mit hellem Body-BG
+            console.log("resetGame: Finished.");
+        }
+
+        // --- Game Logic --- (Identisch)
+        function startGame() { if(currentState===GameState.PLAYING) return; console.log("Starting Game..."); resetGame(); currentState=GameState.PLAYING; updateUI(); lastTime=performance.now(); if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop); }
+        function loseLife() { if(isInvulnerable||currentState!==GameState.PLAYING) return; lives--; updateLivesDisplay(); makePlayerInvulnerable(); if(gameContainer) gameContainer.style.borderColor='#ff0000'; setTimeout(()=>{if(gameContainer) gameContainer.style.borderColor='#333';},200); if(lives<=0) gameOver(); }
+        function gameOver() { currentState=GameState.GAMEOVER; saveHighScore(); if(finalScoreElement) finalScoreElement.textContent=Math.floor(score/10); updateUI(); if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null; }
+        function makePlayerInvulnerable() { isInvulnerable=true; clearTimeout(invulnerabilityTimer); invulnerabilityTimer=setTimeout(()=>{isInvulnerable=false;invulnerabilityTimer=null;}, invulnerabilityDuration); }
+        function togglePause() { if(currentState===GameState.PLAYING){currentState=GameState.PAUSED; if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null;} else if(currentState===GameState.PAUSED){currentState=GameState.PLAYING; lastTime=performance.now(); animationFrameId=requestAnimationFrame(gameLoop);} updateUI(); }
+        function quitGame() { if(currentState===GameState.PLAYING||currentState===GameState.PAUSED) saveHighScore(); alert("Game ended."); try{window.close();}catch(e){} currentState=GameState.GAMEOVER; if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null; updateUI(); }
+
+        // Back to Menu Function
+        function backToMenu() {
+            if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
+                // Save the high score before quitting the current game
+                saveHighScore();
+
+                // Reset the game state to READY
+                currentState = GameState.READY;
+
+                // Reset the game for a fresh start
+                resetGame();
+
+                // Update the UI to show menu elements
+                updateUI();
+
+                // Cancel any running animation frame
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+
+                // Request a new animation frame to draw the menu state
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function jump() { if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return; if(!player.jumping){player.vy=player.jumpStrength; player.jumping=true; player.canDoubleJump=true; player.hasDoubleJumped=false;} else if(player.canDoubleJump&&!player.hasDoubleJumped){player.vy=player.jumpStrength*0.8; player.canDoubleJump=false; player.hasDoubleJumped=true; createDoubleJumpEffect();} }
+        function setDucking(sd) { if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return; if(sd&&!isDucking){isDucking=true;player.height=player.duckHeight;player.y=canvas.height-groundHeight-player.height;} else if(!sd&&isDucking){isDucking=false;player.height=player.baseHeight;player.y=canvas.height-groundHeight-player.height;checkCollision();} }
+        function createDoubleJumpEffect() { try{if(!player||!player.width) return; const s=player.width*1.2; const e=document.createElement('div'); e.className='doubleJumpEffect'; const cr=gameContainer.getBoundingClientRect(); const cvr=canvas.getBoundingClientRect(); const ox=cvr.left-cr.left; const oy=cvr.top-cr.top; e.style.width=`${s}px`; e.style.height=`${s}px`; e.style.left=`${ox+player.x+player.width/2-s/2}px`; e.style.top=`${oy+player.y+player.height/2-s/2}px`; if(gameContainer) gameContainer.appendChild(e); setTimeout(()=>{if(e.parentNode)e.remove();},400);}catch(err){} }
+
+        // --- createObstacle - Mit festen Hitboxen
+        function createObstacle() {
+            try {
+                let chosenType = null;
+                let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
+                // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
+                if (gameTime > highStumpMinTime) {
+                    availableGroundTypes.push(ObstacleType.STUMP_HIGH);
+                }
+                // Zufällige Entscheidung: Boden oder Himmel (z.B. 70% Boden)
+                const isGround = Math.random() < 0.70;
+
+                if (isGround) {
+                    const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
+                    chosenType = availableGroundTypes[randIdx];
+                } else {
+                    const randIdx = Math.floor(Math.random() * skyObstacleTypes.length);
+                    chosenType = skyObstacleTypes[randIdx];
+                }
+
+                const data = obstacleData[chosenType];
+                if (!data) { console.error("Obstacle data missing for type:", chosenType); return; } // Sicherheitscheck
+
+                const scaledWidth = data.baseWidth * scaleFactor;
+                const scaledHeight = data.baseHeight * scaleFactor;
+                let yPos;
+
+                if (data.category === 'ground') {
+                    yPos = canvas.height - groundHeight - scaledHeight;
+                    // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
+                    if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
+                } else { // Sky obstacle positioning
+                    const minTopMargin = 40 * scaleFactor; // Minimaler Abstand von oben
+                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 80 * scaleFactor; // Sicherheitsabstand über Spieler
+                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze für Himmelsobjekte
+                    const availableHeight = Math.max(20 * scaleFactor, safeSkyBottom - minTopMargin - scaledHeight); // Verfügbarer Bereich
+                    yPos = minTopMargin + Math.random() * availableHeight;
+                }
+
+                // Das Hindernis wird mit allen nötigen Informationen erstellt
+                obstacles.push({
+                    x: canvas.width, // Start rechts außerhalb
+                    y: yPos,
+                    width: scaledWidth,
+                    height: scaledHeight,
+                    type: chosenType,
+                    image: data.img, // Referenz auf das Image-Objekt speichern
+                    category: data.category // Kategorie speichern für evtl. spätere Logik
+                    // Hitbox-Offset wird nicht direkt im Objekt gespeichert,
+                    // sondern zur Laufzeit aus obstacleData geholt,
+                    // damit die Hitbox bei Geschwindigkeitsänderungen konsistent bleibt
+                });
+            } catch(err) {
+                 console.error("Error in createObstacle:", err);
+            }
+        }
+        function createCloud() {
+            const bw=60 * globalSizeFactor;
+            const bh=30 * globalSizeFactor;
+            const sw=bw*scaleFactor;
+            const sh=bh*scaleFactor;
+            clouds.push({
+                x: canvas.width,
+                y: (50+Math.random()*100)*scaleFactor,
+                width: sw,
+                height: sh,
+                speed: (baseSpeed*(0.2+Math.random()*0.3))*scaleFactor
+            });
+        }
+
+        // --- Update --- (Identisch)
+        function update(dt) { if(currentState!==GameState.PLAYING)return; gameTime+=dt; updatePlayer(dt); updateObstacles(dt); updateClouds(dt); updateScore(dt); updateBackground(dt); updateDifficulty(dt); checkCollision(); }
+        function updatePlayer(dt) { if(!player||typeof player.vy==='undefined')return; player.vy+=player.gravity*dt; player.y+=player.vy*dt; const gl=canvas.height-groundHeight-player.height; if(player.y>=gl){player.y=gl;player.vy=0;if(player.jumping){player.jumping=false;player.canDoubleJump=false;player.hasDoubleJumped=false;setDucking(isDucking);}} }
+        // --- updateObstacles - Geschwindigkeitsunabhängige Kollision
+        function updateObstacles(dt) {
+            for(let i=obstacles.length-1; i>=0; i--){
+                // Bewege das Hindernis basierend auf der aktuellen Geschwindigkeit
+                obstacles[i].x -= speed*dt;
+
+                // Entferne Hindernisse, die den Bildschirm verlassen haben
+                if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
+            }
+
+            obstacleTimer -= dt;
+            if(obstacleTimer <= 0){
+                createObstacle(); // Ruft die neue Funktion auf
+                // Berechne nächste Spawn-Zeit basierend auf Geschwindigkeit
+                const speedFactor = Math.max(0.4, baseSpeed / (speed / scaleFactor));
+                let nextSpawnTime = (minObstacleTime + Math.random() * (maxObstacleTime - minObstacleTime)) * speedFactor;
+                obstacleTimer = Math.max(0.7, nextSpawnTime); // Mindestabstand sicherstellen
+            }
+        }
+        function updateClouds(dt) { for(let i=clouds.length-1;i>=0;i--){clouds[i].x-=clouds[i].speed*dt;if(clouds[i].x+clouds[i].width<0)clouds.splice(i,1);} cloudTimer-=dt; if(cloudTimer<=0&&clouds.length<5){createCloud();cloudTimer=3+Math.random()*5;} } // Wolken bleiben gleich
+        function updateScore(dt) { if(!scoreElement) return; score+=(speed/scaleFactor)*dt*0.1; scoreElement.textContent=Math.floor(score/10); }
+        // --- updateDifficulty - Mit konsistenter Hitbox
+        function updateDifficulty(dt) {
+             // Erhöhe die Geschwindigkeit mit der Zeit
+             speed += (speedIncrement * baseSpeed) * scaleFactor * dt;
+
+             // Bestimme, ob Tag oder Nacht anhand der Spielzeit/Punktzahl
+             const tier = Math.floor(Math.floor(score/10)/100);
+             const night = tier % 2 !== 0;
+
+             // Wechsle den Hintergrund, wenn sich die Tageszeit ändert
+             if(night !== isNight) {
+                 isNight = night;
+                 if(document.body) document.body.style.backgroundColor = isNight ? '#3a3a4a' : '#e0e0e0';
+             }
+         }
+        // --- updateBackground - Nutzt neue BG Logik --- (Angepasst)
+        function updateBackground(dt) {
+             const img=isNight?nightBgImg:dayBgImg; if (!img||!img.complete||img.naturalWidth===0)return;
+             const h=canvas.height; const r=img.naturalWidth/img.naturalHeight; let sw=h*r; if(sw<canvas.width)sw=canvas.width;
+             backgroundX-=(speed*0.3)*dt; // Angepasste Parallax
+             if(backgroundX<=-sw)backgroundX+=sw;
+         }
+        function checkCollision() {
+            if(isInvulnerable||currentState!==GameState.PLAYING||!player||!player.width)return;
+            const s=0.75;
+            const px=player.x+player.width*(1-s)/2;
+            const py=player.y+player.height*(1-s)/2;
+            const pw=player.width*s;
+            const ph=player.height*s;
+
+            for(const o of obstacles){
+                // Hole die Hitbox-Daten für den Hindernistyp
+                const data = obstacleData[o.type] || {};
+                const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
+
+                // Geschwindigkeitsunabhängige Kollisionsprüfung mit festen Offsets
+                const hitboxLeft = o.x + hitboxOffsetX;
+                const hitboxRight = o.x + o.width - hitboxOffsetX;
+                const hitboxTop = o.y;
+                const hitboxBottom = o.y + o.height;
+
+                // Prüfe Kollision mit der angepassten Hitbox
+                if(px < hitboxRight &&
+                   px + pw > hitboxLeft &&
+                   py < hitboxBottom &&
+                   py + ph > hitboxTop){
+                    loseLife();
+                    return;
+                }
+            }
+        }
+
+        // --- Draw ---
+        function draw() { if(!ctx) return; drawBackground(); drawClouds(); drawGround(); drawObstacles(); drawPlayer(); }
+        // --- drawBackground - Nutzt neue BG Logik --- (Angepasst)
+        function drawBackground() {
+            const img=isNight?nightBgImg:dayBgImg;
+            if (img&&img.complete&&img.naturalWidth>0){
+                const h=canvas.height; const r=img.naturalWidth/img.naturalHeight; let sw=h*r; let sh=h; let y=0;
+                if(sw<canvas.width){sw=canvas.width; sh=sw/r; y=h-sh;}
+                const copies=Math.ceil(canvas.width/sw)+1;
+                for(let i=0;i<copies;i++) { try { ctx.drawImage(img,backgroundX+(sw*i),y,sw,sh); } catch(e){console.error("BG Draw Err:", e); ctx.fillStyle=isNight?'#2d2d3a':'#87CEEB'; ctx.fillRect(0,0,canvas.width,canvas.height); break; }}
+            } else { ctx.fillStyle=isNight?'#2d2d3a':'#87CEEB'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+        }
+        function drawGround() { if(!ctx) return; ctx.fillStyle=isNight?'rgba(40,40,50,0.8)':'rgba(100,140,80,0.7)'; ctx.fillRect(0,canvas.height-groundHeight,canvas.width,groundHeight); ctx.fillStyle=isNight?'rgba(50,50,60,0.8)':'rgba(120,160,100,0.7)'; ctx.fillRect(0,canvas.height-groundHeight,canvas.width,2*scaleFactor); }
+        function drawPlayer() { if(!ctx || !player || !player.image) return; ctx.globalAlpha=(isInvulnerable && currentState===GameState.PLAYING)?(0.6+Math.sin(Date.now()/100)*0.4):1; if(player.image.complete&&player.image.naturalWidth>0){ctx.drawImage(player.image,player.x,player.y,player.width,player.height);}else{ctx.fillStyle=(character==='fuchs'?'#ff6f00':'#8d6e63');ctx.fillRect(player.x,player.y,player.width,player.height);/*Face*/ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(player.x+player.width*0.35,player.y+player.height*0.3,player.width*0.08,0,Math.PI*2);ctx.arc(player.x+player.width*0.65,player.y+player.height*0.3,player.width*0.08,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=1*scaleFactor;ctx.beginPath();ctx.arc(player.x+player.width*0.5,player.y+player.height*0.6,player.width*0.15,0.2*Math.PI,0.8*Math.PI);ctx.stroke();} ctx.globalAlpha=1; }
+        // --- drawObstacles - Mit Hitbox-Visualisierung (optional)
+        function drawObstacles() {
+            if (!ctx) return;
+            for (const obstacle of obstacles) {
+                try { // Fehler isolieren, falls ein Hindernis Probleme macht
+                    if (obstacle.image && obstacle.image.complete && obstacle.image.naturalWidth > 0) {
+                        // Zeichne das geladene Bild
+                        ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+                        // Debug-Modus: Hitbox visualisieren (auskommentiert im Produktionscode)
+                        /*
+                        const data = obstacleData[obstacle.type] || {};
+                        const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
+                        const hitboxLeft = obstacle.x + hitboxOffsetX;
+                        const hitboxRight = obstacle.x + obstacle.width - hitboxOffsetX;
+
+                        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(
+                            hitboxLeft,
+                            obstacle.y,
+                            hitboxRight - hitboxLeft,
+                            obstacle.height
+                        );
+                        */
+                    } else {
+                        // Fallback: Zeichne Rechteck, wenn Bild fehlt
+                        ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D'; // Himmelblau vs Braun
+                        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                        // Optional: Text im Rechteck
+                        ctx.fillStyle = '#000';
+                        ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
+                    }
+                } catch (drawErr) {
+                    console.error("Error drawing obstacle:", obstacle.type, drawErr);
+                    // Zeichne einfachen roten Kasten als Fehlerindikator
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                } finally {
+                     // Wichtig: Text-Alignment zurücksetzen nach jeder Zeichnung
+                     ctx.textAlign = 'start';
+                     ctx.textBaseline = 'alphabetic';
+                }
+            }
+        }
+        function drawClouds() { if(!ctx)return; ctx.fillStyle=isNight?'rgba(100,100,100,0.6)':'rgba(255,255,255,0.7)'; ctx.strokeStyle=isNight?'rgba(80,80,80,0.6)':'rgba(220,220,220,0.7)'; ctx.lineWidth=1*scaleFactor; for(const c of clouds){ctx.beginPath();ctx.ellipse(c.x+c.width/2,c.y+c.height/2,c.width/2,c.height/2,0,0,Math.PI*2); ctx.ellipse(c.x+c.width*0.3,c.y+c.height*0.3,c.width*0.3,c.height*0.4,0,0,Math.PI*2); ctx.ellipse(c.x+c.width*0.7,c.y+c.height*0.4,c.width*0.4,c.height*0.5,0,0,Math.PI*2); ctx.fill(); ctx.stroke();} }
+
+        // --- UI Update --- Mit Anleitung nur vor dem Spielstart
+        function updateUI() {
+            try {
+                const pl = currentState === GameState.PLAYING;
+                const pa = currentState === GameState.PAUSED;
+                const go = currentState === GameState.GAMEOVER;
+                const re = currentState === GameState.READY;
+
+                // Spielsteuerung
+                if(startButton) startButton.style.display = (re || go) ? 'inline-block' : 'none';
+                if(characterSelectContainer) characterSelectContainer.style.display = (re || go) ? 'flex' : 'none';
+                if(restartButton) restartButton.style.display = go ? 'inline-block' : 'none';
+                if(gameOverElement) gameOverElement.style.display = go ? 'flex' : 'none';
+                if(pauseOverlay) pauseOverlay.style.display = pa ? 'flex' : 'none';
+                if(duckButton) duckButton.style.display = pl ? 'flex' : 'none';
+
+                // Back Button nur während des Spiels oder Pause anzeigen
+                if(backButton) backButton.style.display = (pl || pa) ? 'flex' : 'none';
+
+                // Anleitung nur vor dem Spielstart (READY) oder nach Game Over anzeigen
+                const instructionsElement = document.getElementById('instructions');
+                if(instructionsElement) {
+                    instructionsElement.style.display = (re || go) ? 'block' : 'none';
+                }
+
+                if(fuchsSelect) fuchsSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
+                if(waschbaerSelect) waschbaerSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
+            } catch(err) {
+                console.error("Error in updateUI:", err);
+            }
+        }
+
+        // --- Game Loop --- (Identisch, mit Fehlerbehandlung)
+        function gameLoop(timestamp) { if(typeof lastTime==='undefined'||isNaN(timestamp)){console.error("Loop Error TS/LT");lastTime=performance.now();if(animationFrameId)cancelAnimationFrame(animationFrameId);return;} const dt=Math.min(0.05,(timestamp-lastTime)/1000); lastTime=timestamp; try { if (currentState===GameState.PLAYING) update(dt); draw(); } catch (error) { console.error("!!! Runtime Error in Loop:", error); if(animationFrameId)cancelAnimationFrame(animationFrameId); animationFrameId=null; currentState=GameState.GAMEOVER; updateUI(); return; } if (currentState===GameState.PLAYING||currentState===GameState.READY||currentState===GameState.INIT) animationFrameId=requestAnimationFrame(gameLoop); else animationFrameId=null; }
+
+        // --- Event Handlers --- (Identisch, mit Fehlerbehandlung)
+        function handleKeyDown(e) { try{let a=false;if(e.key==='p'||e.key==='P'||e.key==='Escape'){if(currentState===GameState.PLAYING||currentState===GameState.PAUSED)togglePause();a=true;}else if(e.key===' '||e.key==='ArrowUp'){if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();a=true;}else if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(true);a=true;}if(a)e.preventDefault();}catch(err){} }
+        function handleKeyUp(e) { try{let a=false;if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(false);a=true;}if(a)e.preventDefault();}catch(err){} }
+        function handleCanvasPointerDown(e) { try{if(currentState===GameState.PAUSED)togglePause();else if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();e.preventDefault();}catch(err){} }
+        function handleDuckButtonPointerDown(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(true);e.target.setPointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
+        function handleDuckButtonPointerUp(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(false);if(e.target.hasPointerCapture(e.pointerId))e.target.releasePointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
+        function handleDuckButtonPointerCancel(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(false);if(e.target.hasPointerCapture(e.pointerId))e.target.releasePointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
+        function handleCharacterSelect(e) { try{if((currentState!==GameState.READY && currentState!==GameState.GAMEOVER)||!e.target||e.target.tagName!=='IMG')return;const nc=(e.target.id==='fuchs')?'fuchs':'waschbaer';if(nc!==character){character=nc;if(fuchsSelect)fuchsSelect.classList.toggle('selected',character==='fuchs');if(waschbaerSelect)waschbaerSelect.classList.toggle('selected',character==='waschbaer');if(player)player.image=(character==='fuchs'?fuchsImg:waschbaerImg);if(currentState===GameState.READY){resetGame();draw();}}}catch(err){} }
+        function handleResize() { try{resizeCanvas();if(currentState !== GameState.PLAYING) draw();}catch(err){} } // Nur draw() wenn nicht aktiv spielt
+        function addEventListeners() {
+            console.log("Listeners: Adding...");
+            try {
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('keyup', handleKeyUp);
+                if(canvas) canvas.addEventListener('pointerdown', handleCanvasPointerDown);
+                if(startButton) startButton.addEventListener('click', startGame);
+                if(restartButton) restartButton.addEventListener('click', startGame);
+                if(quitButton) quitButton.addEventListener('click', quitGame);
+                if(backButton) backButton.addEventListener('click', backToMenu); // Neuer Event Listener für den Back Button
+                if(duckButton) {
+                    duckButton.addEventListener('pointerdown', handleDuckButtonPointerDown);
+                    duckButton.addEventListener('pointerup', handleDuckButtonPointerUp);
+                    duckButton.addEventListener('pointercancel', handleDuckButtonPointerCancel);
+                    duckButton.addEventListener('contextmenu', (e) => e.preventDefault());
+                }
+                if(characterSelectContainer) characterSelectContainer.addEventListener('click', handleCharacterSelect);
+                window.addEventListener('resize', handleResize);
+                console.log("Listeners: Added.");
+            } catch(e) {
+                console.error("Listener Add Error", e);
+            }
+        }
+
+        // --- Start --- (Identisch)
+        // window.addEventListener('load', init); // Wird oben gesetzt
+        console.log("--- Script End ---");
+
+    </script>
+</body>
+</html>
