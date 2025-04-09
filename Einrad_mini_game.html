@@ -38,7 +38,13 @@
         }
         /* UI Styles */
         #gameControls, #gameInfo, #livesDisplay, #quitButton, #pauseOverlay, #gameOver, #duckButton { position: absolute; z-index: 10; font-size: max(1.7vmin, 14px); }
-        #gameControls { top: 2%; left: 2%; display: flex; gap: 10px; align-items: center; }
+        #gameControls {
+            top: 2%;
+            left: 2%;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
         #gameInfo { top: 2%; right: 10%; text-align: right; color: #eee; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
         #gameInfo div { margin-bottom: 2px; }
         #livesDisplay { top: calc(2% + 60px); right: 10%; background-color: rgba(0, 0, 0, 0.5); padding: max(0.5vmin, 3px) max(1vmin, 6px); border-radius: 5px; display: flex; gap: 5px; }
@@ -78,9 +84,23 @@
         #gameOver h2 { color: #ffffff; font-size: max(4.5vmin, 26px); text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); margin-bottom: 10px; margin-top: -10%; }
         #gameOver div { color: #f0f0f0; margin-bottom: 15px; font-size: max(2.5vmin, 17px); background-color: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); }
         /* Buttons */
-        #startButton, #restartButton { padding: max(1.4vmin, 10px) max(2.8vmin, 20px); font-size: max(2.3vmin, 16px); cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; margin-top: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); text-shadow: 1px 1px 1px rgba(0,0,0,0.4); transition: background-color 0.2s; }
-        #startButton:hover, #restartButton:hover { background-color: #45a049; }
-        #startButton { margin-right: 5px; }
+        #startButton, #restartButton, #settingsButton, #settingsCloseButton, #settingsResetButton {
+            padding: max(1.4vmin, 10px) max(2.8vmin, 20px);
+            font-size: max(2.3vmin, 16px);
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 15px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+            transition: background-color 0.2s;
+        }
+        #startButton:hover, #restartButton:hover, #settingsButton:hover, #settingsCloseButton:hover, #settingsResetButton:hover {
+            background-color: #45a049;
+        }
+        #startButton, #settingsButton { margin-right: 5px; }
         #characterSelect { display: flex; gap: 10px; align-items: center; }
         #characterSelect img { width: max(6vmin, 35px); height: max(6vmin, 35px); cursor: pointer; border: 3px solid transparent; border-radius: 5px; background-color: rgba(255, 255, 255, 0.7); padding: 1px; transition: border-color 0.2s, transform 0.2s; }
         #characterSelect img:hover { transform: scale(1.1); }
@@ -115,27 +135,184 @@
         @keyframes doubleJumpEffect { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.5); opacity: 0; } }
         .doubleJumpEffect { position: absolute; border-radius: 50%; background-color: rgba(255, 215, 0, 0.6); pointer-events: none; z-index: 15; animation: doubleJumpEffect 0.4s ease-out forwards; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Settings Panel Styles */
+        #settingsPanel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 25;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+
+        #settingsPanel h2 {
+            font-size: max(3vmin, 20px);
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 90%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-item label {
+            margin-bottom: 5px;
+            font-size: max(1.8vmin, 14px);
+        }
+
+        .setting-item input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .value-display {
+            font-size: max(1.6vmin, 12px);
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        /* Checkbox styling for hitbox toggle */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-size: max(1.8vmin, 14px);
+            cursor: pointer;
+        }
+
+        .settings-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Debug overlay for hitboxes */
+        #debugOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
     </style>
 </head>
 <body>
     <!-- HTML Struktur -->
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
+        <div id="debugOverlay"></div>
         <div id="loadingOverlay">
             <img id="loadingSpinner" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" alt="Loading..."
                  onerror="this.onerror=null; console.error('Loading image failed to load'); this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIHN0cm9rZT0iIzRDQUY1MCIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSIxNTAgMTgwIiAvPjwvc3ZnPg==';"
                  onload="console.log('Loading spinner image loaded successfully!');">
         </div>
-        <div id="gameControls"> <button id="startButton">START</button> <div id="characterSelect"> <img id="fuchs" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png" alt="Fuchs"> <img id="waschbaer" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png" alt="Waschbär"> </div> </div>
-        <div id="gameInfo"> <div>SCORE: <span id="score">0</span></div> <div>HI: <span id="highScore">0</span></div> </div>
+        <div id="gameControls">
+            <button id="startButton">START</button>
+            <button id="settingsButton">SETTINGS</button>
+            <div id="characterSelect">
+                <img id="fuchs" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png" alt="Fuchs">
+                <img id="waschbaer" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png" alt="Waschbär">
+            </div>
+        </div>
+        <div id="gameInfo">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>HI: <span id="highScore">0</span></div>
+        </div>
         <div id="livesDisplay"></div>
         <button id="quitButton">✕</button>
         <button id="backButton">⬅</button>
-        <div id="pauseOverlay"> <div><h2>GAME PAUSED</h2><p>Press 'P' or ESC or Tap to resume</p></div> </div>
+        <div id="pauseOverlay">
+            <div><h2>GAME PAUSED</h2><p>Press 'P' or ESC or Tap to resume</p></div>
+        </div>
         <button id="duckButton">↓</button>
-        <div id="gameOver"> <h2>GAME OVER</h2> <div>Final Score: <span id="finalScore">0</span></div> <button id="restartButton">RESTART</button> </div>
+        <div id="gameOver">
+            <h2>GAME OVER</h2>
+            <div>Final Score: <span id="finalScore">0</span></div>
+            <button id="restartButton">RESTART</button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel">
+            <h2>Game Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="speedSetting">Game Speed:</label>
+                    <input type="range" id="speedSetting" min="50" max="150" value="100">
+                    <div class="value-display" id="speedValue">100%</div>
+                </div>
+                <div class="setting-item">
+                    <label for="spawnRateSetting">Spawn Rate:</label>
+                    <input type="range" id="spawnRateSetting" min="50" max="200" value="100">
+                    <div class="value-display" id="spawnRateValue">100%</div>
+                </div>
+                <div class="setting-item">
+                    <label for="jumpHeightSetting">Jump Height:</label>
+                    <input type="range" id="jumpHeightSetting" min="70" max="130" value="100">
+                    <div class="value-display" id="jumpHeightValue">100%</div>
+                </div>
+                <div class="setting-item">
+                    <label for="gravitySetting">Gravity Strength:</label>
+                    <input type="range" id="gravitySetting" min="70" max="130" value="100">
+                    <div class="value-display" id="gravityValue">100%</div>
+                </div>
+                <div class="setting-item">
+                    <label for="flyingHeightSetting">Flying Objects Height:</label>
+                    <input type="range" id="flyingHeightSetting" min="50" max="150" value="100">
+                    <div class="value-display" id="flyingHeightValue">100%</div>
+                </div>
+                <div class="setting-item">
+                    <label for="hitboxSizeSetting">Hitbox Size:</label>
+                    <input type="range" id="hitboxSizeSetting" min="60" max="100" value="75">
+                    <div class="value-display" id="hitboxSizeValue">75%</div>
+                </div>
+            </div>
+
+            <!-- Added hitbox visibility toggle checkbox -->
+            <div class="checkbox-container">
+                <input type="checkbox" id="showHitboxSetting">
+                <label for="showHitboxSetting">Show Hitboxes</label>
+            </div>
+
+            <div class="settings-buttons">
+                <button id="settingsResetButton">Reset Defaults</button>
+                <button id="settingsCloseButton">Close</button>
+            </div>
+        </div>
     </div>
-    <div id="instructions"> Press SPACE/UP/Tap to jump/double jump | DOWN/Button to duck | P/ESC to pause </div>
+    <div id="instructions">Press SPACE/UP/Tap to jump/double jump | DOWN/Button to duck | P/ESC to pause</div>
 
     <script>
         'use strict';
@@ -234,11 +411,36 @@
 
         // --- DOM Elements ---
         console.log("DOM: Getting elements...");
-        let canvas, ctx, scoreElement, highScoreElement, finalScoreElement, gameOverElement, restartButton, startButton, fuchsSelect, waschbaerSelect, characterSelectContainer, pauseOverlay, quitButton, livesDisplay, gameContainer, duckButton, backButton;
+        let canvas, ctx, scoreElement, highScoreElement, finalScoreElement, gameOverElement, restartButton, startButton,
+            fuchsSelect, waschbaerSelect, characterSelectContainer, pauseOverlay, quitButton, livesDisplay, gameContainer,
+            duckButton, backButton, settingsButton, settingsPanel, settingsCloseButton, settingsResetButton, debugOverlay,
+            showHitboxSetting;
+
         // Frühe Initialisierung der Variablen
         canvas = document.getElementById('gameCanvas');
         ctx = canvas ? canvas.getContext('2d') : null;
-        scoreElement = document.getElementById('score'); highScoreElement = document.getElementById('highScore'); finalScoreElement = document.getElementById('finalScore'); gameOverElement = document.getElementById('gameOver'); restartButton = document.getElementById('restartButton'); startButton = document.getElementById('startButton'); fuchsSelect = document.getElementById('fuchs'); waschbaerSelect = document.getElementById('waschbaer'); characterSelectContainer = document.getElementById('characterSelect'); pauseOverlay = document.getElementById('pauseOverlay'); quitButton = document.getElementById('quitButton'); livesDisplay = document.getElementById('livesDisplay'); gameContainer = document.getElementById('gameContainer'); duckButton = document.getElementById('duckButton'); backButton = document.getElementById('backButton');
+        scoreElement = document.getElementById('score');
+        highScoreElement = document.getElementById('highScore');
+        finalScoreElement = document.getElementById('finalScore');
+        gameOverElement = document.getElementById('gameOver');
+        restartButton = document.getElementById('restartButton');
+        startButton = document.getElementById('startButton');
+        fuchsSelect = document.getElementById('fuchs');
+        waschbaerSelect = document.getElementById('waschbaer');
+        characterSelectContainer = document.getElementById('characterSelect');
+        pauseOverlay = document.getElementById('pauseOverlay');
+        quitButton = document.getElementById('quitButton');
+        livesDisplay = document.getElementById('livesDisplay');
+        gameContainer = document.getElementById('gameContainer');
+        duckButton = document.getElementById('duckButton');
+        backButton = document.getElementById('backButton');
+        settingsButton = document.getElementById('settingsButton');
+        settingsPanel = document.getElementById('settingsPanel');
+        settingsCloseButton = document.getElementById('settingsCloseButton');
+        settingsResetButton = document.getElementById('settingsResetButton');
+        debugOverlay = document.getElementById('debugOverlay');
+        showHitboxSetting = document.getElementById('showHitboxSetting');
+
         if (!canvas || !ctx) {
              console.error("CRITICAL: Canvas or Context not available immediately!");
              document.addEventListener('DOMContentLoaded', () => { alert("Fehler: Spiel-Canvas konnte nicht initialisiert werden!"); });
@@ -249,14 +451,179 @@
 
 
         // --- Game State ---
-        const GameState = { INIT: 'INIT', READY: 'READY', PLAYING: 'PLAYING', PAUSED: 'PAUSED', GAMEOVER: 'GAMEOVER' }; let currentState = GameState.INIT; let character = 'fuchs'; let score = 0; let highScore = 0; let lives = 3; const maxLives = 3; let speed = 0; let speedIncrement = 0.0005; let backgroundX = 0; let isDucking = false; let isNight = false; let isInvulnerable = false; let invulnerabilityTimer = null; const invulnerabilityDuration = 2000;
+        const GameState = {
+            INIT: 'INIT',
+            READY: 'READY',
+            PLAYING: 'PLAYING',
+            PAUSED: 'PAUSED',
+            GAMEOVER: 'GAMEOVER',
+            SETTINGS: 'SETTINGS'
+        };
+
+        let currentState = GameState.INIT;
+        let character = 'fuchs';
+        let score = 0;
+        let highScore = 0;
+        let lives = 3;
+        const maxLives = 3;
+        let speed = 0;
+        let speedIncrement = 0.0005;
+        let backgroundX = 0;
+        let isDucking = false;
+        let isNight = false;
+        let isInvulnerable = false;
+        let invulnerabilityTimer = null;
+        const invulnerabilityDuration = 2000;
 
         // --- Physics & Scaling ---
-        let scaleFactor = 1; const baseWidth = 800; let baseSpeed = 250; let baseGravity = 1200; let baseJumpStrength = -550; let groundHeight = 0; let player = {}; let obstacles = []; let clouds = []; let obstacleTimer = 0; let cloudTimer = 0; let minObstacleTime = 1.4; let maxObstacleTime = 2.8; const initialObstacleCooldown = 3.0; const highStumpMinTime = 45;
+        let scaleFactor = 1;
+        const baseWidth = 800;
+        let baseSpeed = 250;
+        let baseGravity = 1200;
+        let baseJumpStrength = -550;
+        let groundHeight = 0;
+        let player = {};
+        let obstacles = [];
+        let clouds = [];
+        let obstacleTimer = 0;
+        let cloudTimer = 0;
+        let minObstacleTime = 1.4;
+        let maxObstacleTime = 2.8;
+        const initialObstacleCooldown = 3.0;
+        const highStumpMinTime = 45;
 
         // Skalierungsfaktor für alle Spielelemente - Charakter etwas schmaler machen
         const globalSizeFactor = 1.25; // 25% größer
         const playerWidthRatio = 0.9; // Character width is 90% of normal to make it slightly slimmer
+
+        // --- Game Settings with defaults ---
+        let gameSettings = {
+            speedMultiplier: 1.0,           // Base game speed
+            spawnRateMultiplier: 1.0,       // Spawn rate of obstacles
+            jumpHeightMultiplier: 1.0,      // Jump strength
+            gravityMultiplier: 1.0,         // Gravity strength
+            flyingHeightMultiplier: 1.0,    // Height of flying objects
+            hitboxSizePercentage: 0.75,     // Hitbox size (default 75%)
+            showHitboxes: false             // Added: Show hitboxes toggle
+        };
+
+        // --- Settings Control Functions ---
+        function updateSettingValue(settingId, valueId, value, suffix = '%') {
+            const slider = document.getElementById(settingId);
+            const display = document.getElementById(valueId);
+
+            if (slider && display) {
+                slider.value = value;
+                display.textContent = value + suffix;
+            }
+        }
+
+        function initializeSettings() {
+            // Initialize all settings controls
+            const settingControls = [
+                { id: 'speedSetting', valueId: 'speedValue', prop: 'speedMultiplier', multiplier: 100 },
+                { id: 'spawnRateSetting', valueId: 'spawnRateValue', prop: 'spawnRateMultiplier', multiplier: 100 },
+                { id: 'jumpHeightSetting', valueId: 'jumpHeightValue', prop: 'jumpHeightMultiplier', multiplier: 100 },
+                { id: 'gravitySetting', valueId: 'gravityValue', prop: 'gravityMultiplier', multiplier: 100 },
+                { id: 'flyingHeightSetting', valueId: 'flyingHeightValue', prop: 'flyingHeightMultiplier', multiplier: 100 },
+                { id: 'hitboxSizeSetting', valueId: 'hitboxSizeValue', prop: 'hitboxSizePercentage', multiplier: 100 }
+            ];
+
+            // Set initial values
+            settingControls.forEach(setting => {
+                const control = document.getElementById(setting.id);
+                const display = document.getElementById(setting.valueId);
+
+                if (control && display) {
+                    // Set initial value from gameSettings
+                    const value = Math.round(gameSettings[setting.prop] * setting.multiplier);
+                    control.value = value;
+                    display.textContent = value + '%';
+
+                    // Add event listener
+                    control.addEventListener('input', (e) => {
+                        const value = parseInt(e.target.value);
+                        display.textContent = value + '%';
+                        gameSettings[setting.prop] = value / setting.multiplier;
+
+                        // Apply settings if they changed during setup
+                        if (currentState === GameState.READY) {
+                            applyGameSettings();
+                        }
+                    });
+                }
+            });
+
+            // Initialize hitbox visibility toggle
+            if (showHitboxSetting) {
+                showHitboxSetting.checked = gameSettings.showHitboxes;
+                showHitboxSetting.addEventListener('change', (e) => {
+                    gameSettings.showHitboxes = e.target.checked;
+
+                    // Clear debug overlay if hitboxes are disabled
+                    if (!gameSettings.showHitboxes && debugOverlay) {
+                        debugOverlay.innerHTML = '';
+                    }
+                });
+            }
+        }
+
+        function resetGameSettings() {
+            gameSettings = {
+                speedMultiplier: 1.0,
+                spawnRateMultiplier: 1.0,
+                jumpHeightMultiplier: 1.0,
+                gravityMultiplier: 1.0,
+                flyingHeightMultiplier: 1.0,
+                hitboxSizePercentage: 0.75,
+                showHitboxes: false          // Reset hitbox visibility as well
+            };
+
+            // Update UI
+            updateSettingValue('speedSetting', 'speedValue', 100);
+            updateSettingValue('spawnRateSetting', 'spawnRateValue', 100);
+            updateSettingValue('jumpHeightSetting', 'jumpHeightValue', 100);
+            updateSettingValue('gravitySetting', 'gravityValue', 100);
+            updateSettingValue('flyingHeightSetting', 'flyingHeightValue', 100);
+            updateSettingValue('hitboxSizeSetting', 'hitboxSizeValue', 75);
+
+            // Update hitbox checkbox
+            if (showHitboxSetting) {
+                showHitboxSetting.checked = gameSettings.showHitboxes;
+            }
+
+            // Clear debug overlay
+            if (debugOverlay) {
+                debugOverlay.innerHTML = '';
+            }
+
+            // Apply settings
+            if (currentState === GameState.READY) {
+                applyGameSettings();
+            }
+        }
+
+        function applyGameSettings() {
+            // Apply settings to game variables
+            speed = baseSpeed * scaleFactor * gameSettings.speedMultiplier;
+
+            // Other settings will be applied in their respective functions when needed
+            // For example, jump height and gravity are applied in resetGame or when jumping
+        }
+
+        function toggleSettingsPanel() {
+            if (currentState === GameState.SETTINGS) {
+                // Close settings panel
+                if (settingsPanel) settingsPanel.style.display = 'none';
+                currentState = GameState.READY;
+                updateUI();
+            } else if (currentState === GameState.READY || currentState === GameState.GAMEOVER) {
+                // Open settings panel
+                if (settingsPanel) settingsPanel.style.display = 'flex';
+                currentState = GameState.SETTINGS;
+                updateUI();
+            }
+        }
 
         // --- Obstacle Definitions ---
         console.log("Defining obstacle data...");
@@ -267,8 +634,8 @@
             [ObstacleType.LOG]:        { img: logImg,       baseWidth: 100 * globalSizeFactor, baseHeight: 35 * globalSizeFactor, category: 'ground', level: 'LOW', hitboxOffsetX: 45 * globalSizeFactor },
             [ObstacleType.STUMP]:      { img: stumpImg,     baseWidth: 45 * globalSizeFactor,  baseHeight: 55 * globalSizeFactor, category: 'ground', level: 'MED', hitboxOffsetX: 10 * globalSizeFactor },
             [ObstacleType.STUMP_HIGH]: { img: stumpImg,     baseWidth: 45 * globalSizeFactor,  baseHeight: 55 * globalSizeFactor, category: 'ground', level: 'HIGH', isHigh: true, hitboxOffsetX: 10 * globalSizeFactor },
-            [ObstacleType.OWL]:        { img: owlImg,       baseWidth: 60 * globalSizeFactor,  baseHeight: 50 * globalSizeFactor, category: 'sky', hitboxOffsetX: 10 * globalSizeFactor },
-            [ObstacleType.FLYING_UNI]: { img: flyingUniImg, baseWidth: 70 * globalSizeFactor,  baseHeight: 65 * globalSizeFactor, category: 'sky', hitboxOffsetX: 15 * globalSizeFactor }
+            [ObstacleType.OWL]:        { img: owlImg,       baseWidth: 60 * globalSizeFactor,  baseHeight: 50 * globalSizeFactor, category: 'sky', hitboxOffsetX: 10 * globalSizeFactor, hitboxOffsetY: 10 * globalSizeFactor },
+            [ObstacleType.FLYING_UNI]: { img: flyingUniImg, baseWidth: 70 * globalSizeFactor,  baseHeight: 65 * globalSizeFactor, category: 'sky', hitboxOffsetX: 15 * globalSizeFactor, hitboxOffsetY: 15 * globalSizeFactor }
         }; // Syntax OK.
         const groundObstacleTypes = [ObstacleType.PALLET_4, ObstacleType.PALLET_6, ObstacleType.LOG, ObstacleType.STUMP];
         const skyObstacleTypes = [ObstacleType.OWL, ObstacleType.FLYING_UNI];
@@ -281,7 +648,23 @@
         function init() {
             console.log(">>> init() started");
             if (!canvas || !ctx) { console.error("Init aborted: Canvas/Context missing."); return; }
-            try { loadHighScore(); setupDOM(); resizeCanvas(); createHearts(); resetGame(); addEventListeners(); currentState = GameState.READY; updateUI(); lastTime = performance.now(); if (!animationFrameId) animationFrameId = requestAnimationFrame(gameLoop); console.log("init: Animation loop started"); } catch (error) { console.error("##### CRITICAL ERROR IN INIT #####", error); alert("Game Initialization Failed!"); }
+            try {
+                loadHighScore();
+                initializeSettings();
+                setupDOM();
+                resizeCanvas();
+                createHearts();
+                resetGame();
+                addEventListeners();
+                currentState = GameState.READY;
+                updateUI();
+                lastTime = performance.now();
+                if (!animationFrameId) animationFrameId = requestAnimationFrame(gameLoop);
+                console.log("init: Animation loop started");
+            } catch (error) {
+                console.error("##### CRITICAL ERROR IN INIT #####", error);
+                alert("Game Initialization Failed!");
+            }
             console.log(">>> init() finished");
         }
 
@@ -307,15 +690,15 @@
                 const ss = ps * scaleFactor; // Scaled size
 
                 // Make player width slimmer while keeping the height the same
-                player.width = ss * playerWidthRatio;  // Slimmer width (80% of normal)
+                player.width = ss * playerWidthRatio;  // Slimmer width (90% of normal)
                 player.baseHeight = ss;  // Normal height
                 player.duckHeight = (ps/2) * scaleFactor;
                 player.height = isDucking ? player.duckHeight : player.baseHeight;
 
                 player.x = 50 * scaleFactor;
                 player.y = ch - groundHeight - player.height;
-                player.gravity = baseGravity * scaleFactor;
-                player.jumpStrength = baseJumpStrength * scaleFactor;
+                player.gravity = baseGravity * scaleFactor * gameSettings.gravityMultiplier;
+                player.jumpStrength = baseJumpStrength * scaleFactor * gameSettings.jumpHeightMultiplier;
             }
         }
 
@@ -325,14 +708,29 @@
         function createHearts() { if(!livesDisplay) return; livesDisplay.innerHTML=''; for (let i = 0; i < maxLives; i++) { const h = document.createElement('span'); h.classList.add('heart'); h.innerHTML = '♥'; livesDisplay.appendChild(h); } }
         function updateLivesDisplay() { if(!livesDisplay) return; livesDisplay.querySelectorAll('.heart').forEach((h, i) => h.classList.toggle('hidden', i >= lives)); }
 
-        // --- resetGame - Updated for slimmer character
+        // --- resetGame - Updated for settings and slimmer character
         function resetGame() {
             console.log("resetGame: Running...");
             if (!canvas || !ctx) { console.error("resetGame: Canvas/Context missing."); return; }
-            score=0; gameTime=0; speed=baseSpeed*scaleFactor; backgroundX=0; lives=maxLives; isDucking=false; isNight=false; isInvulnerable=false; clearTimeout(invulnerabilityTimer); invulnerabilityTimer=null;
-            obstacles=[]; clouds=[];
-            obstacleTimer=initialObstacleCooldown; // Verwende Cooldown hier
-            cloudTimer=2+Math.random()*3;
+            score=0;
+            gameTime=0;
+
+            // Apply speed setting
+            speed = baseSpeed * scaleFactor * gameSettings.speedMultiplier;
+
+            backgroundX=0;
+            lives=maxLives;
+            isDucking=false;
+            isNight=false;
+            isInvulnerable=false;
+            clearTimeout(invulnerabilityTimer);
+            invulnerabilityTimer=null;
+            obstacles=[];
+            clouds=[];
+
+            // Apply spawn rate setting
+            obstacleTimer = initialObstacleCooldown / gameSettings.spawnRateMultiplier;
+            cloudTimer = (2 + Math.random() * 3) / gameSettings.spawnRateMultiplier;
 
             const ps = 70 * globalSizeFactor; // Base player size
             const ss = ps * scaleFactor; // Scaled size
@@ -342,13 +740,14 @@
             player = {
                 x: 50 * scaleFactor,
                 y: ch - groundHeight - ss,
-                width: ss * playerWidthRatio, // Slimmer width (80% of normal)
+                width: ss * playerWidthRatio, // Slimmer width (90% of normal)
                 height: ss,
                 baseHeight: ss,
                 duckHeight: (ps/2) * scaleFactor,
                 vy: 0,
-                gravity: baseGravity * scaleFactor,
-                jumpStrength: baseJumpStrength * scaleFactor,
+                // Apply gravity and jump settings
+                gravity: baseGravity * scaleFactor * gameSettings.gravityMultiplier,
+                jumpStrength: baseJumpStrength * scaleFactor * gameSettings.jumpHeightMultiplier,
                 jumping: false,
                 canDoubleJump: false,
                 hasDoubleJumped: false,
@@ -357,16 +756,73 @@
 
             if(!(player.image && player.image.complete && player.image.naturalWidth>0)) { /* Warnung möglich */ }
             if(document.body) document.body.style.backgroundColor = '#e0e0e0'; // Start mit hellem Body-BG
+
+            // Clear hitbox debug overlay
+            if (debugOverlay) {
+                debugOverlay.innerHTML = '';
+            }
+
             console.log("resetGame: Finished.");
         }
 
         // --- Game Logic ---
-        function startGame() { if(currentState===GameState.PLAYING) return; console.log("Starting Game..."); resetGame(); currentState=GameState.PLAYING; updateUI(); lastTime=performance.now(); if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop); }
-        function loseLife() { if(isInvulnerable||currentState!==GameState.PLAYING) return; lives--; updateLivesDisplay(); makePlayerInvulnerable(); if(gameContainer) gameContainer.style.borderColor='#ff0000'; setTimeout(()=>{if(gameContainer) gameContainer.style.borderColor='#333';},200); if(lives<=0) gameOver(); }
-        function gameOver() { currentState=GameState.GAMEOVER; saveHighScore(); if(finalScoreElement) finalScoreElement.textContent=Math.floor(score/10); updateUI(); if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null; }
-        function makePlayerInvulnerable() { isInvulnerable=true; clearTimeout(invulnerabilityTimer); invulnerabilityTimer=setTimeout(()=>{isInvulnerable=false;invulnerabilityTimer=null;}, invulnerabilityDuration); }
-        function togglePause() { if(currentState===GameState.PLAYING){currentState=GameState.PAUSED; if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null;} else if(currentState===GameState.PAUSED){currentState=GameState.PLAYING; lastTime=performance.now(); animationFrameId=requestAnimationFrame(gameLoop);} updateUI(); }
-        function quitGame() { if(currentState===GameState.PLAYING||currentState===GameState.PAUSED) saveHighScore(); alert("Game ended."); try{window.close();}catch(e){} currentState=GameState.GAMEOVER; if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null; updateUI(); }
+        function startGame() {
+            if(currentState===GameState.PLAYING) return;
+            console.log("Starting Game...");
+            resetGame();
+            currentState=GameState.PLAYING;
+            updateUI();
+            lastTime=performance.now();
+            if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop);
+        }
+
+        function loseLife() {
+            if(isInvulnerable||currentState!==GameState.PLAYING) return;
+            lives--;
+            updateLivesDisplay();
+            makePlayerInvulnerable();
+            if(gameContainer) gameContainer.style.borderColor='#ff0000';
+            setTimeout(()=>{if(gameContainer) gameContainer.style.borderColor='#333';},200);
+            if(lives<=0) gameOver();
+        }
+
+        function gameOver() {
+            currentState=GameState.GAMEOVER;
+            saveHighScore();
+            if(finalScoreElement) finalScoreElement.textContent=Math.floor(score/10);
+            updateUI();
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId=null;
+        }
+
+        function makePlayerInvulnerable() {
+            isInvulnerable=true;
+            clearTimeout(invulnerabilityTimer);
+            invulnerabilityTimer=setTimeout(()=>{isInvulnerable=false;invulnerabilityTimer=null;}, invulnerabilityDuration);
+        }
+
+        function togglePause() {
+            if(currentState===GameState.PLAYING){
+                currentState=GameState.PAUSED;
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId=null;
+            } else if(currentState===GameState.PAUSED){
+                currentState=GameState.PLAYING;
+                lastTime=performance.now();
+                animationFrameId=requestAnimationFrame(gameLoop);
+            }
+            updateUI();
+        }
+
+        function quitGame() {
+            if(currentState===GameState.PLAYING||currentState===GameState.PAUSED) saveHighScore();
+            alert("Game ended.");
+            try{window.close();}catch(e){}
+            currentState=GameState.GAMEOVER;
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId=null;
+            updateUI();
+        }
 
         // Back to Menu Function
         function backToMenu() {
@@ -383,11 +839,57 @@
             }
         }
 
-        function jump() { if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return; if(!player.jumping){player.vy=player.jumpStrength; player.jumping=true; player.canDoubleJump=true; player.hasDoubleJumped=false;} else if(player.canDoubleJump&&!player.hasDoubleJumped){player.vy=player.jumpStrength*0.8; player.canDoubleJump=false; player.hasDoubleJumped=true; createDoubleJumpEffect();} }
-        function setDucking(sd) { if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return; if(sd&&!isDucking){isDucking=true;player.height=player.duckHeight;player.y=canvas.height-groundHeight-player.height;} else if(!sd&&isDucking){isDucking=false;player.height=player.baseHeight;player.y=canvas.height-groundHeight-player.height;checkCollision();} }
-        function createDoubleJumpEffect() { try{if(!player||!player.width) return; const s=player.width*1.2; const e=document.createElement('div'); e.className='doubleJumpEffect'; const cr=gameContainer.getBoundingClientRect(); const cvr=canvas.getBoundingClientRect(); const ox=cvr.left-cr.left; const oy=cvr.top-cr.top; e.style.width=`${s}px`; e.style.height=`${s}px`; e.style.left=`${ox+player.x+player.width/2-s/2}px`; e.style.top=`${oy+player.y+player.height/2-s/2}px`; if(gameContainer) gameContainer.appendChild(e); setTimeout(()=>{if(e.parentNode)e.remove();},400);}catch(err){} }
+        function jump() {
+            if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return;
+            if(!player.jumping){
+                // Apply jump height setting
+                player.vy = player.jumpStrength;
+                player.jumping=true;
+                player.canDoubleJump=true;
+                player.hasDoubleJumped=false;
+            } else if(player.canDoubleJump&&!player.hasDoubleJumped){
+                // Apply jump height setting to double jump (slightly weaker)
+                player.vy = player.jumpStrength * 0.8;
+                player.canDoubleJump=false;
+                player.hasDoubleJumped=true;
+                createDoubleJumpEffect();
+            }
+        }
 
-        // --- createObstacle - Mit angepasster Y-Position für Himmelsobjekte
+        function setDucking(sd) {
+            if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return;
+            if(sd&&!isDucking){
+                isDucking=true;
+                player.height=player.duckHeight;
+                player.y=canvas.height-groundHeight-player.height;
+            } else if(!sd&&isDucking){
+                isDucking=false;
+                player.height=player.baseHeight;
+                player.y=canvas.height-groundHeight-player.height;
+                checkCollision();
+            }
+        }
+
+        function createDoubleJumpEffect() {
+            try{
+                if(!player||!player.width) return;
+                const s=player.width*1.2;
+                const e=document.createElement('div');
+                e.className='doubleJumpEffect';
+                const cr=gameContainer.getBoundingClientRect();
+                const cvr=canvas.getBoundingClientRect();
+                const ox=cvr.left-cr.left;
+                const oy=cvr.top-cr.top;
+                e.style.width=`${s}px`;
+                e.style.height=`${s}px`;
+                e.style.left=`${ox+player.x+player.width/2-s/2}px`;
+                e.style.top=`${oy+player.y+player.height/2-s/2}px`;
+                if(gameContainer) gameContainer.appendChild(e);
+                setTimeout(()=>{if(e.parentNode)e.remove();},400);
+            }catch(err){}
+        }
+
+        // --- createObstacle - Updated for settings
         function createObstacle() {
             try {
                 let chosenType = null;
@@ -418,14 +920,38 @@
                     yPos = canvas.height - groundHeight - scaledHeight;
                     // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
                     if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
-                } else { // Sky obstacle positioning
-                    // --- HIER DIE ÄNDERUNG FÜR FLIEGENDE OBJEKTE ---
-                    const minTopMargin = 170 * scaleFactor; // << GEÄNDERT: Erhöht, um Objekte tiefer zu positionieren
-                    // --- ENDE ÄNDERUNG ---
-                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 90 * scaleFactor; // Sicherheitsabstand über Spieler
-                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze für Himmelsobjekte
-                    const availableHeight = Math.max(20 * scaleFactor, safeSkyBottom - minTopMargin - scaledHeight); // Verfügbarer Bereich
-                    yPos = minTopMargin + Math.random() * availableHeight;
+                } else { // Sky obstacle positioning - IMPROVED with settings
+                    // Apply flying height setting
+                    const adjustedHeightMultiplier = gameSettings.flyingHeightMultiplier;
+
+                    // Base values
+                    const minTopMargin = 120 * scaleFactor; // Minimum distance from top
+                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 100 * scaleFactor; // Minimum clearance above player
+                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Bottom limit for sky objects
+
+                    // Apply height multiplier to change where flying objects appear vertically
+                    // Higher multiplier = higher position (smaller value of yPos)
+                    // Lower multiplier = lower position (larger value of yPos)
+
+                    // Calculate the total available height space
+                    const totalHeight = safeSkyBottom - minTopMargin;
+
+                    // Apply the multiplier inversely (2.0 means higher up, 0.5 means lower down)
+                    // We invert by subtracting from 2.0 so the slider behaves intuitively
+                    const heightPosition = (2.0 - adjustedHeightMultiplier) * 0.5;
+
+                    // Use the position to calculate the actual y position
+                    // Lower heightPosition values (0.0) will place objects higher
+                    // Higher values (1.0) will place objects lower
+                    yPos = minTopMargin + (totalHeight * heightPosition);
+
+                    // Add some randomness to prevent predictable patterns
+                    // Use less randomness to keep objects more predictable at their target height
+                    const randomRange = totalHeight * 0.3; // 30% randomness
+                    yPos += (Math.random() - 0.5) * randomRange;
+
+                    // Ensure we stay within safe bounds
+                    yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos));
                 }
 
                 // Das Hindernis wird mit allen nötigen Informationen erstellt
@@ -456,63 +982,171 @@
                 // --- ENDE ÄNDERUNG ---
                 width: sw,
                 height: sh,
-                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor
+                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor * gameSettings.speedMultiplier
             });
         }
 
-
         // --- Update ---
-        function update(dt) { if(currentState!==GameState.PLAYING)return; gameTime+=dt; updatePlayer(dt); updateObstacles(dt); updateClouds(dt); updateScore(dt); updateBackground(dt); updateDifficulty(dt); checkCollision(); }
-        function updatePlayer(dt) { if(!player||typeof player.vy==='undefined')return; player.vy+=player.gravity*dt; player.y+=player.vy*dt; const gl=canvas.height-groundHeight-player.height; if(player.y>=gl){player.y=gl;player.vy=0;if(player.jumping){player.jumping=false;player.canDoubleJump=false;player.hasDoubleJumped=false;setDucking(isDucking);}} }
-        // --- updateObstacles - Geschwindigkeitsunabhängige Kollision
+        function update(dt) {
+            if(currentState!==GameState.PLAYING) return;
+            gameTime+=dt;
+            updatePlayer(dt);
+            updateObstacles(dt);
+            updateClouds(dt);
+            updateScore(dt);
+            updateBackground(dt);
+            updateDifficulty(dt);
+            checkCollision();
+        }
+
+        function updatePlayer(dt) {
+            if(!player||typeof player.vy==='undefined') return;
+            player.vy += player.gravity * dt;
+            player.y += player.vy * dt;
+            const gl = canvas.height - groundHeight - player.height;
+            if(player.y >= gl){
+                player.y = gl;
+                player.vy = 0;
+                if(player.jumping){
+                    player.jumping = false;
+                    player.canDoubleJump = false;
+                    player.hasDoubleJumped = false;
+                    setDucking(isDucking);
+                }
+            }
+        }
+
+        // --- updateObstacles - Updated for settings
         function updateObstacles(dt) {
             for(let i=obstacles.length-1; i>=0; i--){
-                obstacles[i].x -= speed*dt;
+                // Apply speed setting to movement
+                obstacles[i].x -= speed * dt;
                 if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
             }
 
             obstacleTimer -= dt;
             if(obstacleTimer <= 0){
-                createObstacle(); // Ruft die neue Funktion auf
+                createObstacle();
+
+                // Apply spawn rate setting
                 const speedFactor = Math.max(0.4, baseSpeed / (speed / scaleFactor));
                 let nextSpawnTime = (minObstacleTime + Math.random() * (maxObstacleTime - minObstacleTime)) * speedFactor;
-                obstacleTimer = Math.max(0.7, nextSpawnTime); // Mindestabstand sicherstellen
+
+                // Apply spawn rate setting
+                nextSpawnTime = nextSpawnTime / gameSettings.spawnRateMultiplier;
+
+                // Ensure minimum delay
+                obstacleTimer = Math.max(0.7, nextSpawnTime);
             }
         }
-        function updateClouds(dt) { for(let i=clouds.length-1;i>=0;i--){clouds[i].x-=clouds[i].speed*dt;if(clouds[i].x+clouds[i].width<0)clouds.splice(i,1);} cloudTimer-=dt; if(cloudTimer<=0&&clouds.length<5){createCloud();cloudTimer=3+Math.random()*5;} } // Wolken bleiben gleich
-        function updateScore(dt) { if(!scoreElement) return; score+=(speed/scaleFactor)*dt*0.1; scoreElement.textContent=Math.floor(score/10); }
+
+        function updateClouds(dt) {
+            for(let i=clouds.length-1; i>=0; i--){
+                clouds[i].x -= clouds[i].speed * dt;
+                if(clouds[i].x + clouds[i].width < 0) clouds.splice(i, 1);
+            }
+            cloudTimer -= dt;
+            if(cloudTimer <= 0 && clouds.length < 5){
+                createCloud();
+                // Apply spawn rate setting to clouds too, but with less impact
+                const baseCloudTime = 3 + Math.random() * 5;
+                cloudTimer = baseCloudTime / Math.sqrt(gameSettings.spawnRateMultiplier); // Square root makes the effect less dramatic
+            }
+        }
+
+        function updateScore(dt) {
+            if(!scoreElement) return;
+            // Apply speed setting to score calculation
+            score += (speed / scaleFactor) * dt * 0.1;
+            scoreElement.textContent = Math.floor(score/10);
+        }
+
         // --- updateDifficulty - Mit konsistenter Hitbox
         function updateDifficulty(dt) {
-             speed += (speedIncrement * baseSpeed) * scaleFactor * dt;
-             const tier = Math.floor(Math.floor(score/10)/100);
-             const night = tier % 2 !== 0;
-             if(night !== isNight) {
-                 isNight = night;
-                 if(document.body) document.body.style.backgroundColor = isNight ? '#3a3a4a' : '#e0e0e0';
-             }
-         }
+            // Apply speed increment based on speed setting
+            speed += (speedIncrement * baseSpeed) * scaleFactor * gameSettings.speedMultiplier * dt;
+            const tier = Math.floor(Math.floor(score/10)/100);
+            const night = tier % 2 !== 0;
+            if(night !== isNight) {
+                isNight = night;
+                if(document.body) document.body.style.backgroundColor = isNight ? '#3a3a4a' : '#e0e0e0';
+            }
+        }
+
         // --- updateBackground - Nutzt neue BG Logik ---
         function updateBackground(dt) {
-             const img=isNight?nightBgImg:dayBgImg; if (!img||!img.complete||img.naturalWidth===0)return;
-             const h=canvas.height; const r=img.naturalWidth/img.naturalHeight; let sw=h*r; if(sw<canvas.width)sw=canvas.width;
-             backgroundX-=(speed*0.3)*dt; // Angepasste Parallax
-             if(backgroundX<=-sw)backgroundX+=sw;
-         }
-        function checkCollision() {
-            if(isInvulnerable||currentState!==GameState.PLAYING||!player||!player.width)return;
-            const s=0.75;
-            const px=player.x+player.width*(1-s)/2;
-            const py=player.y+player.height*(1-s)/2;
-            const pw=player.width*s;
-            const ph=player.height*s;
+            const img = isNight ? nightBgImg : dayBgImg;
+            if (!img || !img.complete || img.naturalWidth === 0) return;
+            const h = canvas.height;
+            const r = img.naturalWidth / img.naturalHeight;
+            let sw = h * r;
+            if(sw < canvas.width) sw = canvas.width;
 
-            for(const o of obstacles){
-                const data = obstacleData[o.type] || {};
+            // Apply speed setting to parallax
+            backgroundX -= (speed * 0.3) * dt;
+            if(backgroundX <= -sw) backgroundX += sw;
+        }
+
+        // --- checkCollision - Enhanced with improved hitboxes for flying objects and optional visualization
+        function checkCollision() {
+            if(isInvulnerable || currentState !== GameState.PLAYING || !player || !player.width) return;
+
+            // Apply hitbox size setting
+            const s = gameSettings.hitboxSizePercentage;
+            const px = player.x + player.width * (1-s) / 2;
+            const py = player.y + player.height * (1-s) / 2;
+            const pw = player.width * s;
+            const ph = player.height * s;
+
+            // Clear debug overlay if it exists and hitboxes should be shown
+            if (debugOverlay) {
+                // Only show hitboxes if the setting is enabled
+                if (gameSettings.showHitboxes) {
+                    debugOverlay.innerHTML = '';
+
+                    // Visualize player hitbox
+                    const playerHitbox = document.createElement('div');
+                    playerHitbox.style.position = 'absolute';
+                    playerHitbox.style.left = px + 'px';
+                    playerHitbox.style.top = py + 'px';
+                    playerHitbox.style.width = pw + 'px';
+                    playerHitbox.style.height = ph + 'px';
+                    playerHitbox.style.border = '2px solid rgba(0, 255, 0, 0.7)';
+                    playerHitbox.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
+                    debugOverlay.appendChild(playerHitbox);
+                } else {
+                    // Clear the overlay if hitboxes should not be shown
+                    debugOverlay.innerHTML = '';
+                }
+            }
+
+            for(const obstacle of obstacles){
+                const data = obstacleData[obstacle.type] || {};
+
+                // Apply hitbox adjustments based on obstacle type
                 const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
-                const hitboxLeft = o.x + hitboxOffsetX;
-                const hitboxRight = o.x + o.width - hitboxOffsetX;
-                const hitboxTop = o.y;
-                const hitboxBottom = o.y + o.height;
+
+                // Added Y offset for flying obstacles - fixes the hitbox issue
+                const hitboxOffsetY = data.category === 'sky' ?
+                    ((data.hitboxOffsetY || 0) * scaleFactor) : 0;
+
+                const hitboxLeft = obstacle.x + hitboxOffsetX;
+                const hitboxRight = obstacle.x + obstacle.width - hitboxOffsetX;
+                const hitboxTop = obstacle.y + hitboxOffsetY; // Apply Y offset
+                const hitboxBottom = obstacle.y + obstacle.height - hitboxOffsetY; // Apply Y offset
+
+                // Visualize obstacle hitboxes if enabled
+                if (debugOverlay && gameSettings.showHitboxes) {
+                    const obstacleHitbox = document.createElement('div');
+                    obstacleHitbox.style.position = 'absolute';
+                    obstacleHitbox.style.left = hitboxLeft + 'px';
+                    obstacleHitbox.style.top = hitboxTop + 'px';
+                    obstacleHitbox.style.width = (hitboxRight - hitboxLeft) + 'px';
+                    obstacleHitbox.style.height = (hitboxBottom - hitboxTop) + 'px';
+                    obstacleHitbox.style.border = '2px solid rgba(255, 0, 0, 0.7)';
+                    obstacleHitbox.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                    debugOverlay.appendChild(obstacleHitbox);
+                }
 
                 if(px < hitboxRight &&
                    px + pw > hitboxLeft &&
@@ -525,63 +1159,135 @@
         }
 
         // --- Draw ---
-        function draw() { if(!ctx) return; drawBackground(); drawClouds(); drawGround(); drawObstacles(); drawPlayer(); }
+        function draw() {
+            if(!ctx) return;
+            drawBackground();
+            drawClouds();
+            drawGround();
+            drawObstacles();
+            drawPlayer();
+        }
+
         // --- drawBackground - Nutzt neue BG Logik ---
         function drawBackground() {
-            const img=isNight?nightBgImg:dayBgImg;
-            if (img&&img.complete&&img.naturalWidth>0){
-                const h=canvas.height; const r=img.naturalWidth/img.naturalHeight; let sw=h*r; let sh=h; let y=0;
-                if(sw<canvas.width){sw=canvas.width; sh=sw/r; y=h-sh;}
-                const copies=Math.ceil(canvas.width/sw)+1;
-                for(let i=0;i<copies;i++) { try { ctx.drawImage(img,backgroundX+(sw*i),y,sw,sh); } catch(e){console.error("BG Draw Err:", e); ctx.fillStyle=isNight?'#2d2d3a':'#87CEEB'; ctx.fillRect(0,0,canvas.width,canvas.height); break; }}
-            } else { ctx.fillStyle=isNight?'#2d2d3a':'#87CEEB'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+            const img = isNight ? nightBgImg : dayBgImg;
+            if (img && img.complete && img.naturalWidth > 0){
+                const h = canvas.height;
+                const r = img.naturalWidth / img.naturalHeight;
+                let sw = h * r;
+                let sh = h;
+                let y = 0;
+                if(sw < canvas.width){
+                    sw = canvas.width;
+                    sh = sw / r;
+                    y = h - sh;
+                }
+                const copies = Math.ceil(canvas.width / sw) + 1;
+                for(let i = 0; i < copies; i++) {
+                    try {
+                        ctx.drawImage(img, backgroundX + (sw * i), y, sw, sh);
+                    } catch(e){
+                        console.error("BG Draw Err:", e);
+                        ctx.fillStyle = isNight ? '#2d2d3a' : '#87CEEB';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        break;
+                    }
+                }
+            } else {
+                ctx.fillStyle = isNight ? '#2d2d3a' : '#87CEEB';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
         }
-        function drawGround() { if(!ctx) return; ctx.fillStyle=isNight?'rgba(40,40,50,0.8)':'rgba(100,140,80,0.7)'; ctx.fillRect(0,canvas.height-groundHeight,canvas.width,groundHeight); ctx.fillStyle=isNight?'rgba(50,50,60,0.8)':'rgba(120,160,100,0.7)'; ctx.fillRect(0,canvas.height-groundHeight,canvas.width,2*scaleFactor); }
-        function drawPlayer() { if(!ctx || !player || !player.image) return; ctx.globalAlpha=(isInvulnerable && currentState===GameState.PLAYING)?(0.6+Math.sin(Date.now()/100)*0.4):1; if(player.image.complete&&player.image.naturalWidth>0){ctx.drawImage(player.image,player.x,player.y,player.width,player.height);}else{ctx.fillStyle=(character==='fuchs'?'#ff6f00':'#8d6e63');ctx.fillRect(player.x,player.y,player.width,player.height);/*Face*/ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(player.x+player.width*0.35,player.y+player.height*0.3,player.width*0.08,0,Math.PI*2);ctx.arc(player.x+player.width*0.65,player.y+player.height*0.3,player.width*0.08,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=1*scaleFactor;ctx.beginPath();ctx.arc(player.x+player.width*0.5,player.y+player.height*0.6,player.width*0.15,0.2*Math.PI,0.8*Math.PI);ctx.stroke();} ctx.globalAlpha=1; }
-        // --- drawObstacles - Mit Hitbox-Visualisierung (optional)
+
+        function drawGround() {
+            if(!ctx) return;
+            ctx.fillStyle = isNight ? 'rgba(40,40,50,0.8)' : 'rgba(100,140,80,0.7)';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+            ctx.fillStyle = isNight ? 'rgba(50,50,60,0.8)' : 'rgba(120,160,100,0.7)';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 2 * scaleFactor);
+        }
+
+        function drawPlayer() {
+            if(!ctx || !player || !player.image) return;
+            ctx.globalAlpha = (isInvulnerable && currentState === GameState.PLAYING) ? (0.6 + Math.sin(Date.now() / 100) * 0.4) : 1;
+            if(player.image.complete && player.image.naturalWidth > 0){
+                ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+            } else {
+                ctx.fillStyle = (character === 'fuchs' ? '#ff6f00' : '#8d6e63');
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                /*Face*/
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(player.x + player.width * 0.35, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
+                ctx.arc(player.x + player.width * 0.65, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1 * scaleFactor;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width * 0.5, player.y + player.height * 0.6, player.width * 0.15, 0.2 * Math.PI, 0.8 * Math.PI);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // --- drawObstacles - Updated to include hitbox visualization if needed
         function drawObstacles() {
             if (!ctx) return;
             for (const obstacle of obstacles) {
                 try {
                     if (obstacle.image && obstacle.image.complete && obstacle.image.naturalWidth > 0) {
                         ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                        /* // DEBUG: Hitbox visualisieren
-                        const data = obstacleData[obstacle.type] || {};
-                        const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
-                        const hitboxLeft = obstacle.x + hitboxOffsetX;
-                        const hitboxRight = obstacle.x + obstacle.width - hitboxOffsetX;
-                        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; ctx.lineWidth = 2;
-                        ctx.strokeRect(hitboxLeft, obstacle.y, hitboxRight - hitboxLeft, obstacle.height);
-                        */
                     } else {
                         ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D';
                         ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                        ctx.fillStyle = '#000'; ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#000';
+                        ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
                         ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                     }
                 } catch (drawErr) {
                     console.error("Error drawing obstacle:", obstacle.type, drawErr);
-                    ctx.fillStyle = 'red'; ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 } finally {
-                     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+                     ctx.textAlign = 'start';
+                     ctx.textBaseline = 'alphabetic';
                 }
             }
         }
-        function drawClouds() { if(!ctx)return; ctx.fillStyle=isNight?'rgba(100,100,100,0.6)':'rgba(255,255,255,0.7)'; ctx.strokeStyle=isNight?'rgba(80,80,80,0.6)':'rgba(220,220,220,0.7)'; ctx.lineWidth=1*scaleFactor; for(const c of clouds){ctx.beginPath();ctx.ellipse(c.x+c.width/2,c.y+c.height/2,c.width/2,c.height/2,0,0,Math.PI*2); ctx.ellipse(c.x+c.width*0.3,c.y+c.height*0.3,c.width*0.3,c.height*0.4,0,0,Math.PI*2); ctx.ellipse(c.x+c.width*0.7,c.y+c.height*0.4,c.width*0.4,c.height*0.5,0,0,Math.PI*2); ctx.fill(); ctx.stroke();} }
 
-        // --- UI Update --- Mit Anleitung nur vor dem Spielstart
+        function drawClouds() {
+            if(!ctx) return;
+            ctx.fillStyle = isNight ? 'rgba(100,100,100,0.6)' : 'rgba(255,255,255,0.7)';
+            ctx.strokeStyle = isNight ? 'rgba(80,80,80,0.6)' : 'rgba(220,220,220,0.7)';
+            ctx.lineWidth = 1 * scaleFactor;
+            for(const c of clouds){
+                ctx.beginPath();
+                ctx.ellipse(c.x + c.width / 2, c.y + c.height / 2, c.width / 2, c.height / 2, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x + c.width * 0.3, c.y + c.height * 0.3, c.width * 0.3, c.height * 0.4, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x + c.width * 0.7, c.y + c.height * 0.4, c.width * 0.4, c.height * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        // --- UI Update --- Updated for settings panel
         function updateUI() {
             try {
                 const pl = currentState === GameState.PLAYING;
                 const pa = currentState === GameState.PAUSED;
                 const go = currentState === GameState.GAMEOVER;
                 const re = currentState === GameState.READY;
+                const se = currentState === GameState.SETTINGS;
 
                 if(startButton) startButton.style.display = (re || go) ? 'inline-block' : 'none';
+                if(settingsButton) settingsButton.style.display = (re || go) ? 'inline-block' : 'none';
                 if(characterSelectContainer) characterSelectContainer.style.display = (re || go) ? 'flex' : 'none';
                 if(restartButton) restartButton.style.display = go ? 'inline-block' : 'none';
                 if(gameOverElement) gameOverElement.style.display = go ? 'flex' : 'none';
                 if(pauseOverlay) pauseOverlay.style.display = pa ? 'flex' : 'none';
+                if(settingsPanel) settingsPanel.style.display = se ? 'flex' : 'none';
                 if(duckButton) duckButton.style.display = pl ? 'flex' : 'none';
                 if(backButton) backButton.style.display = (pl || pa) ? 'flex' : 'none';
 
@@ -598,17 +1304,136 @@
         }
 
         // --- Game Loop ---
-        function gameLoop(timestamp) { if(typeof lastTime==='undefined'||isNaN(timestamp)){console.error("Loop Error TS/LT");lastTime=performance.now();if(animationFrameId)cancelAnimationFrame(animationFrameId);return;} const dt=Math.min(0.05,(timestamp-lastTime)/1000); lastTime=timestamp; try { if (currentState===GameState.PLAYING) update(dt); draw(); } catch (error) { console.error("!!! Runtime Error in Loop:", error); if(animationFrameId)cancelAnimationFrame(animationFrameId); animationFrameId=null; currentState=GameState.GAMEOVER; updateUI(); return; } if (currentState===GameState.PLAYING||currentState===GameState.READY||currentState===GameState.INIT) animationFrameId=requestAnimationFrame(gameLoop); else animationFrameId=null; }
+        function gameLoop(timestamp) {
+            if(typeof lastTime === 'undefined' || isNaN(timestamp)){
+                console.error("Loop Error TS/LT");
+                lastTime = performance.now();
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                return;
+            }
+            const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+            lastTime = timestamp;
+            try {
+                if (currentState === GameState.PLAYING) update(dt);
+                draw();
+            } catch (error) {
+                console.error("!!! Runtime Error in Loop:", error);
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                currentState = GameState.GAMEOVER;
+                updateUI();
+                return;
+            }
+            if (currentState === GameState.PLAYING || currentState === GameState.READY || currentState === GameState.INIT)
+                animationFrameId = requestAnimationFrame(gameLoop);
+            else
+                animationFrameId = null;
+        }
 
         // --- Event Handlers ---
-        function handleKeyDown(e) { try{let a=false;if(e.key==='p'||e.key==='P'||e.key==='Escape'){if(currentState===GameState.PLAYING||currentState===GameState.PAUSED)togglePause();a=true;}else if(e.key===' '||e.key==='ArrowUp'){if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();a=true;}else if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(true);a=true;}if(a)e.preventDefault();}catch(err){} }
-        function handleKeyUp(e) { try{let a=false;if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(false);a=true;}if(a)e.preventDefault();}catch(err){} }
-        function handleCanvasPointerDown(e) { try{if(currentState===GameState.PAUSED)togglePause();else if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();e.preventDefault();}catch(err){} }
-        function handleDuckButtonPointerDown(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(true);e.target.setPointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
-        function handleDuckButtonPointerUp(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(false);if(e.target.hasPointerCapture(e.pointerId))e.target.releasePointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
-        function handleDuckButtonPointerCancel(e) { try{if(currentState===GameState.PLAYING&&e.target){setDucking(false);if(e.target.hasPointerCapture(e.pointerId))e.target.releasePointerCapture(e.pointerId);}e.preventDefault();}catch(err){} }
-        function handleCharacterSelect(e) { try{if((currentState!==GameState.READY && currentState!==GameState.GAMEOVER)||!e.target||e.target.tagName!=='IMG')return;const nc=(e.target.id==='fuchs')?'fuchs':'waschbaer';if(nc!==character){character=nc;if(fuchsSelect)fuchsSelect.classList.toggle('selected',character==='fuchs');if(waschbaerSelect)waschbaerSelect.classList.toggle('selected',character==='waschbaer');if(player)player.image=(character==='fuchs'?fuchsImg:waschbaerImg);if(currentState===GameState.READY){resetGame();draw();}}}catch(err){} }
-        function handleResize() { try{resizeCanvas();if(currentState !== GameState.PLAYING) draw();}catch(err){} } // Nur draw() wenn nicht aktiv spielt
+        function handleKeyDown(e) {
+            try{
+                let a = false;
+                if(e.key === 'p' || e.key === 'P' || e.key === 'Escape'){
+                    if(currentState === GameState.PLAYING || currentState === GameState.PAUSED)
+                        togglePause();
+                    a = true;
+                } else if(e.key === ' ' || e.key === 'ArrowUp'){
+                    if(currentState === GameState.READY || currentState === GameState.GAMEOVER)
+                        startGame();
+                    else if(currentState === GameState.PLAYING)
+                        jump();
+                    a = true;
+                } else if(e.key === 'ArrowDown'){
+                    if(currentState === GameState.PLAYING)
+                        setDucking(true);
+                    a = true;
+                }
+                if(a) e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleKeyUp(e) {
+            try{
+                let a = false;
+                if(e.key === 'ArrowDown'){
+                    if(currentState === GameState.PLAYING)
+                        setDucking(false);
+                    a = true;
+                }
+                if(a) e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleCanvasPointerDown(e) {
+            try{
+                if(currentState === GameState.PAUSED)
+                    togglePause();
+                else if(currentState === GameState.READY || currentState === GameState.GAMEOVER)
+                    startGame();
+                else if(currentState === GameState.PLAYING)
+                    jump();
+                e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleDuckButtonPointerDown(e) {
+            try{
+                if(currentState === GameState.PLAYING && e.target){
+                    setDucking(true);
+                    e.target.setPointerCapture(e.pointerId);
+                }
+                e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleDuckButtonPointerUp(e) {
+            try{
+                if(currentState === GameState.PLAYING && e.target){
+                    setDucking(false);
+                    if(e.target.hasPointerCapture(e.pointerId))
+                        e.target.releasePointerCapture(e.pointerId);
+                }
+                e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleDuckButtonPointerCancel(e) {
+            try{
+                if(currentState === GameState.PLAYING && e.target){
+                    setDucking(false);
+                    if(e.target.hasPointerCapture(e.pointerId))
+                        e.target.releasePointerCapture(e.pointerId);
+                }
+                e.preventDefault();
+            } catch(err){}
+        }
+
+        function handleCharacterSelect(e) {
+            try{
+                if((currentState !== GameState.READY && currentState !== GameState.GAMEOVER) || !e.target || e.target.tagName !== 'IMG')
+                    return;
+                const nc = (e.target.id === 'fuchs') ? 'fuchs' : 'waschbaer';
+                if(nc !== character){
+                    character = nc;
+                    if(fuchsSelect) fuchsSelect.classList.toggle('selected', character === 'fuchs');
+                    if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
+                    if(player) player.image = (character === 'fuchs' ? fuchsImg : waschbaerImg);
+                    if(currentState === GameState.READY){
+                        resetGame();
+                        draw();
+                    }
+                }
+            } catch(err){}
+        }
+
+        function handleResize() {
+            try{
+                resizeCanvas();
+                if(currentState !== GameState.PLAYING) draw();
+            } catch(err){}
+        }
+
         function addEventListeners() {
             console.log("Listeners: Adding...");
             try {
@@ -618,7 +1443,11 @@
                 if(startButton) startButton.addEventListener('click', startGame);
                 if(restartButton) restartButton.addEventListener('click', startGame);
                 if(quitButton) quitButton.addEventListener('click', quitGame);
-                if(backButton) backButton.addEventListener('click', backToMenu); // Neuer Event Listener für den Back Button
+                if(backButton) backButton.addEventListener('click', backToMenu);
+                if(settingsButton) settingsButton.addEventListener('click', toggleSettingsPanel);
+                if(settingsCloseButton) settingsCloseButton.addEventListener('click', toggleSettingsPanel);
+                if(settingsResetButton) settingsResetButton.addEventListener('click', resetGameSettings);
+
                 if(duckButton) {
                     duckButton.addEventListener('pointerdown', handleDuckButtonPointerDown);
                     duckButton.addEventListener('pointerup', handleDuckButtonPointerUp);
@@ -634,9 +1463,7 @@
         }
 
         // --- Start ---
-        // window.addEventListener('load', init); // Wird oben gesetzt
         console.log("--- Script End ---");
-
     </script>
 </body>
 </html>
