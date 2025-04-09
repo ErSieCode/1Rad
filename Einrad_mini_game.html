@@ -135,8 +135,9 @@
         @keyframes doubleJumpEffect { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.5); opacity: 0; } }
         .doubleJumpEffect { position: absolute; border-radius: 50%; background-color: rgba(255, 215, 0, 0.6); pointer-events: none; z-index: 15; animation: doubleJumpEffect 0.4s ease-out forwards; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
-        /* Settings Panel Styles - UPDATED FOR MOBILE RESPONSIVENESS */
+        /* Settings Panel Styles - UPDATED FOR DIFFICULTY LEVELS */
         #settingsPanel {
             position: absolute;
             top: 0;
@@ -197,59 +198,98 @@
             text-align: center;
         }
 
-        /* Updated settings grid for better mobile responsiveness */
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 90%;
-            max-width: 500px;
-            margin-bottom: 20px;
-        }
-
-        /* On small screens, make the grid 1 column */
-        @media (max-width: 500px) {
-            .settings-grid {
-                grid-template-columns: 1fr;
-                width: 95%;
-            }
-
-            /* Increase touch target sizes on mobile */
-            .setting-item input[type="range"] {
-                height: 30px;
-            }
-
-            .checkbox-container input[type="checkbox"] {
-                width: 24px;
-                height: 24px;
-            }
-        }
-
-        .setting-item {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
+        /* NEW DIFFICULTY SELECTION STYLES */
+        .difficulty-selection {
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 500px;
         }
 
-        .setting-item label {
-            margin-bottom: 8px;
-            font-size: max(1.8vmin, 14px);
+        .difficulty-title {
+            font-size: max(2.2vmin, 16px);
             font-weight: bold;
-        }
-
-        .setting-item input[type="range"] {
-            width: 100%;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
-
-        .value-display {
-            font-size: max(1.6vmin, 12px);
+            margin-bottom: 10px;
             text-align: center;
             color: #4CAF50;
+        }
+
+        .difficulty-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .difficulty-option {
+            position: relative;
+            width: calc(50% - 10px);
+            min-width: 100px;
+        }
+
+        @media (max-width: 500px) {
+            .difficulty-option {
+                width: 100%;
+            }
+        }
+
+        .difficulty-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .difficulty-option label {
+            display: block;
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
             font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .difficulty-option input[type="radio"]:checked + label {
+            border-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.3);
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .difficulty-option:nth-child(1) label {
+            color: #90EE90; /* Light green for easy */
+        }
+
+        .difficulty-option:nth-child(2) label {
+            color: #FFFFFF; /* White for normal */
+        }
+
+        .difficulty-option:nth-child(3) label {
+            color: #FFA500; /* Orange for hard */
+        }
+
+        .difficulty-option:nth-child(4) label {
+            color: #FF6347; /* Tomato for very hard */
+        }
+
+        /* Setting sections */
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            max-width: 500px;
+            margin-bottom: 15px;
+        }
+
+        .settings-section-title {
+            font-size: max(1.8vmin, 15px);
+            margin-bottom: 5px;
+            color: #DDD;
+            text-align: center;
         }
 
         /* Checkbox styling for hitbox toggle */
@@ -342,46 +382,129 @@
             <button id="restartButton">RESTART</button>
         </div>
 
-        <!-- Settings Panel - UPDATED WITH BACK BUTTON AND BETTER MOBILE LAYOUT -->
+        <!-- Settings Panel - UPDATED WITH DIFFICULTY LEVELS -->
         <div id="settingsPanel">
             <div class="settings-header">
                 <button id="settingsBackButton">⬅</button>
                 <h2>Game Settings</h2>
             </div>
-            <div class="settings-grid">
-                <div class="setting-item">
-                    <label for="speedSetting">Game Speed:</label>
-                    <input type="range" id="speedSetting" min="50" max="150" value="100">
-                    <div class="value-display" id="speedValue">100%</div>
-                </div>
-                <div class="setting-item">
-                    <label for="spawnRateSetting">Spawn Rate:</label>
-                    <input type="range" id="spawnRateSetting" min="50" max="200" value="100">
-                    <div class="value-display" id="spawnRateValue">100%</div>
-                </div>
-                <div class="setting-item">
-                    <label for="jumpHeightSetting">Jump Height:</label>
-                    <input type="range" id="jumpHeightSetting" min="70" max="130" value="100">
-                    <div class="value-display" id="jumpHeightValue">100%</div>
-                </div>
-                <div class="setting-item">
-                    <label for="gravitySetting">Gravity Strength:</label>
-                    <input type="range" id="gravitySetting" min="70" max="130" value="100">
-                    <div class="value-display" id="gravityValue">100%</div>
-                </div>
-                <div class="setting-item">
-                    <label for="flyingHeightSetting">Flying Objects Height:</label>
-                    <input type="range" id="flyingHeightSetting" min="50" max="150" value="100">
-                    <div class="value-display" id="flyingHeightValue">100%</div>
-                </div>
-                <div class="setting-item">
-                    <label for="hitboxSizeSetting">Hitbox Size:</label>
-                    <input type="range" id="hitboxSizeSetting" min="60" max="100" value="75">
-                    <div class="value-display" id="hitboxSizeValue">75%</div>
+
+            <!-- Game Speed Setting -->
+            <div class="difficulty-selection">
+                <div class="difficulty-title">Game Speed</div>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" id="speedEasy" name="speedSetting" value="easy">
+                        <label for="speedEasy">Einfach</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="speedNormal" name="speedSetting" value="normal" checked>
+                        <label for="speedNormal">Normal</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="speedHard" name="speedSetting" value="hard">
+                        <label for="speedHard">Schwer</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="speedVeryHard" name="speedSetting" value="veryHard">
+                        <label for="speedVeryHard">Sehr Schwer</label>
+                    </div>
                 </div>
             </div>
 
-            <!-- Added hitbox visibility toggle checkbox -->
+            <!-- Jump Height Setting -->
+            <div class="difficulty-selection">
+                <div class="difficulty-title">Jump Height</div>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" id="jumpEasy" name="jumpSetting" value="easy">
+                        <label for="jumpEasy">Einfach</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="jumpNormal" name="jumpSetting" value="normal" checked>
+                        <label for="jumpNormal">Normal</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="jumpHard" name="jumpSetting" value="hard">
+                        <label for="jumpHard">Schwer</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="jumpVeryHard" name="jumpSetting" value="veryHard">
+                        <label for="jumpVeryHard">Sehr Schwer</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spawn Rate Setting -->
+            <div class="difficulty-selection">
+                <div class="difficulty-title">Spawn Rate</div>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" id="spawnEasy" name="spawnSetting" value="easy">
+                        <label for="spawnEasy">Einfach</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="spawnNormal" name="spawnSetting" value="normal" checked>
+                        <label for="spawnNormal">Normal</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="spawnHard" name="spawnSetting" value="hard">
+                        <label for="spawnHard">Schwer</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="spawnVeryHard" name="spawnSetting" value="veryHard">
+                        <label for="spawnVeryHard">Sehr Schwer</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flying Objects Height Setting -->
+            <div class="difficulty-selection">
+                <div class="difficulty-title">Flying Objects Height</div>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" id="flyingHeightEasy" name="flyingHeightSetting" value="easy">
+                        <label for="flyingHeightEasy">Einfach</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="flyingHeightNormal" name="flyingHeightSetting" value="normal" checked>
+                        <label for="flyingHeightNormal">Normal</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="flyingHeightHard" name="flyingHeightSetting" value="hard">
+                        <label for="flyingHeightHard">Schwer</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="flyingHeightVeryHard" name="flyingHeightSetting" value="veryHard">
+                        <label for="flyingHeightVeryHard">Sehr Schwer</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hitbox Size Setting -->
+            <div class="difficulty-selection">
+                <div class="difficulty-title">Hitbox Size</div>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" id="hitboxSizeEasy" name="hitboxSizeSetting" value="easy">
+                        <label for="hitboxSizeEasy">Einfach</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="hitboxSizeNormal" name="hitboxSizeSetting" value="normal" checked>
+                        <label for="hitboxSizeNormal">Normal</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="hitboxSizeHard" name="hitboxSizeSetting" value="hard">
+                        <label for="hitboxSizeHard">Schwer</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" id="hitboxSizeVeryHard" name="hitboxSizeSetting" value="veryHard">
+                        <label for="hitboxSizeVeryHard">Sehr Schwer</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hitbox visualization toggle -->
             <div class="checkbox-container">
                 <input type="checkbox" id="showHitboxSetting">
                 <label for="showHitboxSetting">Show Hitboxes</label>
@@ -574,67 +697,93 @@
         const initialObstacleCooldown = 3.0;
         const highStumpMinTime = 45;
 
+        // Variable to track separate spawn timers for ground and sky obstacles
+        let groundObstacleTimer = 0;
+        let skyObstacleTimer = 0;
+
+        // Additional offset timers for more randomized spawning
+        let groundObstacleTimerOffset = 0;
+        let skyObstacleTimerOffset = 0;
+
         // Skalierungsfaktor für alle Spielelemente - Charakter etwas schmaler machen
         const globalSizeFactor = 1.25; // 25% größer
         const playerWidthRatio = 0.9; // Character width is 90% of normal to make it slightly slimmer
 
-        // --- Game Settings with defaults ---
+        // Difficulty level constants for ground and air obstacles
+        const GroundObstacleMode = {
+            EASY: { timer: 3.5, independent: false },
+            NORMAL: { timer: 2.5, independent: false },
+            HARD: { timer: 1.8, independent: true },
+            VERY_HARD: { timer: 1.0, independent: true }
+        };
+
+        const SkyObstacleMode = {
+            EASY: { timer: 3.5, independent: false },
+            NORMAL: { timer: 2.5, independent: false },
+            HARD: { timer: 1.8, independent: true },
+            VERY_HARD: { timer: 1.0, independent: true }
+        };
+
+        // --- Game Settings with difficulty levels ---
         let gameSettings = {
-            speedMultiplier: 1.0,           // Base game speed
-            spawnRateMultiplier: 1.0,       // Spawn rate of obstacles
-            jumpHeightMultiplier: 1.0,      // Jump strength
-            gravityMultiplier: 1.0,         // Gravity strength
-            flyingHeightMultiplier: 1.0,    // Height of flying objects
-            hitboxSizePercentage: 0.75,     // Hitbox size (default 75%)
-            showHitboxes: false             // Added: Show hitboxes toggle
+            // Changed from multipliers to difficulty levels
+            speedLevel: 'normal',           // easy, normal, hard, veryHard
+            jumpHeightLevel: 'normal',      // easy, normal, hard, veryHard
+            spawnRateLevel: 'normal',       // easy, normal, hard, veryHard
+            flyingHeightLevel: 'normal',    // easy, normal, hard, veryHard
+            hitboxSizeLevel: 'normal',      // easy, normal, hard, veryHard
+            showHitboxes: false             // Toggle for hitbox visualization
+        };
+
+        // Difficulty level values
+        const difficultyValues = {
+            speed: {
+                easy: 0.7,      // Very slow
+                normal: 1.0,    // Normal speed
+                hard: 1.3,      // Fast
+                veryHard: 1.6   // Very fast
+            },
+            jumpHeight: {
+                easy: 1.3,      // Very high jump
+                normal: 1.0,    // Normal jump
+                hard: 0.8,      // Low jump
+                veryHard: 0.7   // Very low jump (just enough to clear objects)
+            },
+            gravity: {
+                easy: 0.8,      // Less gravity for easier control
+                normal: 1.0,    // Normal gravity
+                hard: 1.2,      // More gravity
+                veryHard: 1.3   // Very strong gravity
+            },
+            flyingHeight: {
+                easy: 0.3,      // Flying objects very high (easier)
+                normal: 0.5,    // Flying objects normal height
+                hard: 0.7,      // Flying objects low (harder)
+                veryHard: 0.95  // Flying objects extremely low (ducking required)
+            },
+            hitboxSize: {
+                easy: 0.7,      // Smaller hitbox (more forgiving)
+                normal: 0.75,   // Normal hitbox
+                hard: 0.8,      // Larger hitbox
+                veryHard: 0.85  // Very large hitbox
+            }
         };
 
         // --- Settings Control Functions ---
-        function updateSettingValue(settingId, valueId, value, suffix = '%') {
-            const slider = document.getElementById(settingId);
-            const display = document.getElementById(valueId);
-
-            if (slider && display) {
-                slider.value = value;
-                display.textContent = value + suffix;
-            }
-        }
-
         function initializeSettings() {
-            // Initialize all settings controls
-            const settingControls = [
-                { id: 'speedSetting', valueId: 'speedValue', prop: 'speedMultiplier', multiplier: 100 },
-                { id: 'spawnRateSetting', valueId: 'spawnRateValue', prop: 'spawnRateMultiplier', multiplier: 100 },
-                { id: 'jumpHeightSetting', valueId: 'jumpHeightValue', prop: 'jumpHeightMultiplier', multiplier: 100 },
-                { id: 'gravitySetting', valueId: 'gravityValue', prop: 'gravityMultiplier', multiplier: 100 },
-                { id: 'flyingHeightSetting', valueId: 'flyingHeightValue', prop: 'flyingHeightMultiplier', multiplier: 100 },
-                { id: 'hitboxSizeSetting', valueId: 'hitboxSizeValue', prop: 'hitboxSizePercentage', multiplier: 100 }
-            ];
+            // Find all radio buttons for each setting type
+            const speedRadios = document.querySelectorAll('input[name="speedSetting"]');
+            const jumpRadios = document.querySelectorAll('input[name="jumpSetting"]');
+            const spawnRadios = document.querySelectorAll('input[name="spawnSetting"]');
+            const flyingHeightRadios = document.querySelectorAll('input[name="flyingHeightSetting"]');
+            const hitboxSizeRadios = document.querySelectorAll('input[name="hitboxSizeSetting"]');
 
-            // Set initial values
-            settingControls.forEach(setting => {
-                const control = document.getElementById(setting.id);
-                const display = document.getElementById(setting.valueId);
-
-                if (control && display) {
-                    // Set initial value from gameSettings
-                    const value = Math.round(gameSettings[setting.prop] * setting.multiplier);
-                    control.value = value;
-                    display.textContent = value + '%';
-
-                    // Add event listener
-                    control.addEventListener('input', (e) => {
-                        const value = parseInt(e.target.value);
-                        display.textContent = value + '%';
-                        gameSettings[setting.prop] = value / setting.multiplier;
-
-                        // Apply settings if they changed during setup
-                        if (currentState === GameState.READY) {
-                            applyGameSettings();
-                        }
-                    });
-                }
-            });
+            // Set initial selections based on gameSettings
+            setRadioByValue(speedRadios, gameSettings.speedLevel);
+            setRadioByValue(jumpRadios, gameSettings.jumpHeightLevel);
+            setRadioByValue(spawnRadios, gameSettings.spawnRateLevel);
+            setRadioByValue(flyingHeightRadios, gameSettings.flyingHeightLevel);
+            setRadioByValue(hitboxSizeRadios, gameSettings.hitboxSizeLevel);
 
             // Initialize hitbox visibility toggle
             if (showHitboxSetting) {
@@ -648,30 +797,67 @@
                     }
                 });
             }
+
+            // Add event listeners to all radio buttons
+            addRadioListeners(speedRadios, 'speedLevel');
+            addRadioListeners(jumpRadios, 'jumpHeightLevel');
+            addRadioListeners(spawnRadios, 'spawnRateLevel');
+            addRadioListeners(flyingHeightRadios, 'flyingHeightLevel');
+            addRadioListeners(hitboxSizeRadios, 'hitboxSizeLevel');
+        }
+
+        // Helper function to set a radio button by value
+        function setRadioByValue(radios, value) {
+            for (const radio of radios) {
+                if (radio.value === value) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+        }
+
+        // Helper function to add listeners to radio buttons
+        function addRadioListeners(radios, settingName) {
+            for (const radio of radios) {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        gameSettings[settingName] = e.target.value;
+
+                        // Apply settings if they changed during setup
+                        if (currentState === GameState.READY) {
+                            applyGameSettings();
+                        }
+                    }
+                });
+            }
         }
 
         function resetGameSettings() {
             gameSettings = {
-                speedMultiplier: 1.0,
-                spawnRateMultiplier: 1.0,
-                jumpHeightMultiplier: 1.0,
-                gravityMultiplier: 1.0,
-                flyingHeightMultiplier: 1.0,
-                hitboxSizePercentage: 0.75,
-                showHitboxes: false          // Reset hitbox visibility as well
+                speedLevel: 'normal',
+                jumpHeightLevel: 'normal',
+                spawnRateLevel: 'normal',
+                flyingHeightLevel: 'normal',
+                hitboxSizeLevel: 'normal',
+                showHitboxes: false
             };
 
-            // Update UI
-            updateSettingValue('speedSetting', 'speedValue', 100);
-            updateSettingValue('spawnRateSetting', 'spawnRateValue', 100);
-            updateSettingValue('jumpHeightSetting', 'jumpHeightValue', 100);
-            updateSettingValue('gravitySetting', 'gravityValue', 100);
-            updateSettingValue('flyingHeightSetting', 'flyingHeightValue', 100);
-            updateSettingValue('hitboxSizeSetting', 'hitboxSizeValue', 75);
+            // Update UI controls
+            const speedRadios = document.querySelectorAll('input[name="speedSetting"]');
+            const jumpRadios = document.querySelectorAll('input[name="jumpSetting"]');
+            const spawnRadios = document.querySelectorAll('input[name="spawnSetting"]');
+            const flyingHeightRadios = document.querySelectorAll('input[name="flyingHeightSetting"]');
+            const hitboxSizeRadios = document.querySelectorAll('input[name="hitboxSizeSetting"]');
+
+            setRadioByValue(speedRadios, 'normal');
+            setRadioByValue(jumpRadios, 'normal');
+            setRadioByValue(spawnRadios, 'normal');
+            setRadioByValue(flyingHeightRadios, 'normal');
+            setRadioByValue(hitboxSizeRadios, 'normal');
 
             // Update hitbox checkbox
             if (showHitboxSetting) {
-                showHitboxSetting.checked = gameSettings.showHitboxes;
+                showHitboxSetting.checked = false;
             }
 
             // Clear debug overlay
@@ -686,8 +872,11 @@
         }
 
         function applyGameSettings() {
-            // Apply settings to game variables
-            speed = baseSpeed * scaleFactor * gameSettings.speedMultiplier;
+            // Get the appropriate multipliers based on difficulty levels
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+
+            // Apply speed setting
+            speed = baseSpeed * scaleFactor * speedMultiplier;
 
             // Other settings will be applied in their respective functions when needed
             // For example, jump height and gravity are applied in resetGame or when jumping
@@ -779,8 +968,14 @@
 
                 player.x = 50 * scaleFactor;
                 player.y = ch - groundHeight - player.height;
-                player.gravity = baseGravity * scaleFactor * gameSettings.gravityMultiplier;
-                player.jumpStrength = baseJumpStrength * scaleFactor * gameSettings.jumpHeightMultiplier;
+
+                // Apply gravity settings based on difficulty
+                const gravityMultiplier = difficultyValues.gravity[gameSettings.jumpHeightLevel];
+                player.gravity = baseGravity * scaleFactor * gravityMultiplier;
+
+                // Apply jump height settings based on difficulty
+                const jumpMultiplier = difficultyValues.jumpHeight[gameSettings.jumpHeightLevel];
+                player.jumpStrength = baseJumpStrength * scaleFactor * jumpMultiplier;
             }
         }
 
@@ -797,8 +992,9 @@
             score=0;
             gameTime=0;
 
-            // Apply speed setting
-            speed = baseSpeed * scaleFactor * gameSettings.speedMultiplier;
+            // Apply speed setting based on difficulty level
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+            speed = baseSpeed * scaleFactor * speedMultiplier;
 
             backgroundX=0;
             lives=maxLives;
@@ -810,14 +1006,27 @@
             obstacles=[];
             clouds=[];
 
-            // Apply spawn rate setting
-            obstacleTimer = initialObstacleCooldown / gameSettings.spawnRateMultiplier;
-            cloudTimer = (2 + Math.random() * 3) / gameSettings.spawnRateMultiplier;
+            // Initialize spawn timers based on difficulty with randomly staggered starts
+            obstacleTimer = initialObstacleCooldown;
+
+            // Primary timers with random starting values
+            groundObstacleTimer = initialObstacleCooldown * (0.8 + Math.random() * 0.4); // 80-120% of base time
+            skyObstacleTimer = initialObstacleCooldown * (0.7 + Math.random() * 0.5);   // 70-120% of base time
+
+            // Secondary offset timers - completely random offsets
+            groundObstacleTimerOffset = initialObstacleCooldown * (0.3 + Math.random() * 0.5); // 30-80% of base time
+            skyObstacleTimerOffset = initialObstacleCooldown * (0.2 + Math.random() * 0.6);    // 20-80% of base time
+
+            cloudTimer = (2 + Math.random() * 3);
 
             const ps = 70 * globalSizeFactor; // Base player size
             const ss = ps * scaleFactor; // Scaled size
             const ch = canvas.height || 0;
             if (ch <= 0) return;
+
+            // Apply gravity and jump settings based on difficulty
+            const gravityMultiplier = difficultyValues.gravity[gameSettings.jumpHeightLevel];
+            const jumpMultiplier = difficultyValues.jumpHeight[gameSettings.jumpHeightLevel];
 
             player = {
                 x: 50 * scaleFactor,
@@ -828,8 +1037,8 @@
                 duckHeight: (ps/2) * scaleFactor,
                 vy: 0,
                 // Apply gravity and jump settings
-                gravity: baseGravity * scaleFactor * gameSettings.gravityMultiplier,
-                jumpStrength: baseJumpStrength * scaleFactor * gameSettings.jumpHeightMultiplier,
+                gravity: baseGravity * scaleFactor * gravityMultiplier,
+                jumpStrength: baseJumpStrength * scaleFactor * jumpMultiplier,
                 jumping: false,
                 canDoubleJump: false,
                 hasDoubleJumped: false,
@@ -858,14 +1067,60 @@
             if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop);
         }
 
+        // --- FIXED loseLife Function ---
         function loseLife() {
-            if(isInvulnerable||currentState!==GameState.PLAYING) return;
+            // Debug log to troubleshoot
+            console.log("loseLife called! Current lives:", lives, "Invulnerable:", isInvulnerable, "State:", currentState);
+
+            if(isInvulnerable || currentState !== GameState.PLAYING) {
+                console.log("No life lost - player is invulnerable or not playing");
+                return;
+            }
+
             lives--;
+            console.log("Life lost! Remaining lives:", lives);
+
             updateLivesDisplay();
             makePlayerInvulnerable();
-            if(gameContainer) gameContainer.style.borderColor='#ff0000';
-            setTimeout(()=>{if(gameContainer) gameContainer.style.borderColor='#333';},200);
-            if(lives<=0) gameOver();
+
+            if(gameContainer) {
+                gameContainer.style.borderColor='#ff0000';
+                // Flash the screen red for better feedback
+                const flashEffect = document.createElement('div');
+                flashEffect.style.position = 'absolute';
+                flashEffect.style.top = '0';
+                flashEffect.style.left = '0';
+                flashEffect.style.width = '100%';
+                flashEffect.style.height = '100%';
+                flashEffect.style.backgroundColor = 'rgba(255,0,0,0.3)';
+                flashEffect.style.pointerEvents = 'none';
+                flashEffect.style.zIndex = '20';
+                flashEffect.style.animation = 'fadeOut 0.5s forwards';
+
+                // Add fadeOut animation if it doesn't exist
+                if (!document.getElementById('flashAnimation')) {
+                    const style = document.createElement('style');
+                    style.id = 'flashAnimation';
+                    style.textContent = '@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }';
+                    document.head.appendChild(style);
+                }
+
+                gameContainer.appendChild(flashEffect);
+
+                setTimeout(() => {
+                    if(gameContainer) {
+                        gameContainer.style.borderColor = '#333';
+                        if (flashEffect.parentNode) {
+                            flashEffect.parentNode.removeChild(flashEffect);
+                        }
+                    }
+                }, 200);
+            }
+
+            if(lives <= 0) {
+                console.log("Game over triggered!");
+                gameOver();
+            }
         }
 
         function gameOver() {
@@ -877,10 +1132,22 @@
             animationFrameId=null;
         }
 
+        // --- Improved makePlayerInvulnerable function ---
         function makePlayerInvulnerable() {
-            isInvulnerable=true;
+            console.log("Making player invulnerable");
+            isInvulnerable = true;
             clearTimeout(invulnerabilityTimer);
-            invulnerabilityTimer=setTimeout(()=>{isInvulnerable=false;invulnerabilityTimer=null;}, invulnerabilityDuration);
+
+            // Visual indicator for invulnerability (player will blink)
+            if (player) {
+                console.log("Invulnerability visual effects applied");
+            }
+
+            invulnerabilityTimer = setTimeout(() => {
+                isInvulnerable = false;
+                invulnerabilityTimer = null;
+                console.log("Invulnerability ended");
+            }, invulnerabilityDuration);
         }
 
         function togglePause() {
@@ -924,13 +1191,11 @@
         function jump() {
             if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return;
             if(!player.jumping){
-                // Apply jump height setting
                 player.vy = player.jumpStrength;
                 player.jumping=true;
                 player.canDoubleJump=true;
                 player.hasDoubleJumped=false;
             } else if(player.canDoubleJump&&!player.hasDoubleJumped){
-                // Apply jump height setting to double jump (slightly weaker)
                 player.vy = player.jumpStrength * 0.8;
                 player.canDoubleJump=false;
                 player.hasDoubleJumped=true;
@@ -971,19 +1236,23 @@
             }catch(err){}
         }
 
-        // --- createObstacle - Updated for settings
-        function createObstacle() {
+        // --- createObstacle - Updated for difficulty settings
+        function createObstacle(category = null) {
             try {
                 let chosenType = null;
                 let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
+
                 // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
                 if (gameTime > highStumpMinTime) {
                     availableGroundTypes.push(ObstacleType.STUMP_HIGH);
                 }
-                // Zufällige Entscheidung: Boden oder Himmel (z.B. 70% Boden)
-                const isGround = Math.random() < 0.70;
 
-                if (isGround) {
+                // If category is not specified, decide randomly (this is for backward compatibility)
+                if (category === null) {
+                    category = Math.random() < 0.70 ? 'ground' : 'sky';
+                }
+
+                if (category === 'ground') {
                     const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
                     chosenType = availableGroundTypes[randIdx];
                 } else {
@@ -1002,41 +1271,46 @@
                     yPos = canvas.height - groundHeight - scaledHeight;
                     // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
                     if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
-                } else { // Sky obstacle positioning - IMPROVED with settings
-                    // Apply flying height setting
-                    const adjustedHeightMultiplier = gameSettings.flyingHeightMultiplier;
-
+                } else { // Sky obstacle positioning
                     // Base values
                     const minTopMargin = 120 * scaleFactor; // Minimum distance from top
                     const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 100 * scaleFactor; // Minimum clearance above player
                     const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Bottom limit for sky objects
-
-                    // Apply height multiplier to change where flying objects appear vertically
-                    // Higher multiplier = higher position (smaller value of yPos)
-                    // Lower multiplier = lower position (larger value of yPos)
+                    const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
+                    const duckClearance = duckHeight * 1.3; // Space needed for ducking
 
                     // Calculate the total available height space
                     const totalHeight = safeSkyBottom - minTopMargin;
 
-                    // Apply the multiplier inversely (2.0 means higher up, 0.5 means lower down)
-                    // We invert by subtracting from 2.0 so the slider behaves intuitively
-                    const heightPosition = (2.0 - adjustedHeightMultiplier) * 0.5;
+                    // Apply the difficulty setting for flying objects from the flying height setting
+                    // Harder = lower flying objects that are harder to jump over
+                    const flyingHeightValue = difficultyValues.flyingHeight[gameSettings.flyingHeightLevel];
 
-                    // Use the position to calculate the actual y position
-                    // Lower heightPosition values (0.0) will place objects higher
-                    // Higher values (1.0) will place objects lower
-                    yPos = minTopMargin + (totalHeight * heightPosition);
+                    // If very hard level, spawn at ducking height
+                    if (gameSettings.flyingHeightLevel === 'veryHard') {
+                        // For the hardest level, spawn objects at a height where ducking is necessary
+                        // Calculate a position that requires ducking (near player head height when standing)
+                        const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
+                        yPos = duckRequiredY - (scaledHeight / 2); // Center the object at duck-required height
+                    } else {
+                        // Normal height calculation for other difficulties
+                        yPos = minTopMargin + (totalHeight * flyingHeightValue);
+                    }
 
                     // Add some randomness to prevent predictable patterns
-                    // Use less randomness to keep objects more predictable at their target height
-                    const randomRange = totalHeight * 0.3; // 30% randomness
+                    // Less randomness for very hard mode to ensure ducking is required
+                    const randomRange = gameSettings.flyingHeightLevel === 'veryHard'
+                        ? totalHeight * 0.1  // 10% randomness for very hard
+                        : totalHeight * 0.3; // 30% randomness for other levels
+
                     yPos += (Math.random() - 0.5) * randomRange;
 
                     // Ensure we stay within safe bounds
                     yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos));
                 }
 
-                // Das Hindernis wird mit allen nötigen Informationen erstellt
+                // Create the obstacle with all necessary information
+                console.log(`Creating ${chosenType} obstacle at position ${yPos}`);
                 obstacles.push({
                     x: canvas.width, // Start rechts außerhalb
                     y: yPos,
@@ -1064,7 +1338,7 @@
                 // --- ENDE ÄNDERUNG ---
                 width: sw,
                 height: sh,
-                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor * gameSettings.speedMultiplier
+                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor * difficultyValues.speed[gameSettings.speedLevel]
             });
         }
 
@@ -1078,7 +1352,9 @@
             updateScore(dt);
             updateBackground(dt);
             updateDifficulty(dt);
-            checkCollision();
+
+            // We now call checkCollision in the updateObstacles function
+            // instead of here, to ensure it's called after obstacle positions update
         }
 
         function updatePlayer(dt) {
@@ -1098,27 +1374,156 @@
             }
         }
 
-        // --- updateObstacles - Updated for settings
+        // --- updateObstacles - Super randomized version with properly placed collision detection
         function updateObstacles(dt) {
+            // First update existing obstacles position and remove any that are off-screen
             for(let i=obstacles.length-1; i>=0; i--){
-                // Apply speed setting to movement
+                // Apply speed based on difficulty
                 obstacles[i].x -= speed * dt;
                 if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
             }
 
-            obstacleTimer -= dt;
-            if(obstacleTimer <= 0){
-                createObstacle();
+            // Get difficulty settings for obstacle spawning
+            const spawnSetting = gameSettings.spawnRateLevel;
+            const spawnMode = getSpawnMode(spawnSetting);
 
-                // Apply spawn rate setting
-                const speedFactor = Math.max(0.4, baseSpeed / (speed / scaleFactor));
-                let nextSpawnTime = (minObstacleTime + Math.random() * (maxObstacleTime - minObstacleTime)) * speedFactor;
+            // Run collision checks after updating positions
+            checkCollision();
 
-                // Apply spawn rate setting
-                nextSpawnTime = nextSpawnTime / gameSettings.spawnRateMultiplier;
+            // Super random spawning for hard and very hard difficulties
+            if (spawnMode.independent) {
+                // Process all timers but with random chance of skipping updates
+                // This makes the timer pattern itself unpredictable
+                if (Math.random() < 0.9) groundObstacleTimer -= dt;
+                if (Math.random() < 0.85) groundObstacleTimerOffset -= dt;
+                if (Math.random() < 0.87) skyObstacleTimer -= dt;
+                if (Math.random() < 0.83) skyObstacleTimerOffset -= dt;
 
-                // Ensure minimum delay
-                obstacleTimer = Math.max(0.7, nextSpawnTime);
+                // Random chance to spawn even if timer isn't exactly 0
+                // This creates completely unpredictable timing
+                const randomTriggerChance = spawnSetting === 'veryHard' ? 0.005 : 0.003;
+
+                // When any ground timer reaches 0 or random trigger, spawn a ground obstacle
+                if (groundObstacleTimer <= 0 || groundObstacleTimerOffset <= 0 || Math.random() < randomTriggerChance) {
+                    // Random chance to NOT spawn even when timer hits 0 (makes patterns less predictable)
+                    if (Math.random() < 0.9) {
+                        createObstacle('ground');
+                    }
+
+                    // Calculate random new times with wider ranges for more chaos
+                    let minTime, maxTime;
+                    switch (spawnSetting) {
+                        case 'hard':
+                            minTime = 1.5 + Math.random() * 0.6; // 1.5-2.1s
+                            maxTime = 2.0 + Math.random() * 0.5; // 2.0-2.5s
+                            break;
+                        case 'veryHard':
+                            minTime = 0.8 + Math.random() * 0.4; // 0.8-1.2s
+                            maxTime = 1.3 + Math.random() * 0.6; // 1.3-1.9s
+                            break;
+                        default:
+                            minTime = 1.8;
+                            maxTime = 2.0;
+                    }
+
+                    // Reset the timer that triggered the spawn with complete randomness
+                    if (groundObstacleTimer <= 0) {
+                        groundObstacleTimer = minTime + Math.random() * (maxTime - minTime);
+                    }
+                    if (groundObstacleTimerOffset <= 0) {
+                        groundObstacleTimerOffset = minTime + Math.random() * (maxTime - minTime);
+                    }
+                }
+
+                // When any sky timer reaches 0 or random trigger, spawn a sky obstacle
+                if (skyObstacleTimer <= 0 || skyObstacleTimerOffset <= 0 || Math.random() < randomTriggerChance) {
+                    // Random chance to NOT spawn even when timer hits 0
+                    if (Math.random() < 0.9) {
+                        createObstacle('sky');
+                    }
+
+                    // Calculate random new times
+                    let minTime, maxTime;
+                    switch (spawnSetting) {
+                        case 'hard':
+                            minTime = 1.6 + Math.random() * 0.5; // 1.6-2.1s
+                            maxTime = 2.1 + Math.random() * 0.4; // 2.1-2.5s
+                            break;
+                        case 'veryHard':
+                            minTime = 0.9 + Math.random() * 0.3; // 0.9-1.2s
+                            maxTime = 1.4 + Math.random() * 0.5; // 1.4-1.9s
+                            break;
+                        default:
+                            minTime = 1.8;
+                            maxTime = 2.0;
+                    }
+
+                    // Reset the timer that triggered the spawn
+                    if (skyObstacleTimer <= 0) {
+                        skyObstacleTimer = minTime + Math.random() * (maxTime - minTime);
+                    }
+                    if (skyObstacleTimerOffset <= 0) {
+                        skyObstacleTimerOffset = minTime + Math.random() * (maxTime - minTime);
+                    }
+                }
+
+            } else {
+                // Even easier difficulty modes get more randomness
+                obstacleTimer -= dt;
+
+                // Random chance to spawn regardless of timer (small chance)
+                if (obstacleTimer <= 0 || Math.random() < 0.002) {
+                    // 70% chance of pure randomness, 30% chance of alternating pattern
+                    let nextType;
+
+                    if (Math.random() < 0.7) {
+                        // Pure random selection with variable probability
+                        // Make ground obstacles slightly more common to avoid too many flying obstacles
+                        nextType = Math.random() < 0.6 ? 'ground' : 'sky';
+                    } else {
+                        // Alternating pattern for some predictability
+                        if (obstacles.length > 0) {
+                            const lastObstacle = obstacles[obstacles.length-1];
+                            nextType = lastObstacle.category === 'ground' ? 'sky' : 'ground';
+                        } else {
+                            nextType = 'ground';
+                        }
+                    }
+
+                    createObstacle(nextType);
+
+                    // Set spawn rate based on difficulty with much more randomness
+                    let baseInterval;
+                    switch (spawnSetting) {
+                        case 'easy':
+                            baseInterval = 3.5;
+                            break;
+                        case 'normal':
+                            baseInterval = 2.5;
+                            break;
+                        default:
+                            baseInterval = 2.5;
+                    }
+
+                    // Much wider random range (±40% of base interval)
+                    obstacleTimer = baseInterval * (0.8 + Math.random() * 0.8); // 80-160% of base interval
+                }
+            }
+        }
+
+        // Helper function to get spawn mode based on difficulty setting
+        function getSpawnMode(difficulty) {
+            switch (difficulty) {
+                case 'easy':
+                    return { timer: 3.5, independent: false };
+                case 'normal':
+                    return { timer: 2.5, independent: false };
+                case 'hard':
+                    return { timer: 1.8, independent: true };
+                case 'veryHard':
+                    return { timer: 1.0, independent: true };
+                default:
+                    return { timer: 2.5, independent: false };
             }
         }
 
@@ -1130,23 +1535,27 @@
             cloudTimer -= dt;
             if(cloudTimer <= 0 && clouds.length < 5){
                 createCloud();
-                // Apply spawn rate setting to clouds too, but with less impact
-                const baseCloudTime = 3 + Math.random() * 5;
-                cloudTimer = baseCloudTime / Math.sqrt(gameSettings.spawnRateMultiplier); // Square root makes the effect less dramatic
+                // Cloud spawn rate is simpler and less affected by difficulty
+                cloudTimer = 3 + Math.random() * 5;
             }
         }
 
         function updateScore(dt) {
             if(!scoreElement) return;
             // Apply speed setting to score calculation
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
             score += (speed / scaleFactor) * dt * 0.1;
             scoreElement.textContent = Math.floor(score/10);
         }
 
         // --- updateDifficulty - Mit konsistenter Hitbox
         function updateDifficulty(dt) {
-            // Apply speed increment based on speed setting
-            speed += (speedIncrement * baseSpeed) * scaleFactor * gameSettings.speedMultiplier * dt;
+            // Get the speed multiplier from settings
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+
+            // Apply speed increment based on speed setting and game progress
+            speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
+
             const tier = Math.floor(Math.floor(score/10)/100);
             const night = tier % 2 !== 0;
             if(night !== isNight) {
@@ -1165,77 +1574,85 @@
             if(sw < canvas.width) sw = canvas.width;
 
             // Apply speed setting to parallax
+            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
             backgroundX -= (speed * 0.3) * dt;
             if(backgroundX <= -sw) backgroundX += sw;
         }
 
-        // --- checkCollision - Enhanced with improved hitboxes for flying objects and optional visualization
+        // --- FIXED checkCollision - Simpler and more reliable
         function checkCollision() {
-            if(isInvulnerable || currentState !== GameState.PLAYING || !player || !player.width) return;
+            // Debug indicator - remove in production
+            // console.log("Checking collisions...");
 
-            // Apply hitbox size setting
-            const s = gameSettings.hitboxSizePercentage;
-            const px = player.x + player.width * (1-s) / 2;
-            const py = player.y + player.height * (1-s) / 2;
-            const pw = player.width * s;
-            const ph = player.height * s;
-
-            // Clear debug overlay if it exists and hitboxes should be shown
-            if (debugOverlay) {
-                // Only show hitboxes if the setting is enabled
-                if (gameSettings.showHitboxes) {
-                    debugOverlay.innerHTML = '';
-
-                    // Visualize player hitbox
-                    const playerHitbox = document.createElement('div');
-                    playerHitbox.style.position = 'absolute';
-                    playerHitbox.style.left = px + 'px';
-                    playerHitbox.style.top = py + 'px';
-                    playerHitbox.style.width = pw + 'px';
-                    playerHitbox.style.height = ph + 'px';
-                    playerHitbox.style.border = '2px solid rgba(0, 255, 0, 0.7)';
-                    playerHitbox.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
-                    debugOverlay.appendChild(playerHitbox);
-                } else {
-                    // Clear the overlay if hitboxes should not be shown
-                    debugOverlay.innerHTML = '';
-                }
+            // Skip collision check entirely if invulnerable or not in gameplay
+            if (isInvulnerable || currentState !== GameState.PLAYING || !player) {
+                return;
             }
 
-            for(const obstacle of obstacles){
-                const data = obstacleData[obstacle.type] || {};
+            // Use a simplified, reliable collision detection with pixel margins
+            // Apply a consistent hitbox size for the player based on difficulty
+            const hitboxReduction = 0.25; // 25% smaller hitbox than visual size
 
-                // Apply hitbox adjustments based on obstacle type
-                const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
+            // Calculate player hitbox with some margin for better gameplay
+            const pLeft = player.x + player.width * hitboxReduction / 2;
+            const pTop = player.y + player.height * hitboxReduction / 2;
+            const pWidth = player.width * (1 - hitboxReduction);
+            const pHeight = player.height * (1 - hitboxReduction);
 
-                // Added Y offset for flying obstacles - fixes the hitbox issue
-                const hitboxOffsetY = data.category === 'sky' ?
-                    ((data.hitboxOffsetY || 0) * scaleFactor) : 0;
+            // Visualize hitboxes if enabled
+            if (gameSettings.showHitboxes && debugOverlay) {
+                debugOverlay.innerHTML = ''; // Clear previous hitboxes
 
-                const hitboxLeft = obstacle.x + hitboxOffsetX;
-                const hitboxRight = obstacle.x + obstacle.width - hitboxOffsetX;
-                const hitboxTop = obstacle.y + hitboxOffsetY; // Apply Y offset
-                const hitboxBottom = obstacle.y + obstacle.height - hitboxOffsetY; // Apply Y offset
+                // Draw player hitbox
+                const playerBox = document.createElement('div');
+                playerBox.style.position = 'absolute';
+                playerBox.style.left = pLeft + 'px';
+                playerBox.style.top = pTop + 'px';
+                playerBox.style.width = pWidth + 'px';
+                playerBox.style.height = pHeight + 'px';
+                playerBox.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+                playerBox.style.border = '2px solid lime';
+                playerBox.style.zIndex = '100';
+                debugOverlay.appendChild(playerBox);
+            }
+
+            // Check each obstacle
+            for (const obstacle of obstacles) {
+                // Apply obstacle hitbox reduction for better gameplay
+                const obstacleHitboxReduction = 0.2; // 20% smaller than visual
+
+                // Calculate obstacle hitbox
+                const oLeft = obstacle.x + obstacle.width * obstacleHitboxReduction / 2;
+                const oTop = obstacle.y + obstacle.height * obstacleHitboxReduction / 2;
+                const oWidth = obstacle.width * (1 - obstacleHitboxReduction);
+                const oHeight = obstacle.height * (1 - obstacleHitboxReduction);
 
                 // Visualize obstacle hitboxes if enabled
-                if (debugOverlay && gameSettings.showHitboxes) {
-                    const obstacleHitbox = document.createElement('div');
-                    obstacleHitbox.style.position = 'absolute';
-                    obstacleHitbox.style.left = hitboxLeft + 'px';
-                    obstacleHitbox.style.top = hitboxTop + 'px';
-                    obstacleHitbox.style.width = (hitboxRight - hitboxLeft) + 'px';
-                    obstacleHitbox.style.height = (hitboxBottom - hitboxTop) + 'px';
-                    obstacleHitbox.style.border = '2px solid rgba(255, 0, 0, 0.7)';
-                    obstacleHitbox.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                    debugOverlay.appendChild(obstacleHitbox);
+                if (gameSettings.showHitboxes && debugOverlay) {
+                    const obstacleBox = document.createElement('div');
+                    obstacleBox.style.position = 'absolute';
+                    obstacleBox.style.left = oLeft + 'px';
+                    obstacleBox.style.top = oTop + 'px';
+                    obstacleBox.style.width = oWidth + 'px';
+                    obstacleBox.style.height = oHeight + 'px';
+                    obstacleBox.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+                    obstacleBox.style.border = '2px solid red';
+                    obstacleBox.style.zIndex = '100';
+                    debugOverlay.appendChild(obstacleBox);
                 }
 
-                if(px < hitboxRight &&
-                   px + pw > hitboxLeft &&
-                   py < hitboxBottom &&
-                   py + ph > hitboxTop){
+                // AABB collision detection (Axis-Aligned Bounding Box)
+                // This is the most reliable method for rectangle collision
+                if (
+                    pLeft < oLeft + oWidth &&
+                    pLeft + pWidth > oLeft &&
+                    pTop < oTop + oHeight &&
+                    pTop + pHeight > oTop
+                ) {
+                    // Collision detected!
+                    console.log("COLLISION DETECTED with:", obstacle.type);
                     loseLife();
-                    return;
+                    return; // Exit after processing collision
                 }
             }
         }
@@ -1312,7 +1729,6 @@
             ctx.globalAlpha = 1;
         }
 
-        // --- drawObstacles - Updated to include hitbox visualization if needed
         function drawObstacles() {
             if (!ctx) return;
             for (const obstacle of obstacles) {
