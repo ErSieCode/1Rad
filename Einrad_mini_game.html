@@ -226,17 +226,17 @@
         }
 
 
-        // --- Game State --- (Identisch)
+        // --- Game State ---
         const GameState = { INIT: 'INIT', READY: 'READY', PLAYING: 'PLAYING', PAUSED: 'PAUSED', GAMEOVER: 'GAMEOVER' }; let currentState = GameState.INIT; let character = 'fuchs'; let score = 0; let highScore = 0; let lives = 3; const maxLives = 3; let speed = 0; let speedIncrement = 0.0005; let backgroundX = 0; let isDucking = false; let isNight = false; let isInvulnerable = false; let invulnerabilityTimer = null; const invulnerabilityDuration = 2000;
 
-        // --- Physics & Scaling --- (Angepasst für größere Elemente)
+        // --- Physics & Scaling ---
         let scaleFactor = 1; const baseWidth = 800; let baseSpeed = 250; let baseGravity = 1200; let baseJumpStrength = -550; let groundHeight = 0; let player = {}; let obstacles = []; let clouds = []; let obstacleTimer = 0; let cloudTimer = 0; let minObstacleTime = 1.4; let maxObstacleTime = 2.8; const initialObstacleCooldown = 3.0; const highStumpMinTime = 45;
 
         // Skalierungsfaktor für alle Spielelemente - Charakter etwas schmaler machen
         const globalSizeFactor = 1.25; // 25% größer
         const playerWidthRatio = 0.9; // Character width is 90% of normal to make it slightly slimmer
 
-        // --- Obstacle Definitions --- (Angepasst für größere Elemente)
+        // --- Obstacle Definitions ---
         console.log("Defining obstacle data...");
         const ObstacleType = { PALLET_4: 'PALLET_4', PALLET_6: 'PALLET_6', LOG: 'LOG', STUMP: 'STUMP', STUMP_HIGH: 'STUMP_HIGH', OWL: 'OWL', FLYING_UNI: 'FLYING_UNI' };
         const obstacleData = { // Sorgfältig geprüft, korrekte Variablennamen verwendet
@@ -252,10 +252,10 @@
         const skyObstacleTypes = [ObstacleType.OWL, ObstacleType.FLYING_UNI];
         console.log("Obstacle data defined.");
 
-        // --- Game Loop --- (Identisch)
+        // --- Game Loop ---
         let lastTime = 0; let animationFrameId = null; let gameTime = 0;
 
-        // --- Initialization --- (Identisch)
+        // --- Initialization ---
         function init() {
             console.log(">>> init() started");
             if (!canvas || !ctx) { console.error("Init aborted: Canvas/Context missing."); return; }
@@ -263,7 +263,7 @@
             console.log(">>> init() finished");
         }
 
-        // --- Setup DOM --- (Identisch)
+        // --- Setup DOM ---
         function setupDOM() {
             if(highScoreElement) highScoreElement.textContent = highScore;
             if (duckButton) {
@@ -274,7 +274,7 @@
             if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
         }
 
-        // --- Resize Canvas --- (Angepasst für schmalere Player-Modelle)
+        // --- Resize Canvas ---
         function resizeCanvas() {
             if (!gameContainer || !canvas) { return; }
             const cw = gameContainer.clientWidth; const ch = gameContainer.clientHeight; if (cw === 0 || ch === 0) return;
@@ -297,7 +297,7 @@
             }
         }
 
-        // --- High Score, Hearts --- (Identisch)
+        // --- High Score, Hearts ---
         function loadHighScore() { try{const s=localStorage.getItem('pixelRunnerHighScore');highScore=s?parseInt(s):0;}catch(e){highScore=0;} }
         function saveHighScore() { const fs=Math.floor(score/10);if(fs>highScore){highScore=fs;try{localStorage.setItem('pixelRunnerHighScore',highScore);if(highScoreElement)highScoreElement.textContent=highScore;}catch(e){}} }
         function createHearts() { if(!livesDisplay) return; livesDisplay.innerHTML=''; for (let i = 0; i < maxLives; i++) { const h = document.createElement('span'); h.classList.add('heart'); h.innerHTML = '♥'; livesDisplay.appendChild(h); } }
@@ -338,7 +338,7 @@
             console.log("resetGame: Finished.");
         }
 
-        // --- Game Logic --- (Identisch)
+        // --- Game Logic ---
         function startGame() { if(currentState===GameState.PLAYING) return; console.log("Starting Game..."); resetGame(); currentState=GameState.PLAYING; updateUI(); lastTime=performance.now(); if(!animationFrameId) animationFrameId=requestAnimationFrame(gameLoop); }
         function loseLife() { if(isInvulnerable||currentState!==GameState.PLAYING) return; lives--; updateLivesDisplay(); makePlayerInvulnerable(); if(gameContainer) gameContainer.style.borderColor='#ff0000'; setTimeout(()=>{if(gameContainer) gameContainer.style.borderColor='#333';},200); if(lives<=0) gameOver(); }
         function gameOver() { currentState=GameState.GAMEOVER; saveHighScore(); if(finalScoreElement) finalScoreElement.textContent=Math.floor(score/10); updateUI(); if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId=null; }
@@ -349,25 +349,14 @@
         // Back to Menu Function
         function backToMenu() {
             if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
-                // Save the high score before quitting the current game
                 saveHighScore();
-
-                // Reset the game state to READY
                 currentState = GameState.READY;
-
-                // Reset the game for a fresh start
                 resetGame();
-
-                // Update the UI to show menu elements
                 updateUI();
-
-                // Cancel any running animation frame
                 if (animationFrameId) {
                     cancelAnimationFrame(animationFrameId);
                     animationFrameId = null;
                 }
-
-                // Request a new animation frame to draw the menu state
                 animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
@@ -376,7 +365,7 @@
         function setDucking(sd) { if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return; if(sd&&!isDucking){isDucking=true;player.height=player.duckHeight;player.y=canvas.height-groundHeight-player.height;} else if(!sd&&isDucking){isDucking=false;player.height=player.baseHeight;player.y=canvas.height-groundHeight-player.height;checkCollision();} }
         function createDoubleJumpEffect() { try{if(!player||!player.width) return; const s=player.width*1.2; const e=document.createElement('div'); e.className='doubleJumpEffect'; const cr=gameContainer.getBoundingClientRect(); const cvr=canvas.getBoundingClientRect(); const ox=cvr.left-cr.left; const oy=cvr.top-cr.top; e.style.width=`${s}px`; e.style.height=`${s}px`; e.style.left=`${ox+player.x+player.width/2-s/2}px`; e.style.top=`${oy+player.y+player.height/2-s/2}px`; if(gameContainer) gameContainer.appendChild(e); setTimeout(()=>{if(e.parentNode)e.remove();},400);}catch(err){} }
 
-        // --- createObstacle - Mit festen Hitboxen
+        // --- createObstacle - Mit angepasster Y-Position für Himmelsobjekte
         function createObstacle() {
             try {
                 let chosenType = null;
@@ -408,8 +397,10 @@
                     // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
                     if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
                 } else { // Sky obstacle positioning
-                    const minTopMargin = 40 * scaleFactor; // Minimaler Abstand von oben
-                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 80 * scaleFactor; // Sicherheitsabstand über Spieler
+                    // --- HIER DIE ÄNDERUNG FÜR FLIEGENDE OBJEKTE ---
+                    const minTopMargin = 170 * scaleFactor; // << GEÄNDERT: Erhöht, um Objekte tiefer zu positionieren
+                    // --- ENDE ÄNDERUNG ---
+                    const playerClearance = player.baseHeight ? player.baseHeight * 1.3 : 100 * scaleFactor; // Sicherheitsabstand über Spieler
                     const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze für Himmelsobjekte
                     const availableHeight = Math.max(20 * scaleFactor, safeSkyBottom - minTopMargin - scaledHeight); // Verfügbarer Bereich
                     yPos = minTopMargin + Math.random() * availableHeight;
@@ -424,45 +415,43 @@
                     type: chosenType,
                     image: data.img, // Referenz auf das Image-Objekt speichern
                     category: data.category // Kategorie speichern für evtl. spätere Logik
-                    // Hitbox-Offset wird nicht direkt im Objekt gespeichert,
-                    // sondern zur Laufzeit aus obstacleData geholt,
-                    // damit die Hitbox bei Geschwindigkeitsänderungen konsistent bleibt
                 });
             } catch(err) {
                  console.error("Error in createObstacle:", err);
             }
         }
+
+        // --- createCloud - Mit angepasster Y-Position
         function createCloud() {
-            const bw=60 * globalSizeFactor;
-            const bh=30 * globalSizeFactor;
-            const sw=bw*scaleFactor;
-            const sh=bh*scaleFactor;
+            const bw = 60 * globalSizeFactor;
+            const bh = 30 * globalSizeFactor;
+            const sw = bw * scaleFactor;
+            const sh = bh * scaleFactor;
             clouds.push({
                 x: canvas.width,
-                y: (50+Math.random()*100)*scaleFactor,
+                // --- HIER DIE ÄNDERUNG FÜR WOLKEN ---
+                y: (100 + Math.random() * 100) * scaleFactor, // << GEÄNDERT: Startet tiefer und hat größeren Bereich nach unten
+                // --- ENDE ÄNDERUNG ---
                 width: sw,
                 height: sh,
-                speed: (baseSpeed*(0.2+Math.random()*0.3))*scaleFactor
+                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor
             });
         }
 
-        // --- Update --- (Identisch)
+
+        // --- Update ---
         function update(dt) { if(currentState!==GameState.PLAYING)return; gameTime+=dt; updatePlayer(dt); updateObstacles(dt); updateClouds(dt); updateScore(dt); updateBackground(dt); updateDifficulty(dt); checkCollision(); }
         function updatePlayer(dt) { if(!player||typeof player.vy==='undefined')return; player.vy+=player.gravity*dt; player.y+=player.vy*dt; const gl=canvas.height-groundHeight-player.height; if(player.y>=gl){player.y=gl;player.vy=0;if(player.jumping){player.jumping=false;player.canDoubleJump=false;player.hasDoubleJumped=false;setDucking(isDucking);}} }
         // --- updateObstacles - Geschwindigkeitsunabhängige Kollision
         function updateObstacles(dt) {
             for(let i=obstacles.length-1; i>=0; i--){
-                // Bewege das Hindernis basierend auf der aktuellen Geschwindigkeit
                 obstacles[i].x -= speed*dt;
-
-                // Entferne Hindernisse, die den Bildschirm verlassen haben
                 if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
             }
 
             obstacleTimer -= dt;
             if(obstacleTimer <= 0){
                 createObstacle(); // Ruft die neue Funktion auf
-                // Berechne nächste Spawn-Zeit basierend auf Geschwindigkeit
                 const speedFactor = Math.max(0.4, baseSpeed / (speed / scaleFactor));
                 let nextSpawnTime = (minObstacleTime + Math.random() * (maxObstacleTime - minObstacleTime)) * speedFactor;
                 obstacleTimer = Math.max(0.7, nextSpawnTime); // Mindestabstand sicherstellen
@@ -472,20 +461,15 @@
         function updateScore(dt) { if(!scoreElement) return; score+=(speed/scaleFactor)*dt*0.1; scoreElement.textContent=Math.floor(score/10); }
         // --- updateDifficulty - Mit konsistenter Hitbox
         function updateDifficulty(dt) {
-             // Erhöhe die Geschwindigkeit mit der Zeit
              speed += (speedIncrement * baseSpeed) * scaleFactor * dt;
-
-             // Bestimme, ob Tag oder Nacht anhand der Spielzeit/Punktzahl
              const tier = Math.floor(Math.floor(score/10)/100);
              const night = tier % 2 !== 0;
-
-             // Wechsle den Hintergrund, wenn sich die Tageszeit ändert
              if(night !== isNight) {
                  isNight = night;
                  if(document.body) document.body.style.backgroundColor = isNight ? '#3a3a4a' : '#e0e0e0';
              }
          }
-        // --- updateBackground - Nutzt neue BG Logik --- (Angepasst)
+        // --- updateBackground - Nutzt neue BG Logik ---
         function updateBackground(dt) {
              const img=isNight?nightBgImg:dayBgImg; if (!img||!img.complete||img.naturalWidth===0)return;
              const h=canvas.height; const r=img.naturalWidth/img.naturalHeight; let sw=h*r; if(sw<canvas.width)sw=canvas.width;
@@ -501,17 +485,13 @@
             const ph=player.height*s;
 
             for(const o of obstacles){
-                // Hole die Hitbox-Daten für den Hindernistyp
                 const data = obstacleData[o.type] || {};
                 const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
-
-                // Geschwindigkeitsunabhängige Kollisionsprüfung mit festen Offsets
                 const hitboxLeft = o.x + hitboxOffsetX;
                 const hitboxRight = o.x + o.width - hitboxOffsetX;
                 const hitboxTop = o.y;
                 const hitboxBottom = o.y + o.height;
 
-                // Prüfe Kollision mit der angepassten Hitbox
                 if(px < hitboxRight &&
                    px + pw > hitboxLeft &&
                    py < hitboxBottom &&
@@ -524,7 +504,7 @@
 
         // --- Draw ---
         function draw() { if(!ctx) return; drawBackground(); drawClouds(); drawGround(); drawObstacles(); drawPlayer(); }
-        // --- drawBackground - Nutzt neue BG Logik --- (Angepasst)
+        // --- drawBackground - Nutzt neue BG Logik ---
         function drawBackground() {
             const img=isNight?nightBgImg:dayBgImg;
             if (img&&img.complete&&img.naturalWidth>0){
@@ -540,47 +520,28 @@
         function drawObstacles() {
             if (!ctx) return;
             for (const obstacle of obstacles) {
-                try { // Fehler isolieren, falls ein Hindernis Probleme macht
+                try {
                     if (obstacle.image && obstacle.image.complete && obstacle.image.naturalWidth > 0) {
-                        // Zeichne das geladene Bild
                         ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-                        // Debug-Modus: Hitbox visualisieren (auskommentiert im Produktionscode)
-                        /*
+                        /* // DEBUG: Hitbox visualisieren
                         const data = obstacleData[obstacle.type] || {};
                         const hitboxOffsetX = (data.hitboxOffsetX || 0) * scaleFactor;
                         const hitboxLeft = obstacle.x + hitboxOffsetX;
                         const hitboxRight = obstacle.x + obstacle.width - hitboxOffsetX;
-
-                        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(
-                            hitboxLeft,
-                            obstacle.y,
-                            hitboxRight - hitboxLeft,
-                            obstacle.height
-                        );
+                        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; ctx.lineWidth = 2;
+                        ctx.strokeRect(hitboxLeft, obstacle.y, hitboxRight - hitboxLeft, obstacle.height);
                         */
                     } else {
-                        // Fallback: Zeichne Rechteck, wenn Bild fehlt
-                        ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D'; // Himmelblau vs Braun
+                        ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D';
                         ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                        // Optional: Text im Rechteck
-                        ctx.fillStyle = '#000';
-                        ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#000'; ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                         ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                     }
                 } catch (drawErr) {
                     console.error("Error drawing obstacle:", obstacle.type, drawErr);
-                    // Zeichne einfachen roten Kasten als Fehlerindikator
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                    ctx.fillStyle = 'red'; ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 } finally {
-                     // Wichtig: Text-Alignment zurücksetzen nach jeder Zeichnung
-                     ctx.textAlign = 'start';
-                     ctx.textBaseline = 'alphabetic';
+                     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
                 }
             }
         }
@@ -594,18 +555,14 @@
                 const go = currentState === GameState.GAMEOVER;
                 const re = currentState === GameState.READY;
 
-                // Spielsteuerung
                 if(startButton) startButton.style.display = (re || go) ? 'inline-block' : 'none';
                 if(characterSelectContainer) characterSelectContainer.style.display = (re || go) ? 'flex' : 'none';
                 if(restartButton) restartButton.style.display = go ? 'inline-block' : 'none';
                 if(gameOverElement) gameOverElement.style.display = go ? 'flex' : 'none';
                 if(pauseOverlay) pauseOverlay.style.display = pa ? 'flex' : 'none';
                 if(duckButton) duckButton.style.display = pl ? 'flex' : 'none';
-
-                // Back Button nur während des Spiels oder Pause anzeigen
                 if(backButton) backButton.style.display = (pl || pa) ? 'flex' : 'none';
 
-                // Anleitung nur vor dem Spielstart (READY) oder nach Game Over anzeigen
                 const instructionsElement = document.getElementById('instructions');
                 if(instructionsElement) {
                     instructionsElement.style.display = (re || go) ? 'block' : 'none';
@@ -618,10 +575,10 @@
             }
         }
 
-        // --- Game Loop --- (Identisch, mit Fehlerbehandlung)
+        // --- Game Loop ---
         function gameLoop(timestamp) { if(typeof lastTime==='undefined'||isNaN(timestamp)){console.error("Loop Error TS/LT");lastTime=performance.now();if(animationFrameId)cancelAnimationFrame(animationFrameId);return;} const dt=Math.min(0.05,(timestamp-lastTime)/1000); lastTime=timestamp; try { if (currentState===GameState.PLAYING) update(dt); draw(); } catch (error) { console.error("!!! Runtime Error in Loop:", error); if(animationFrameId)cancelAnimationFrame(animationFrameId); animationFrameId=null; currentState=GameState.GAMEOVER; updateUI(); return; } if (currentState===GameState.PLAYING||currentState===GameState.READY||currentState===GameState.INIT) animationFrameId=requestAnimationFrame(gameLoop); else animationFrameId=null; }
 
-        // --- Event Handlers --- (Identisch, mit Fehlerbehandlung)
+        // --- Event Handlers ---
         function handleKeyDown(e) { try{let a=false;if(e.key==='p'||e.key==='P'||e.key==='Escape'){if(currentState===GameState.PLAYING||currentState===GameState.PAUSED)togglePause();a=true;}else if(e.key===' '||e.key==='ArrowUp'){if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();a=true;}else if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(true);a=true;}if(a)e.preventDefault();}catch(err){} }
         function handleKeyUp(e) { try{let a=false;if(e.key==='ArrowDown'){if(currentState===GameState.PLAYING)setDucking(false);a=true;}if(a)e.preventDefault();}catch(err){} }
         function handleCanvasPointerDown(e) { try{if(currentState===GameState.PAUSED)togglePause();else if(currentState===GameState.READY||currentState===GameState.GAMEOVER)startGame();else if(currentState===GameState.PLAYING)jump();e.preventDefault();}catch(err){} }
@@ -654,7 +611,7 @@
             }
         }
 
-        // --- Start --- (Identisch)
+        // --- Start ---
         // window.addEventListener('load', init); // Wird oben gesetzt
         console.log("--- Script End ---");
 
