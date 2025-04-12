@@ -204,7 +204,6 @@
             background-color: #d32f2f;
         }
 
-        /* Galerie Stile */
         .gallery-section {
             background-color: white;
             padding: 2rem;
@@ -280,7 +279,6 @@
             background-color: var(--secondary-color);
         }
 
-        /* Lightbox Stile */
         .lightbox {
             display: none;
             position: fixed;
@@ -295,6 +293,7 @@
         }
 
         .lightbox-content {
+            position: relative;
             max-width: 90%;
             max-height: 90%;
         }
@@ -316,7 +315,28 @@
             transition: color 0.3s;
         }
 
-        .close-lightbox:hover {
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border: none;
+        }
+
+        .prev-btn {
+            left: 30px;
+        }
+
+        .next-btn {
+            right: 30px;
+        }
+
+        .close-lightbox:hover,
+        .nav-btn:hover {
             color: var(--accent-color);
         }
 
@@ -353,9 +373,13 @@
             .add-image-form {
                 flex-direction: column;
             }
+
+            .nav-btn {
+                font-size: 30px;
+                padding: 10px;
+            }
         }
 
-        /* Button Styles for Edit/Delete */
         .edit-btn, .delete-btn {
             background: none;
             border: none;
@@ -430,16 +454,7 @@
         <section class="gallery-section">
             <h2>Bildergalerie</h2>
             <div class="gallery-container" id="galleryContainer">
-                <!-- Bilder werden hier dynamisch eingefügt -->
-                <div class="gallery-item">
-                    <img src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Banner.png" alt="Angel Event" onclick="openLightbox(this.src)">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Logo.png" alt="Vereinslogo" onclick="openLightbox(this.src)">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Titel.png" alt="Angelausflug" onclick="openLightbox(this.src)">
-                </div>
+                <!-- Bilder werden dynamisch eingefügt -->
             </div>
             
             <div class="add-image-form">
@@ -448,12 +463,13 @@
             </div>
         </section>
 
-        <!-- Lightbox für Bildervorschau -->
-        <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-            <span class="close-lightbox" onclick="closeLightbox(event)">&times;</span>
+        <div class="lightbox" id="lightbox">
+            <button class="nav-btn prev-btn" onclick="navigate(-1)">❮</button>
             <div class="lightbox-content">
                 <img id="lightboxImage" src="" alt="Großansicht">
             </div>
+            <button class="nav-btn next-btn" onclick="navigate(1)">❯</button>
+            <span class="close-lightbox" onclick="closeLightbox()">&times;</span>
         </div>
     </main>
 
@@ -463,39 +479,38 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Teilnehmerliste Array
             let participants = JSON.parse(localStorage.getItem('fishingParticipants')) || [];
-            
-            // Bildergalerie Array
             let galleryImages = JSON.parse(localStorage.getItem('fishingGallery')) || [
                 "https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Banner.png",
                 "https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Logo.png",
-                "https://raw.githubusercontent.com/ErSieCode/1Rad/main/WSF_Titel.png"
+                "https://via.placeholder.com/800x600/2a6f97/ffffff?text=Platzhalter+Bild"
             ];
             
-            // DOM Elemente
-            const participantList = document.getElementById('participantList').getElementsByTagName('tbody')[0];
-            const addButton = document.getElementById('addParticipant');
-            const exportButton = document.getElementById('exportPDF');
-            const clearButton = document.getElementById('clearList');
-            const lastNameInput = document.getElementById('lastName');
-            const firstNameInput = document.getElementById('firstName');
-            const participantsInput = document.getElementById('participants');
-            
-            // Galerie Elemente
-            const galleryContainer = document.getElementById('galleryContainer');
-            const imageUrlInput = document.getElementById('imageUrl');
-            const addImageBtn = document.getElementById('addImageBtn');
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImage = document.getElementById('lightboxImage');
-            
-            // Liste rendern
+            let currentImageIndex = 0;
+            const elements = {
+                participantList: document.getElementById('participantList').getElementsByTagName('tbody')[0],
+                galleryContainer: document.getElementById('galleryContainer'),
+                lightbox: document.getElementById('lightbox'),
+                lightboxImage: document.getElementById('lightboxImage'),
+                addParticipant: document.getElementById('addParticipant'),
+                exportPDF: document.getElementById('exportPDF'),
+                clearList: document.getElementById('clearList'),
+                lastName: document.getElementById('lastName'),
+                firstName: document.getElementById('firstName'),
+                participants: document.getElementById('participants'),
+                imageUrl: document.getElementById('imageUrl'),
+                addImageBtn: document.getElementById('addImageBtn')
+            };
+
+            // Initialisierung
+            renderList();
+            renderGallery();
+            setupEventListeners();
+
             function renderList() {
-                participantList.innerHTML = '';
-                
+                elements.participantList.innerHTML = '';
                 participants.forEach((participant, index) => {
                     const row = document.createElement('tr');
-                    
                     row.innerHTML = `
                         <td>${participant.lastName}</td>
                         <td>${participant.firstName}</td>
@@ -505,244 +520,167 @@
                             <button class="delete-btn" data-index="${index}">🗑️</button>
                         </td>
                     `;
-                    
-                    participantList.appendChild(row);
+                    elements.participantList.appendChild(row);
                 });
-                
-                // Event Listener für Buttons hinzufügen
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', deleteParticipant);
-                });
-                
-                document.querySelectorAll('.edit-btn').forEach(btn => {
-                    btn.addEventListener('click', editParticipant);
-                });
+                addButtonListeners();
             }
-            
-            // Galerie rendern
+
             function renderGallery() {
-                galleryContainer.innerHTML = '';
-                
-                galleryImages.forEach((imageUrl, index) => {
+                elements.galleryContainer.innerHTML = '';
+                galleryImages.forEach((imgUrl, index) => {
                     const galleryItem = document.createElement('div');
                     galleryItem.className = 'gallery-item';
-                    
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.alt = `Angelbild ${index + 1}`;
-                    img.onclick = function() { openLightbox(imageUrl); };
-                    
-                    galleryItem.appendChild(img);
-                    galleryContainer.appendChild(galleryItem);
+                    galleryItem.innerHTML = `
+                        <img src="${imgUrl}" alt="Bild ${index + 1}" onclick="openLightbox(${index})">
+                    `;
+                    elements.galleryContainer.appendChild(galleryItem);
                 });
             }
-            
-            // Teilnehmer hinzufügen
+
+            function openLightbox(index) {
+                currentImageIndex = index;
+                elements.lightboxImage.src = galleryImages[index];
+                elements.lightbox.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+
+            window.navigate = function(direction) {
+                currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+                elements.lightboxImage.src = galleryImages[currentImageIndex];
+            }
+
+            window.closeLightbox = function() {
+                elements.lightbox.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
             function addParticipant() {
-                const lastName = lastNameInput.value.trim();
-                const firstName = firstNameInput.value.trim();
-                const participantsCount = parseInt(participantsInput.value);
-                
-                if (!lastName || !firstName || isNaN(participantsCount) || participantsCount < 1) {
+                const participant = {
+                    lastName: elements.lastName.value.trim(),
+                    firstName: elements.firstName.value.trim(),
+                    participants: parseInt(elements.participants.value)
+                };
+
+                if (!participant.lastName || !participant.firstName || isNaN(participant.participants) || participant.participants < 1) {
                     alert('Bitte füllen Sie alle Felder korrekt aus!');
                     return;
                 }
-                
-                participants.push({
-                    lastName,
-                    firstName,
-                    participants: participantsCount
-                });
-                
-                saveToLocalStorage();
+
+                participants.push(participant);
+                saveToLocalStorage('fishingParticipants', participants);
                 renderList();
-                
-                // Formular zurücksetzen
-                lastNameInput.value = '';
-                firstNameInput.value = '';
-                participantsInput.value = '';
-                lastNameInput.focus();
+                clearForm();
             }
-            
-            // Bild hinzufügen
+
             function addImage() {
-                const imageUrl = imageUrlInput.value.trim();
-                
+                const imageUrl = elements.imageUrl.value.trim();
                 if (!imageUrl) {
                     alert('Bitte geben Sie eine gültige Bild-URL ein!');
                     return;
                 }
-                
-                // Überprüfen, ob die URL bereits existiert
-                if (galleryImages.includes(imageUrl)) {
-                    alert('Dieses Bild ist bereits in der Galerie vorhanden!');
-                    return;
-                }
-                
-                // Testen, ob die URL ein Bild ist
+
                 const img = new Image();
-                img.onload = function() {
+                img.onload = () => {
                     galleryImages.push(imageUrl);
-                    saveGalleryToLocalStorage();
+                    saveToLocalStorage('fishingGallery', galleryImages);
                     renderGallery();
-                    imageUrlInput.value = '';
+                    elements.imageUrl.value = '';
                 };
-                img.onerror = function() {
-                    alert('Die angegebene URL führt zu keinem gültigen Bild! Bitte überprüfen Sie die URL.');
-                };
+                img.onerror = () => alert('Ungültige Bild-URL!');
                 img.src = imageUrl;
             }
-            
-            // Teilnehmer löschen
-            function deleteParticipant(e) {
-                e.stopPropagation();
-                const index = e.target.getAttribute('data-index');
-                if (confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
-                    participants.splice(index, 1);
-                    saveToLocalStorage();
-                    renderList();
-                }
+
+            function saveToLocalStorage(key, data) {
+                localStorage.setItem(key, JSON.stringify(data));
             }
-            
-            // Teilnehmer bearbeiten
-            function editParticipant(e) {
-                e.stopPropagation();
-                const index = e.target.getAttribute('data-index');
-                const participant = participants[index];
-                
-                lastNameInput.value = participant.lastName;
-                firstNameInput.value = participant.firstName;
-                participantsInput.value = participant.participants;
-                
-                // Bearbeitungsmodus
-                addButton.textContent = 'Aktualisieren';
-                addButton.removeEventListener('click', addParticipant);
-                
-                const updateHandler = function() {
-                    participants[index] = {
-                        lastName: lastNameInput.value.trim(),
-                        firstName: firstNameInput.value.trim(),
-                        participants: parseInt(participantsInput.value)
-                    };
-                    
-                    saveToLocalStorage();
-                    renderList();
-                    
-                    // Formular zurücksetzen
-                    lastNameInput.value = '';
-                    firstNameInput.value = '';
-                    participantsInput.value = '';
-                    addButton.textContent = 'Hinzufügen';
-                    
-                    // Event Listener wiederherstellen
-                    addButton.removeEventListener('click', updateHandler);
-                    addButton.addEventListener('click', addParticipant);
-                };
-                
-                addButton.addEventListener('click', updateHandler);
+
+            function setupEventListeners() {
+                elements.addParticipant.addEventListener('click', addParticipant);
+                elements.exportPDF.addEventListener('click', exportToPDF);
+                elements.clearList.addEventListener('click', clearList);
+                elements.addImageBtn.addEventListener('click', addImage);
+
+                document.querySelectorAll('.registration-form input').forEach(input => {
+                    input.addEventListener('keypress', e => e.key === 'Enter' && addParticipant());
+                });
+
+                elements.imageUrl.addEventListener('keypress', e => e.key === 'Enter' && addImage());
             }
-            
-            // Lightbox öffnen
-            function openLightbox(imageSrc) {
-                event.stopPropagation();
-                lightboxImage.src = imageSrc;
-                lightbox.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-            
-            // Lightbox schließen
-            function closeLightbox(e) {
-                if (e) e.stopPropagation();
-                if (!e || e.target === lightbox || e.target.className === 'close-lightbox') {
-                    lightbox.style.display = 'none';
-                    document.body.style.overflow = 'auto';
-                }
-            }
-            
-            // In Local Storage speichern
-            function saveToLocalStorage() {
-                localStorage.setItem('fishingParticipants', JSON.stringify(participants));
-            }
-            
-            // Galerie in Local Storage speichern
-            function saveGalleryToLocalStorage() {
-                localStorage.setItem('fishingGallery', JSON.stringify(galleryImages));
-            }
-            
-            // Als PDF exportieren
+
             async function exportToPDF() {
                 try {
-                    // Warten bis html2canvas geladen ist
-                    if (typeof html2canvas !== 'function') {
-                        throw new Error('html2canvas nicht geladen');
-                    }
-                    
-                    // Warten bis jsPDF geladen ist
-                    if (typeof jsPDF !== 'function') {
-                        throw new Error('jsPDF nicht geladen');
-                    }
-                    
                     const { jsPDF } = window.jspdf;
-                    const element = document.querySelector('.container');
-                    const canvas = await html2canvas(element, {
-                        scale: 2,
-                        logging: false,
-                        useCORS: true
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/png');
+                    const canvas = await html2canvas(document.querySelector('.container'));
                     const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
                     pdf.save('Forellenangeln_Werningshausen_2025.pdf');
                 } catch (error) {
-                    console.error('Fehler beim PDF-Export:', error);
-                    alert('Fehler beim Erstellen des PDFs. Bitte versuchen Sie es später erneut.');
+                    alert('Fehler beim PDF-Export: ' + error.message);
                 }
             }
-            
-            // Liste leeren
+
             function clearList() {
-                if (participants.length === 0) {
-                    alert('Die Liste ist bereits leer!');
-                    return;
-                }
-                
                 if (confirm('Möchten Sie wirklich die gesamte Liste löschen?')) {
                     participants = [];
-                    saveToLocalStorage();
+                    saveToLocalStorage('fishingParticipants', participants);
                     renderList();
                 }
             }
-            
-            // Event Listener
-            addButton.addEventListener('click', addParticipant);
-            exportButton.addEventListener('click', exportToPDF);
-            clearButton.addEventListener('click', clearList);
-            addImageBtn.addEventListener('click', addImage);
-            
-            // Enter-Taste zum Hinzufügen
-            document.querySelectorAll('.registration-form input').forEach(input => {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        addParticipant();
-                    }
+
+            function addButtonListeners() {
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', deleteParticipant);
                 });
-            });
-            
-            imageUrlInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    addImage();
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', editParticipant);
+                });
+            }
+
+            function deleteParticipant(e) {
+                const index = e.target.dataset.index;
+                if (confirm('Eintrag wirklich löschen?')) {
+                    participants.splice(index, 1);
+                    saveToLocalStorage('fishingParticipants', participants);
+                    renderList();
                 }
-            });
-            
-            // Initiale Render
-            renderList();
-            renderGallery();
+            }
+
+            function editParticipant(e) {
+                const index = e.target.dataset.index;
+                const participant = participants[index];
+                elements.lastName.value = participant.lastName;
+                elements.firstName.value = participant.firstName;
+                elements.participants.value = participant.participants;
+                
+                const update = () => {
+                    participants[index] = {
+                        lastName: elements.lastName.value.trim(),
+                        firstName: elements.firstName.value.trim(),
+                        participants: parseInt(elements.participants.value)
+                    };
+                    saveToLocalStorage('fishingParticipants', participants);
+                    renderList();
+                    clearForm();
+                };
+
+                elements.addParticipant.textContent = 'Aktualisieren';
+                elements.addParticipant.replaceEventListener('click', update);
+            }
+
+            function clearForm() {
+                elements.lastName.value = '';
+                elements.firstName.value = '';
+                elements.participants.value = '';
+                elements.addParticipant.textContent = 'Hinzufügen';
+                elements.addParticipant.addEventListener('click', addParticipant);
+            }
         });
+
+        Element.prototype.replaceEventListener = function(type, newListener) {
+            this.removeEventListener(type, this.lastListener);
+            this.lastListener = newListener;
+            this.addEventListener(type, newListener);
+        };
     </script>
 </body>
 </html>
