@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#333333">
     <meta charset="UTF-8">
     <!-- Preload the loading image first -->
-    <link rel="preload" href="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" as="image">
+    <link rel="preload" href="https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/load.webp" as="image">
     <style>
         /* Reset and Base Styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -417,6 +417,21 @@
             pointer-events: none;
             z-index: 15;
         }
+
+        /* Stil für Hintergrund-Info-Anzeige */
+        #backgroundInfo {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+            pointer-events: none;
+            display: none; /* Standardmäßig ausgeblendet */
+        }
     </style>
 </head>
 <body>
@@ -425,7 +440,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="debugOverlay"></div>
         <div id="loadingOverlay">
-            <img id="loadingSpinner" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/load.png" alt="Loading..."
+            <img id="loadingSpinner" src="https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/load.webp" alt="Loading..."
                  onerror="this.onerror=null; console.error('Loading image failed to load'); this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIHN0cm9rZT0iIzRDQUY1MCIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSIxNTAgMTgwIiAvPjwvc3ZnPg==';"
                  onload="console.log('Loading spinner image loaded successfully!');">
         </div>
@@ -433,8 +448,8 @@
             <button id="startButton">START</button>
             <button id="settingsButton">SETTINGS</button>
             <div id="characterSelect">
-                <img id="fuchs" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png" alt="Fuchs">
-                <img id="waschbaer" src="https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png" alt="Waschbär">
+                <img id="fuchs" src="https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Fuchs_einrad.webp" alt="Fuchs">
+                <img id="waschbaer" src="https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/waschbaer_einrad.webp" alt="Waschbär">
             </div>
         </div>
         <div id="gameInfo">
@@ -453,6 +468,7 @@
             <div>Final Score: <span id="finalScore">0</span></div>
             <button id="restartButton">RESTART</button>
         </div>
+        <div id="backgroundInfo">Aktuelle Zeit: <span id="currentMinute">0</span> Minuten</div>
 
         <!-- Settings Panel - UPDATED WITH DIFFICULTY LEVELS -->
         <div id="settingsPanel">
@@ -582,6 +598,12 @@
                 <label for="showHitboxSetting">Show Hitboxes</label>
             </div>
 
+            <!-- Background info toggle -->
+            <div class="checkbox-container">
+                <input type="checkbox" id="showBackgroundInfoSetting">
+                <label for="showBackgroundInfoSetting">Show Background Info</label>
+            </div>
+
             <div class="settings-buttons">
                 <button id="settingsResetButton">Reset Defaults</button>
                 <button id="settingsCloseButton">Close</button>
@@ -626,7 +648,7 @@
         // --- Asset Loading with progress tracking ---
         console.log("Assets: Defining...");
         // Track loading progress
-        let totalAssets = 12; // Total number of images to load
+        let totalAssets = 14; // Erhöht auf 14 für die zwei zusätzlichen Hintergrundbilder
         let loadedAssets = 0;
         const loadingOverlay = document.getElementById('loadingOverlay');
 
@@ -656,32 +678,43 @@
         const fuchsImg = new Image(); enhancedLogImageStatus('Fuchs', fuchsImg);
         const waschbaerImg = new Image(); enhancedLogImageStatus('Waschbär', waschbaerImg);
         const duckButtonImg = new Image(); enhancedLogImageStatus('Duck Icon', duckButtonImg);
-        // Backgrounds
+
+        // Backgrounds - Originale + neue Varianten
         const dayBgImg = new Image(); enhancedLogImageStatus('BG Day', dayBgImg);
         const nightBgImg = new Image(); enhancedLogImageStatus('BG Night', nightBgImg);
+        const dayBgImg1 = new Image(); enhancedLogImageStatus('BG Day V4', dayBgImg1);
+        const nightBgImg1 = new Image(); enhancedLogImageStatus('BG Night V4', nightBgImg1);
+
         const gameOverBannerImg = new Image(); enhancedLogImageStatus('Game Over Banner', gameOverBannerImg);
+
         // Obstacles - Ground
         const pallet4Img = new Image(); enhancedLogImageStatus('Obstacle Pallet 4', pallet4Img);
         const pallet6Img = new Image(); enhancedLogImageStatus('Obstacle Pallet 6', pallet6Img);
         const logImg = new Image(); enhancedLogImageStatus('Obstacle Log', logImg);
         const stumpImg = new Image(); enhancedLogImageStatus('Obstacle Stump', stumpImg);
+
         // Obstacles - Sky
         const owlImg = new Image(); enhancedLogImageStatus('Obstacle Owl', owlImg);
         const flyingUniImg = new Image(); enhancedLogImageStatus('Obstacle Flying Uni', flyingUniImg);
 
         // Set sources after setting up handlers
-        fuchsImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fuchs_einrad.png';
-        waschbaerImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/waschbaer_einrad.png';
-        duckButtonImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Muni_logo.png';
-        dayBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Tag_BG.png';
-        nightBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Nacht_BG.png';
-        gameOverBannerImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Banner.png';
-        pallet4Img.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Paletten_4_IMG.png';
-        pallet6Img.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Paletten_6_IMG.png';
-        logImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baum_liegend.png';
-        stumpImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/baumstumpf.png';
-        owlImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Eule_v1_L.png';
-        flyingUniImg.src = 'https://raw.githubusercontent.com/ErSieCode/1Rad/main/Fulg_Einrad_orange.png';
+        fuchsImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Fuchs_einrad.webp';
+        waschbaerImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/waschbaer_einrad.webp';
+        duckButtonImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Muni_logo.webp';
+
+        // Alle Hintergründe laden - Original und neue Version
+        dayBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Tag_BG.webp';
+        nightBgImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Nacht_BG.webp';
+        dayBgImg1.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Tag_BG_v4.webp';
+        nightBgImg1.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Nacht_BG_v4.webp';
+
+        gameOverBannerImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Banner.webp';
+        pallet4Img.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Paletten_4_IMG.webp';
+        pallet6Img.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Paletten_6_IMG.webp';
+        logImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/baum_liegend.webp';
+        stumpImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/baumstumpf.webp';
+        owlImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Eule_v1_L.webp';
+        flyingUniImg.src = 'https://raw.githubusercontent.com/ErSieCode/ersiecode.github.io/main/images/Fulg_Einrad_orange.webp';
 
         console.log("Assets: Defined.");
 
@@ -690,7 +723,7 @@
         let canvas, ctx, scoreElement, highScoreElement, finalScoreElement, gameOverElement, restartButton, startButton,
             fuchsSelect, waschbaerSelect, characterSelectContainer, pauseOverlay, quitButton, livesDisplay, gameContainer,
             duckButton, backButton, settingsButton, settingsPanel, settingsCloseButton, settingsResetButton, debugOverlay,
-            showHitboxSetting, settingsBackButton;
+            showHitboxSetting, settingsBackButton, showBackgroundInfoSetting, backgroundInfo, currentMinuteElement;
 
         // Frühe Initialisierung der Variablen
         canvas = document.getElementById('gameCanvas');
@@ -717,6 +750,9 @@
         debugOverlay = document.getElementById('debugOverlay');
         showHitboxSetting = document.getElementById('showHitboxSetting');
         settingsBackButton = document.getElementById('settingsBackButton');
+        showBackgroundInfoSetting = document.getElementById('showBackgroundInfoSetting');
+        backgroundInfo = document.getElementById('backgroundInfo');
+        currentMinuteElement = document.getElementById('currentMinute');
 
         if (!canvas || !ctx) {
              console.error("CRITICAL: Canvas or Context not available immediately!");
@@ -750,6 +786,9 @@
         let isInvulnerable = false;
         let invulnerabilityTimer = null;
         const invulnerabilityDuration = 2000;
+
+        // Variable für Hintergrund-Info-Anzeige
+        let showBackgroundInfo = false;
 
         // --- Physics & Scaling ---
         let scaleFactor = 1;
@@ -858,7 +897,8 @@
             spawnRateLevel: 'easy',       // Auf einfach gesetzt (vormals normal)
             flyingHeightLevel: 'easy',    // Auf einfach gesetzt (vormals normal)
             hitboxSizeLevel: 'normal',    // Unverändert
-            showHitboxes: false           // Toggle für Hitbox-Visualisierung
+            showHitboxes: false,          // Toggle für Hitbox-Visualisierung
+            showBackgroundInfo: false     // Toggle für Hintergrund-Info
         };
 
         // Difficulty level values - ÜBERARBEITET für bessere Stufenverteilung
@@ -912,6 +952,19 @@
                 });
             }
 
+            // Initialisiere Background-Info-Toggle
+            if (showBackgroundInfoSetting) {
+                showBackgroundInfoSetting.checked = gameSettings.showBackgroundInfo;
+                showBackgroundInfoSetting.addEventListener('change', (e) => {
+                    gameSettings.showBackgroundInfo = e.target.checked;
+
+                    // Info-Anzeige ein- oder ausblenden
+                    if (backgroundInfo) {
+                        backgroundInfo.style.display = gameSettings.showBackgroundInfo ? 'block' : 'none';
+                    }
+                });
+            }
+
             // Add event listeners to all radio buttons
             addRadioListeners(speedRadios, 'speedLevel');
             addRadioListeners(jumpRadios, 'jumpHeightLevel');
@@ -953,7 +1006,8 @@
                 spawnRateLevel: 'easy',      // Auf einfach gesetzt (vormals normal)
                 flyingHeightLevel: 'easy',   // Auf einfach gesetzt (vormals normal)
                 hitboxSizeLevel: 'normal',   // Unverändert
-                showHitboxes: false
+                showHitboxes: false,
+                showBackgroundInfo: false
             };
 
             // Update UI controls
@@ -972,6 +1026,16 @@
             // Update hitbox checkbox
             if (showHitboxSetting) {
                 showHitboxSetting.checked = false;
+            }
+
+            // Update background info checkbox
+            if (showBackgroundInfoSetting) {
+                showBackgroundInfoSetting.checked = false;
+            }
+
+            // Hide background info
+            if (backgroundInfo) {
+                backgroundInfo.style.display = 'none';
             }
 
             // Clear debug overlay
@@ -1062,6 +1126,11 @@
             }
             if(fuchsSelect) fuchsSelect.classList.toggle('selected', character === 'fuchs');
             if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
+
+            // Setup für Hintergrund-Info
+            if (backgroundInfo) {
+                backgroundInfo.style.display = gameSettings.showBackgroundInfo ? 'block' : 'none';
+            }
         }
 
         // --- ENHANCED: Resize Canvas with better orientation handling ---
@@ -1517,248 +1586,254 @@
                 }
 
                 if (gameContainer) {
-                    // Alten Indikator entfernen falls vorhanden
-                    const oldIndicator = gameContainer.querySelector('.player-invulnerable-indicator');
-                    if (oldIndicator && oldIndicator.parentNode) {
-                        oldIndicator.parentNode.removeChild(oldIndicator);
-                    }
+    // Alten Indikator entfernen falls vorhanden
+    const oldIndicator = gameContainer.querySelector('.player-invulnerable-indicator');
+    if (oldIndicator && oldIndicator.parentNode) {
+        oldIndicator.parentNode.removeChild(oldIndicator);
+    }
 
-                    gameContainer.appendChild(playerFlash);
-                }
+    gameContainer.appendChild(playerFlash);
+}
 
-                console.log("Unverwundbarkeits-Effekte angewendet");
+console.log("Unverwundbarkeits-Effekte angewendet");
+}
+
+// Neuen Timer setzen - mit Darstellung der verbleibenden Zeit
+console.log(`Starte Unverwundbarkeit für ${invulnerabilityDuration/1000} Sekunden`);
+let timeLeft = invulnerabilityDuration;
+
+// Erstelle eine Funktion, die die Unverwundbarkeit beendet
+const endInvulnerability = () => {
+    console.log("### UNVERWUNDBARKEIT BEENDET ###");
+    isInvulnerable = false;
+    invulnerabilityTimer = null;
+
+    // Entferne den visuellen Indikator
+    if (gameContainer) {
+        const indicator = gameContainer.querySelector('.player-invulnerable-indicator');
+        if (indicator && indicator.parentNode) {
+            indicator.parentNode.removeChild(indicator);
+        }
+    }
+};
+
+// Verwende einen robusten Timer
+invulnerabilityTimer = setTimeout(endInvulnerability, invulnerabilityDuration);
+
+console.log(`Unverwundbarkeits-Timer gesetzt für ${invulnerabilityDuration}ms`);
+}
+
+function togglePause() {
+    if(currentState===GameState.PLAYING){
+        currentState=GameState.PAUSED;
+        if(animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId=null;
+    } else if(currentState===GameState.PAUSED){
+        currentState=GameState.PLAYING;
+        lastTime=performance.now();
+        animationFrameId=requestAnimationFrame(gameLoop);
+    }
+    updateUI();
+}
+
+function quitGame() {
+    if(currentState===GameState.PLAYING||currentState===GameState.PAUSED) saveHighScore();
+    alert("Game ended.");
+    try{window.close();}catch(e){}
+    currentState=GameState.GAMEOVER;
+    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+    animationFrameId=null;
+    updateUI();
+}
+
+// Back to Menu Function
+function backToMenu() {
+    if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
+        saveHighScore();
+        currentState = GameState.READY;
+        resetGame();
+        updateUI();
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+}
+
+function jump() {
+    if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return;
+    if(!player.jumping){
+        player.vy = player.jumpStrength;
+        player.jumping=true;
+        player.canDoubleJump=true;
+        player.hasDoubleJumped=false;
+    } else if(player.canDoubleJump&&!player.hasDoubleJumped){
+        player.vy = player.jumpStrength * 0.8;
+        player.canDoubleJump=false;
+        player.hasDoubleJumped=true;
+        createDoubleJumpEffect();
+    }
+}
+
+function setDucking(sd) {
+    if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return;
+    if(sd&&!isDucking){
+        isDucking=true;
+        player.height=player.duckHeight;
+        player.y=canvas.height-groundHeight-player.height;
+    } else if(!sd&&isDucking){
+        isDucking=false;
+        player.height=player.baseHeight;
+        player.y=canvas.height-groundHeight-player.height;
+        checkCollision();
+    }
+}
+
+function createDoubleJumpEffect() {
+    try{
+        if(!player||!player.width) return;
+        const s=player.width*1.2;
+        const e=document.createElement('div');
+        e.className='doubleJumpEffect';
+        const cr=gameContainer.getBoundingClientRect();
+        const cvr=canvas.getBoundingClientRect();
+        const ox=cvr.left-cr.left;
+        const oy=cvr.top-cr.top;
+        e.style.width=`${s}px`;
+        e.style.height=`${s}px`;
+        e.style.left=`${ox+player.x+player.width/2-s/2}px`;
+        e.style.top=`${oy+player.y+player.height/2-s/2}px`;
+        if(gameContainer) gameContainer.appendChild(e);
+        setTimeout(()=>{if(e.parentNode)e.remove();},400);
+    }catch(err){}
+}
+
+// --- createObstacle - Verbessert für verschiedene Schwierigkeitsgrade und tiefere Flughöhe ---
+function createObstacle(category = null) {
+    try {
+        let chosenType = null;
+        let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
+
+        // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
+        if (gameTime > highStumpMinTime) {
+            availableGroundTypes.push(ObstacleType.STUMP_HIGH);
+        }
+
+        // Wenn keine Kategorie angegeben ist, zufällig entscheiden
+        if (category === null) {
+            category = Math.random() < 0.70 ? 'ground' : 'sky';
+        }
+
+        if (category === 'ground') {
+            const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
+            chosenType = availableGroundTypes[randIdx];
+        } else {
+            const randIdx = Math.floor(Math.random() * skyObstacleTypes.length);
+            chosenType = skyObstacleTypes[randIdx];
+        }
+
+        const data = obstacleData[chosenType];
+        if (!data) { console.error("Obstacle data missing for type:", chosenType); return; } // Sicherheitscheck
+
+        const scaledWidth = data.baseWidth * scaleFactor;
+        const scaledHeight = data.baseHeight * scaleFactor;
+        let yPos;
+
+        if (data.category === 'ground') {
+            yPos = canvas.height - groundHeight - scaledHeight;
+            // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
+            if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
+        } else { // Positionierung von Flug-Hindernissen
+            // Flughöhen-Einstellungen abrufen
+            const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
+
+            // Basiswerte - VOLLSTÄNDIG ANGEPASST für deutlich tiefere Flugobjekte
+            const minTopMargin = 30 * scaleFactor; // STARK REDUZIERT: Von 120 auf 80, dann auf 50, jetzt auf 30 für extrem tiefe Flughöhen
+            const playerClearance = player.baseHeight ? player.baseHeight * 0.7 : 40 * scaleFactor; // NOCHMALS REDUZIERT: von 1.3 auf 1.1, dann auf 0.9, jetzt auf 0.7
+            const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze noch tiefer angesetzt
+            const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
+
+            // Gesamthöhenbereich berechnen
+            const totalHeight = safeSkyBottom - minTopMargin;
+
+            // Höhenfaktor und Zufallsbereich anwenden
+            const heightFactor = flyingHeightSettings.heightFactor;
+            const randomness = flyingHeightSettings.randomness;
+
+            // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
+            if (gameSettings.flyingHeightLevel === 'veryHard') {
+                // Höhe berechnen, die Ducken erforderlich macht
+                const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
+                yPos = duckRequiredY - (scaledHeight / 2); // Objekt in Duck-Höhe zentrieren
+            } else {
+                // Normale Höhenberechnung für andere Schwierigkeitsgrade
+                yPos = minTopMargin + (totalHeight * heightFactor);
             }
 
-            // Neuen Timer setzen - mit Darstellung der verbleibenden Zeit
-            console.log(`Starte Unverwundbarkeit für ${invulnerabilityDuration/1000} Sekunden`);
-            let timeLeft = invulnerabilityDuration;
+            // Zufälligkeit hinzufügen, umgekehrt proportional zum Schwierigkeitsgrad
+            const randomRange = totalHeight * randomness;
+            yPos += (Math.random() - 0.5) * randomRange;
 
-            // Erstelle eine Funktion, die die Unverwundbarkeit beendet
-            const endInvulnerability = () => {
-                console.log("### UNVERWUNDBARKEIT BEENDET ###");
-                isInvulnerable = false;
-                invulnerabilityTimer = null;
-
-                // Entferne den visuellen Indikator
-                if (gameContainer) {
-                    const indicator = gameContainer.querySelector('.player-invulnerable-indicator');
-                    if (indicator && indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                }
-            };
-
-            // Verwende einen robusten Timer
-            invulnerabilityTimer = setTimeout(endInvulnerability, invulnerabilityDuration);
-
-            console.log(`Unverwundbarkeits-Timer gesetzt für ${invulnerabilityDuration}ms`);
+            // Sicherstellen, dass wir im sicheren Bereich bleiben
+            yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos));
         }
 
-        function togglePause() {
-            if(currentState===GameState.PLAYING){
-                currentState=GameState.PAUSED;
-                if(animationFrameId) cancelAnimationFrame(animationFrameId);
-                animationFrameId=null;
-            } else if(currentState===GameState.PAUSED){
-                currentState=GameState.PLAYING;
-                lastTime=performance.now();
-                animationFrameId=requestAnimationFrame(gameLoop);
-            }
-            updateUI();
-        }
+        // Hindernis mit allen erforderlichen Informationen erstellen
+        console.log(`Erstelle ${chosenType} Hindernis auf Position ${yPos}`);
+        obstacles.push({
+            x: canvas.width, // Start rechts außerhalb
+            y: yPos,
+            width: scaledWidth,
+            height: scaledHeight,
+            type: chosenType,
+            image: data.img, // Referenz auf das Image-Objekt speichern
+            category: data.category // Kategorie speichern für spätere Logik
+        });
+    } catch(err) {
+         console.error("Fehler in createObstacle:", err);
+    }
+}
 
-        function quitGame() {
-            if(currentState===GameState.PLAYING||currentState===GameState.PAUSED) saveHighScore();
-            alert("Game ended.");
-            try{window.close();}catch(e){}
-            currentState=GameState.GAMEOVER;
-            if(animationFrameId) cancelAnimationFrame(animationFrameId);
-            animationFrameId=null;
-            updateUI();
-        }
+// --- createCloud - Mit angepasster Y-Position
+function createCloud() {
+    const bw = 60 * globalSizeFactor;
+    const bh = 30 * globalSizeFactor;
+    const sw = bw * scaleFactor;
+    const sh = bh * scaleFactor;
+    clouds.push({
+        x: canvas.width,
+        // --- HIER DIE ÄNDERUNG FÜR WOLKEN ---
+        y: (30 + Math.random() * 80) * scaleFactor, // << GEÄNDERT: Startet tiefer und hat größeren Bereich nach unten
+        // --- ENDE ÄNDERUNG ---
+        width: sw,
+        height: sh,
+        speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor * difficultyValues.speed[gameSettings.speedLevel]
+    });
+}
 
-        // Back to Menu Function
-        function backToMenu() {
-            if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
-                saveHighScore();
-                currentState = GameState.READY;
-                resetGame();
-                updateUI();
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                animationFrameId = requestAnimationFrame(gameLoop);
-            }
-        }
+// --- Update ---
+function update(dt) {
+    if(currentState!==GameState.PLAYING) return;
+    gameTime+=dt;
+    updatePlayer(dt);
+    updateObstacles(dt);
+    updateClouds(dt);
+    updateScore(dt);
+    updateBackground(dt);
+    updateDifficulty(dt);
 
-        function jump() {
-            if(currentState!==GameState.PLAYING||isDucking||!player||typeof player.vy==='undefined') return;
-            if(!player.jumping){
-                player.vy = player.jumpStrength;
-                player.jumping=true;
-                player.canDoubleJump=true;
-                player.hasDoubleJumped=false;
-            } else if(player.canDoubleJump&&!player.hasDoubleJumped){
-                player.vy = player.jumpStrength * 0.8;
-                player.canDoubleJump=false;
-                player.hasDoubleJumped=true;
-                createDoubleJumpEffect();
-            }
-        }
+    // Zeitanzeige aktualisieren, wenn aktiviert
+    if (gameSettings.showBackgroundInfo && backgroundInfo && currentMinuteElement) {
+        const currentMinutes = Math.floor(gameTime / 60);
+        currentMinuteElement.textContent = currentMinutes;
+    }
 
-        function setDucking(sd) {
-            if(currentState!==GameState.PLAYING||player.jumping||!player||typeof player.height==='undefined') return;
-            if(sd&&!isDucking){
-                isDucking=true;
-                player.height=player.duckHeight;
-                player.y=canvas.height-groundHeight-player.height;
-            } else if(!sd&&isDucking){
-                isDucking=false;
-                player.height=player.baseHeight;
-                player.y=canvas.height-groundHeight-player.height;
-                checkCollision();
-            }
-        }
+    // Kollisionsprüfung am Ende des Update-Zyklus
+    checkCollision();
+}
 
-        function createDoubleJumpEffect() {
-            try{
-                if(!player||!player.width) return;
-                const s=player.width*1.2;
-                const e=document.createElement('div');
-                e.className='doubleJumpEffect';
-                const cr=gameContainer.getBoundingClientRect();
-                const cvr=canvas.getBoundingClientRect();
-                const ox=cvr.left-cr.left;
-                const oy=cvr.top-cr.top;
-                e.style.width=`${s}px`;
-                e.style.height=`${s}px`;
-                e.style.left=`${ox+player.x+player.width/2-s/2}px`;
-                e.style.top=`${oy+player.y+player.height/2-s/2}px`;
-                if(gameContainer) gameContainer.appendChild(e);
-                setTimeout(()=>{if(e.parentNode)e.remove();},400);
-            }catch(err){}
-        }
-
-        // --- createObstacle - Verbessert für verschiedene Schwierigkeitsgrade und tiefere Flughöhe ---
-        function createObstacle(category = null) {
-            try {
-                let chosenType = null;
-                let availableGroundTypes = [...groundObstacleTypes]; // Kopie der Basis-Bodentypen
-
-                // Hohen Baumstumpf hinzufügen, wenn Zeit abgelaufen
-                if (gameTime > highStumpMinTime) {
-                    availableGroundTypes.push(ObstacleType.STUMP_HIGH);
-                }
-
-                // Wenn keine Kategorie angegeben ist, zufällig entscheiden
-                if (category === null) {
-                    category = Math.random() < 0.70 ? 'ground' : 'sky';
-                }
-
-                if (category === 'ground') {
-                    const randIdx = Math.floor(Math.random() * availableGroundTypes.length);
-                    chosenType = availableGroundTypes[randIdx];
-                } else {
-                    const randIdx = Math.floor(Math.random() * skyObstacleTypes.length);
-                    chosenType = skyObstacleTypes[randIdx];
-                }
-
-                const data = obstacleData[chosenType];
-                if (!data) { console.error("Obstacle data missing for type:", chosenType); return; } // Sicherheitscheck
-
-                const scaledWidth = data.baseWidth * scaleFactor;
-                const scaledHeight = data.baseHeight * scaleFactor;
-                let yPos;
-
-                if (data.category === 'ground') {
-                    yPos = canvas.height - groundHeight - scaledHeight;
-                    // Optional: Leichte Höhenanpassung für spezielle Typen hier möglich
-                    if (data.isHigh) { yPos -= 20 * scaleFactor; } // Höhenjustierung für STUMP_HIGH
-                } else { // Positionierung von Flug-Hindernissen
-                    // Flughöhen-Einstellungen abrufen
-                    const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
-
-                    // Basiswerte - VOLLSTÄNDIG ANGEPASST für deutlich tiefere Flugobjekte
-                    const minTopMargin = 30 * scaleFactor; // STARK REDUZIERT: Von 120 auf 80, dann auf 50, jetzt auf 30 für extrem tiefe Flughöhen
-                    const playerClearance = player.baseHeight ? player.baseHeight * 0.7 : 40 * scaleFactor; // NOCHMALS REDUZIERT: von 1.3 auf 1.1, dann auf 0.9, jetzt auf 0.7
-                    const safeSkyBottom = canvas.height - groundHeight - playerClearance; // Untere Grenze noch tiefer angesetzt
-                    const duckHeight = player.duckHeight || (player.baseHeight * 0.5);
-
-                    // Gesamthöhenbereich berechnen
-                    const totalHeight = safeSkyBottom - minTopMargin;
-
-                    // Höhenfaktor und Zufallsbereich anwenden
-                    const heightFactor = flyingHeightSettings.heightFactor;
-                    const randomness = flyingHeightSettings.randomness;
-
-                    // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
-                    if (gameSettings.flyingHeightLevel === 'veryHard') {
-                        // Höhe berechnen, die Ducken erforderlich macht
-                        const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - duckHeight) / 2;
-                        yPos = duckRequiredY - (scaledHeight / 2); // Objekt in Duck-Höhe zentrieren
-                    } else {
-                        // Normale Höhenberechnung für andere Schwierigkeitsgrade
-                        yPos = minTopMargin + (totalHeight * heightFactor);
-                    }
-
-                    // Zufälligkeit hinzufügen, umgekehrt proportional zum Schwierigkeitsgrad
-                    const randomRange = totalHeight * randomness;
-                    yPos += (Math.random() - 0.5) * randomRange;
-
-                    // Sicherstellen, dass wir im sicheren Bereich bleiben
-                    yPos = Math.max(minTopMargin, Math.min(safeSkyBottom - scaledHeight, yPos));
-                }
-
-                // Hindernis mit allen erforderlichen Informationen erstellen
-                console.log(`Erstelle ${chosenType} Hindernis auf Position ${yPos}`);
-                obstacles.push({
-                    x: canvas.width, // Start rechts außerhalb
-                    y: yPos,
-                    width: scaledWidth,
-                    height: scaledHeight,
-                    type: chosenType,
-                    image: data.img, // Referenz auf das Image-Objekt speichern
-                    category: data.category // Kategorie speichern für spätere Logik
-                });
-            } catch(err) {
-                 console.error("Fehler in createObstacle:", err);
-            }
-        }
-
-        // --- createCloud - Mit angepasster Y-Position
-        function createCloud() {
-            const bw = 60 * globalSizeFactor;
-            const bh = 30 * globalSizeFactor;
-            const sw = bw * scaleFactor;
-            const sh = bh * scaleFactor;
-            clouds.push({
-                x: canvas.width,
-                // --- HIER DIE ÄNDERUNG FÜR WOLKEN ---
-                y: (30 + Math.random() * 80) * scaleFactor, // << GEÄNDERT: Startet tiefer und hat größeren Bereich nach unten
-                // --- ENDE ÄNDERUNG ---
-                width: sw,
-                height: sh,
-                speed: (baseSpeed * (0.2 + Math.random() * 0.3)) * scaleFactor * difficultyValues.speed[gameSettings.speedLevel]
-            });
-        }
-
-        // --- Update ---
-        function update(dt) {
-            if(currentState!==GameState.PLAYING) return;
-            gameTime+=dt;
-            updatePlayer(dt);
-            updateObstacles(dt);
-            updateClouds(dt);
-            updateScore(dt);
-            updateBackground(dt);
-            updateDifficulty(dt);
-
-            // Kollisionsprüfung am Ende des Update-Zyklus
-            checkCollision();
-        }
-
-        function updatePlayer(dt) {
+function updatePlayer(dt) {
     if(!player||typeof player.vy==='undefined') return;
     player.vy += player.gravity * dt;
     player.y += player.vy * dt;
@@ -1776,132 +1851,155 @@
 }
 
 // --- updateObstacles - Verbessert mit 4-Stufen-System ---
-        function updateObstacles(dt) {
-            // Erst die bestehenden Hindernisse aktualisieren
-            for(let i=obstacles.length-1; i>=0; i--){
-                // Geschwindigkeit basierend auf Schwierigkeitsgrad anwenden
-                obstacles[i].x -= speed * dt;
-                if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
-            }
+function updateObstacles(dt) {
+    // Erst die bestehenden Hindernisse aktualisieren
+    for(let i=obstacles.length-1; i>=0; i--){
+        // Geschwindigkeit basierend auf Schwierigkeitsgrad anwenden
+        obstacles[i].x -= speed * dt;
+        if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
+    }
 
-            // Spawn-Regeln für aktuellen Schwierigkeitsgrad abrufen
-            const spawnRules = getSpawnRules(gameSettings.spawnRateLevel);
+    // Spawn-Regeln für aktuellen Schwierigkeitsgrad abrufen
+    const spawnRules = getSpawnRules(gameSettings.spawnRateLevel);
 
-            // --- Je nach Schwierigkeitsgrad unterschiedliche Spawn-Logik verwenden ---
+    // --- Je nach Schwierigkeitsgrad unterschiedliche Spawn-Logik verwenden ---
 
-            // Gemeinsamer Timer für einfache Schwierigkeitsgrade
-            if (!spawnRules.independent) {
-                // Für leichtere Schwierigkeitsgrade: alternierendes System mit etwas Zufall
-                obstacleTimer -= dt;
+    // Gemeinsamer Timer für einfache Schwierigkeitsgrade
+    if (!spawnRules.independent) {
+        // Für leichtere Schwierigkeitsgrade: alternierendes System mit etwas Zufall
+        obstacleTimer -= dt;
 
-                // Kleine Zufallschance für Spawns unabhängig vom Timer
-                const randomSpawn = Math.random() < spawnRules.randomTriggerChance;
+        // Kleine Zufallschance für Spawns unabhängig vom Timer
+        const randomSpawn = Math.random() < spawnRules.randomTriggerChance;
 
-                if (obstacleTimer <= 0 || randomSpawn) {
-                    // Bei einfacheren Levels ist die Auswahl halbwegs vorhersehbar
-                    let nextType;
+        if (obstacleTimer <= 0 || randomSpawn) {
+            // Bei einfacheren Levels ist die Auswahl halbwegs vorhersehbar
+            let nextType;
 
-                    // Manchmal Zufall, manchmal Alternieren
-                    if (Math.random() < 0.3) {
-                        // Zufällige Auswahl mit Tendenz zu mehr Boden-Hindernissen
-                        nextType = Math.random() < 0.6 ? 'ground' : 'sky';
-                    } else {
-                        // Alternierendes Muster für etwas Vorhersehbarkeit
-                        if (obstacles.length > 0) {
-                            const lastObstacle = obstacles[obstacles.length-1];
-                            nextType = lastObstacle.category === 'ground' ? 'sky' : 'ground';
-                        } else {
-                            nextType = 'ground';
-                        }
-                    }
-
-                    // Hindernis erstellen
-                    createObstacle(nextType);
-
-                    // Interval basierend auf Schwierigkeitsgrad setzen
-                    let baseInterval = nextType === 'ground' ? spawnRules.groundInterval : spawnRules.skyInterval;
-
-                    // Zufallsvarianz hinzufügen
-                    const variance = baseInterval * spawnRules.randomVariation;
-                    obstacleTimer = baseInterval + ((Math.random() * 2 - 1) * variance);
+            // Manchmal Zufall, manchmal Alternieren
+            if (Math.random() < 0.3) {
+                // Zufällige Auswahl mit Tendenz zu mehr Boden-Hindernissen
+                nextType = Math.random() < 0.6 ? 'ground' : 'sky';
+            } else {
+                // Alternierendes Muster für etwas Vorhersehbarkeit
+                if (obstacles.length > 0) {
+                    const lastObstacle = obstacles[obstacles.length-1];
+                    nextType = lastObstacle.category === 'ground' ? 'sky' : 'ground';
+                } else {
+                    nextType = 'ground';
                 }
             }
-            // Unabhängige Timer für schwerere Schwierigkeitsgrade
-            else {
-                // Unabhängige Timer für Boden- und Flug-Hindernisse
 
-                // Boden-Hindernis-Timer
-                groundObstacleTimer -= dt;
-                groundObstacleTimerOffset -= dt;
+            // Hindernis erstellen
+            createObstacle(nextType);
 
-                // Wenn ein Boden-Timer 0 erreicht, ein Boden-Hindernis spawnen
-                if (groundObstacleTimer <= 0 || groundObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
-                    // Manchmal kein Spawn trotz Timer-Auslösung (für mehr Unvorhersehbarkeit)
-                    if (Math.random() < 0.9) {
-                        createObstacle('ground');
-                    }
+            // Interval basierend auf Schwierigkeitsgrad setzen
+            let baseInterval = nextType === 'ground' ? spawnRules.groundInterval : spawnRules.skyInterval;
 
-                    // Zufällige neue Zeiten berechnen
-                    const baseTime = spawnRules.groundInterval;
-                    const variance = baseTime * spawnRules.randomVariation;
+            // Zufallsvarianz hinzufügen
+            const variance = baseInterval * spawnRules.randomVariation;
+            obstacleTimer = baseInterval + ((Math.random() * 2 - 1) * variance);
+        }
+    }
+    // Unabhängige Timer für schwerere Schwierigkeitsgrade
+    else {
+        // Unabhängige Timer für Boden- und Flug-Hindernisse
 
-                    // Den ausgelösten Timer zurücksetzen
-                    if (groundObstacleTimer <= 0) {
-                        groundObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
-                    }
-                    if (groundObstacleTimerOffset <= 0) {
-                        groundObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
-                    }
-                }
+        // Boden-Hindernis-Timer
+        groundObstacleTimer -= dt;
+        groundObstacleTimerOffset -= dt;
 
-                // Flug-Hindernis-Timer
-                skyObstacleTimer -= dt;
-                skyObstacleTimerOffset -= dt;
+        // Wenn ein Boden-Timer 0 erreicht, ein Boden-Hindernis spawnen
+        if (groundObstacleTimer <= 0 || groundObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
+            // Manchmal kein Spawn trotz Timer-Auslösung (für mehr Unvorhersehbarkeit)
+            if (Math.random() < 0.9) {
+                createObstacle('ground');
+            }
 
-                // Wenn ein Flug-Timer 0 erreicht, ein Flug-Hindernis spawnen
-                if (skyObstacleTimer <= 0 || skyObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
-                    // Manchmal kein Spawn trotz Timer-Auslösung
-                    if (Math.random() < 0.9) {
-                        createObstacle('sky');
-                    }
+            // Zufällige neue Zeiten berechnen
+            const baseTime = spawnRules.groundInterval;
+            const variance = baseTime * spawnRules.randomVariation;
 
-                    // Zufällige neue Zeiten berechnen
-                    const baseTime = spawnRules.skyInterval;
-                    const variance = baseTime * spawnRules.randomVariation;
-
-                    // Den ausgelösten Timer zurücksetzen
-                    if (skyObstacleTimer <= 0) {
-                        skyObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
-                    }
-                    if (skyObstacleTimerOffset <= 0) {
-                        skyObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
-                    }
-                }
+            // Den ausgelösten Timer zurücksetzen
+            if (groundObstacleTimer <= 0) {
+                groundObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
+            }
+            if (groundObstacleTimerOffset <= 0) {
+                groundObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
             }
         }
 
-        function updateClouds(dt) {
-            for(let i=clouds.length-1; i>=0; i--){
-                clouds[i].x -= clouds[i].speed * dt;
-                if(clouds[i].x + clouds[i].width < 0) clouds.splice(i, 1);
+        // Flug-Hindernis-Timer
+        skyObstacleTimer -= dt;
+        skyObstacleTimerOffset -= dt;
+
+        // Wenn ein Flug-Timer 0 erreicht, ein Flug-Hindernis spawnen
+        if (skyObstacleTimer <= 0 || skyObstacleTimerOffset <= 0 || Math.random() < spawnRules.randomTriggerChance) {
+            // Manchmal kein Spawn trotz Timer-Auslösung
+            if (Math.random() < 0.9) {
+                createObstacle('sky');
             }
-            cloudTimer -= dt;
-            if(cloudTimer <= 0 && clouds.length < 5){
-                createCloud();
-                // Cloud spawn rate is simpler and less affected by difficulty
-                cloudTimer = 3 + Math.random() * 5;
+
+            // Zufällige neue Zeiten berechnen
+            const baseTime = spawnRules.skyInterval;
+            const variance = baseTime * spawnRules.randomVariation;
+
+            // Den ausgelösten Timer zurücksetzen
+            if (skyObstacleTimer <= 0) {
+                skyObstacleTimer = baseTime + ((Math.random() * 2 - 1) * variance);
+            }
+            if (skyObstacleTimerOffset <= 0) {
+                skyObstacleTimerOffset = baseTime + ((Math.random() * 2 - 1) * variance);
             }
         }
+    }
+}
 
-        function updateScore(dt) {
-            if(!scoreElement) return;
-            // Apply speed setting to score calculation
-            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
-            score += (speed / scaleFactor) * dt * 0.1;
-            scoreElement.textContent = Math.floor(score/10);
+function updateClouds(dt) {
+    for(let i=clouds.length-1; i>=0; i--){
+        clouds[i].x -= clouds[i].speed * dt;
+        if(clouds[i].x + clouds[i].width < 0) clouds.splice(i, 1);
+    }
+    cloudTimer -= dt;
+    if(cloudTimer <= 0 && clouds.length < 5){
+        createCloud();
+        // Cloud spawn rate is simpler and less affected by difficulty
+        cloudTimer = 3 + Math.random() * 5;
+    }
+}
+
+function updateScore(dt) {
+    if(!scoreElement) return;
+    // Apply speed setting to score calculation
+    const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+    score += (speed / scaleFactor) * dt * 0.1;
+    scoreElement.textContent = Math.floor(score/10);
+}
+
+// --- <<< ÜBERARBEITETE HILFSFUNKTION FÜR HINTERGRUNDBILD (MIT LOOPING) >>> ---
+        function getCurrentBackground() {
+            // Array der Hintergrundbilder in der gewünschten Reihenfolge
+            const backgroundImages = [
+                dayBgImg,    // Minute 1 (Index 0)
+                nightBgImg,  // Minute 2 (Index 1)
+                dayBgImg1,   // Minute 3 (Index 2)
+                nightBgImg1  // Minute 4 (Index 3)
+            ];
+
+            // Berechne die *ganzen* vergangenen Minuten
+            const minutesPassed = Math.floor(gameTime / 60);
+
+            // Berechne den Index mit Modulo 4, um durch 0, 1, 2, 3 zu loopen
+            const backgroundIndex = minutesPassed % 4;
+
+            // Gib das entsprechende Bild aus dem Array zurück
+            // Füge einen Fallback hinzu, falls der Index ungültig ist (sollte nicht passieren)
+            return backgroundImages[backgroundIndex] || dayBgImg; // Fallback auf das erste Bild
         }
+        // --- <<< ENDE ÜBERARBEITETE HILFSFUNKTION >>> ---
 
-        // --- updateDifficulty - Mit konsistenter Hitbox und dynamischer Geschwindigkeit ---
+
+        // --- updateDifficulty - `isNight` jetzt ZEITBASIERT statt Score-basiert ---
         function updateDifficulty(dt) {
             // Get the speed multiplier from settings
             const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
@@ -1909,558 +2007,633 @@
             // Apply speed increment based on speed setting and game progress
             speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
 
-            // Flughöhen-Logik für fliegende Hindernisse
-            const tier = Math.floor(Math.floor(score/10)/100);
-            const night = tier % 2 !== 0;
-            if(night !== isNight) {
-                isNight = night;
-                if(document.body) document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
+            // --- `isNight`-Logik basierend auf dem AKTUELLEN HINTERGRUND-INDEX ---
+            const minutesPassed = Math.floor(gameTime / 60);
+            const backgroundIndex = minutesPassed % 4;
+            const shouldBeNight = (backgroundIndex === 1 || backgroundIndex === 3); // Indizes 1 und 3 sind Nacht
+
+            if (shouldBeNight !== isNight) {
+                isNight = shouldBeNight;
+                console.log(`Setting theme based on time: ${isNight ? 'Night' : 'Day'} (Minute: ${minutesPassed + 1}, Index: ${backgroundIndex})`);
+                if (document.body) {
+                    document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
+                }
+                // Optional: Hier könnten auch Wolken- und Bodenfarben direkt aktualisiert werden,
+                // aber sie werden ohnehin in jedem Draw-Frame neu gezeichnet.
             }
-
-            // Flughöhen-Logik basierend auf Spielzeit
-            const timeInGame = gameTime;
-            const timeInMinutes = timeInGame / 60;
-
-            // Flughöhen-Einstellungen basierend auf Schwierigkeitsgrad
+            // --- Ende `isNight`-Logik ---
+            // Flughöhen-Logik basierend auf Schwierigkeitsgrad und Spielzeit (bleibt wie es war)
             const flyingHeightSettings = getFlyingHeight(gameSettings.flyingHeightLevel);
+            const timeInMinutes = gameTime / 60; // Exakte Zeit für feinere Anpassungen
 
-            // 30% Variation ab 30 Sekunden
-            if (timeInMinutes >= 0.5) {
-                const heightVariation = 0.3;
-                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (heightVariation * (timeInMinutes - 0.5) * 2));
-            }
-
-            // 64% Wahrscheinlichkeit bei 1 Minute
-            if (timeInMinutes >= 1.0) {
-                const targetHeight = 0.64;
-                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (targetHeight * (timeInMinutes - 1.0)));
-            }
-
-            // Duck-Logik für fliegende Hindernisse
-            if (gameSettings.flyingHeightLevel === 'veryHard') {
-                // Bei "Sehr Schwer" spezielle Logik für Duck-Höhe
-                const duckRequiredY = canvas.height - groundHeight - player.baseHeight + (player.baseHeight - player.duckHeight) / 2;
-                flyingHeightSettings.heightFactor = Math.min(0.95, flyingHeightSettings.heightFactor + (timeInMinutes * 0.1));
-            }
-        }
-
-        // --- updateBackground - Nutzt neue BG Logik ---
-        function updateBackground(dt) {
-            const img = isNight ? nightBgImg : dayBgImg;
-            if (!img || !img.complete || img.naturalWidth === 0) return;
-            const h = canvas.height;
-            const r = img.naturalWidth / img.naturalHeight;
-            let sw = h * r;
-            if(sw < canvas.width) sw = canvas.width;
-
-            // Apply speed setting to parallax
-            const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
-            backgroundX -= (speed * 0.3) * dt;
-            if(backgroundX <= -sw) backgroundX += sw;
-        }
-
-        // --- ENHANCED FUNCTION: Improved collision detection for orientation changes ---
-        function checkCollision() {
-            // Debug output if hitbox visualization is enabled
-            if (gameSettings.showHitboxes) {
-                console.log("Checking collisions. Invulnerable:", isInvulnerable);
-            }
-
-            // Safety checks
-            if (!player) {
-                console.error("Collision check: Player object missing!");
-                return;
-            }
-
-            // Status check
-            if (currentState !== GameState.PLAYING) {
-                return;
-            }
-
-            // Skip collision check if invulnerable
-            if (isInvulnerable) {
-                if (gameSettings.showHitboxes) {
-                    console.log("Collision check skipped - player is invulnerable");
-                }
-                return;
-            }
-
-            // Get consistent hitbox size based on difficulty level
-            const hitboxSize = getHitboxSize(gameSettings.hitboxSizeLevel);
-
-            // Calculate player hitbox with consistent reduction
-            const pLeft = player.x + player.width * (1-hitboxSize) / 2;
-            const pTop = player.y + player.height * (1-hitboxSize) / 2;
-            const pWidth = player.width * hitboxSize;
-            const pHeight = player.height * hitboxSize;
-
-            // Visualize hitboxes if enabled
-            if (gameSettings.showHitboxes && debugOverlay) {
-                debugOverlay.innerHTML = ''; // Clear previous hitboxes
-
-                // Draw player hitbox
-                const playerBox = document.createElement('div');
-                playerBox.style.position = 'absolute';
-                playerBox.style.left = pLeft + 'px';
-                playerBox.style.top = pTop + 'px';
-                playerBox.style.width = pWidth + 'px';
-                playerBox.style.height = pHeight + 'px';
-                playerBox.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
-                playerBox.style.border = '2px solid lime';
-                playerBox.style.zIndex = '100';
-                debugOverlay.appendChild(playerBox);
-            }
-
-            // Check each obstacle
-            for (const obstacle of obstacles) {
-                // Use consistent hitbox reduction for obstacles
-                const obstacleHitboxReduction = 0.2; // 20% smaller than visual size
-
-                // Calculate obstacle hitbox
-                const oLeft = obstacle.x + obstacle.width * obstacleHitboxReduction / 2;
-                const oTop = obstacle.y + obstacle.height * obstacleHitboxReduction / 2;
-                const oWidth = obstacle.width * (1 - obstacleHitboxReduction);
-                const oHeight = obstacle.height * (1 - obstacleHitboxReduction);
-
-                // Visualize obstacle hitboxes if enabled
-                if (gameSettings.showHitboxes && debugOverlay) {
-                    const obstacleBox = document.createElement('div');
-                    obstacleBox.style.position = 'absolute';
-                    obstacleBox.style.left = oLeft + 'px';
-                    obstacleBox.style.top = oTop + 'px';
-                    obstacleBox.style.width = oWidth + 'px';
-                    obstacleBox.style.height = oHeight + 'px';
-                    obstacleBox.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-                    obstacleBox.style.border = '2px solid red';
-                    obstacleBox.style.zIndex = '100';
-                    debugOverlay.appendChild(obstacleBox);
-                }
-
-                // AABB collision detection (Axis-Aligned Bounding Box)
-                if (
-                    pLeft < oLeft + oWidth &&
-                    pLeft + pWidth > oLeft &&
-                    pTop < oTop + oHeight &&
-                    pTop + pHeight > oTop
-                ) {
-                    // Collision detected!
-                    console.log("COLLISION DETECTED with:", obstacle.type);
-                    loseLife();
-                    return; // Exit after collision processing
+            // Dynamische Anpassung der Flughöhe (Beispiel bleibt gleich)
+            if (gameSettings.flyingHeightLevel !== 'veryHard') {
+                const adjustmentFactor = Math.min(0.2, (timeInMinutes - 1.0) * 0.05);
+                if (adjustmentFactor > 0) {
+                    // Hole die ursprüngliche Basishöhe für diesen Schwierigkeitsgrad
+                    const baseHeightFactor = FlyingHeights[gameSettings.flyingHeightLevel].heightFactor;
+                    // Passe sie an, aber nicht über 0.95 und nicht unter 0.1
+                    flyingHeightSettings.heightFactor = Math.min(0.95, Math.max(0.1, baseHeightFactor + adjustmentFactor));
                 }
             }
         }
 
-        // --- Draw ---
-        function draw() {
-            if(!ctx) return;
-            drawBackground();
-            drawClouds();
-            drawGround();
-            drawObstacles();
-            drawPlayer();
+// --- updateDifficulty - Mit konsistenter Hitbox und dynamischer Geschwindigkeit ---
+function updateDifficulty(dt) {
+    // Get the speed multiplier from settings
+    const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+
+    // Apply speed increment based on speed setting and game progress
+    speed += (speedIncrement * baseSpeed) * scaleFactor * speedMultiplier * dt;
+
+    // Base night/day logic
+    const timeMinutes = gameTime / 60;
+    const cycleMinutes = timeMinutes % 5; // 5-Minuten-Zyklus
+
+    // Hier ist eine einfachere Logik, die auf der Minute basiert
+    if (cycleMinutes < 1) {
+        // Minute 0-1: Tag mit Tag_BG.webp
+        isNight = false;
+    } else if (cycleMinutes < 2) {
+        // Minute 1-2: Nacht mit Nacht_BG.webp
+        isNight = true;
+    } else if (cycleMinutes < 3) {
+        // Minute 2-3: Tag mit Tag_BG_v4.webp (wird in drawBackground gehandhabt)
+        isNight = false;
+    } else if (cycleMinutes < 4) {
+        // Minute 3-4: Nacht mit Nacht_BG_v4.webp (wird in drawBackground gehandhabt)
+        isNight = true;
+    } else {
+        // Minute 4-5: Übergangsphase oder einfach zurück zu Tag
+        isNight = false;
+    }
+
+    // Body-Hintergrundfarbe basierend auf Tag/Nacht aktualisieren
+    if (document.body) {
+        document.body.style.backgroundColor = isNight ? '#2d2d3a' : '#e0e0e0';
+    }
+}
+
+// --- updateBackground - Nutzt neue BG Logik ---
+function updateBackground(dt) {
+    // Hintergrundbewegung aktualisieren
+    const speedMultiplier = difficultyValues.speed[gameSettings.speedLevel];
+    backgroundX -= (speed * 0.3) * dt;
+
+    // Bestimmen der verfügbaren Breite für den Hintergrund
+    const h = canvas.height;
+    let img;
+
+    // Auswahl des richtigen Hintergrundbildes basierend auf der Spielzeit
+    const timeMinutes = gameTime / 60;
+    const cycleMinutes = timeMinutes % 5; // 5-Minuten-Zyklus
+
+    if (cycleMinutes < 1) {
+        // Minute 0-1: Originale Hintergrundbilder
+        img = isNight ? nightBgImg : dayBgImg;
+    } else if (cycleMinutes < 2) {
+        // Minute 1-2: Originale Hintergrundbilder
+        img = isNight ? nightBgImg : dayBgImg;
+    } else if (cycleMinutes < 3) {
+        // Minute 2-3: Neue Tag-Version v4
+        img = dayBgImg1;
+    } else if (cycleMinutes < 4) {
+        // Minute 3-4: Neue Nacht-Version v4
+        img = nightBgImg1;
+    } else {
+        // Minute 4-5: Zurück zu originalen Hintergrundbildern
+        img = isNight ? nightBgImg : dayBgImg;
+    }
+
+    // Hintergrundbreite berechnen und zurücksetzen bei Bedarf
+    if (img && img.complete && img.naturalWidth > 0) {
+        const r = img.naturalWidth / img.naturalHeight;
+        let sw = h * r;
+        if(sw < canvas.width) sw = canvas.width;
+
+        if(backgroundX <= -sw) backgroundX += sw;
+    }
+}
+
+// --- ENHANCED FUNCTION: Improved collision detection for orientation changes ---
+function checkCollision() {
+    // Debug output if hitbox visualization is enabled
+    if (gameSettings.showHitboxes) {
+        console.log("Checking collisions. Invulnerable:", isInvulnerable);
+    }
+
+    // Safety checks
+    if (!player) {
+        console.error("Collision check: Player object missing!");
+        return;
+    }
+
+    // Status check
+    if (currentState !== GameState.PLAYING) {
+        return;
+    }
+
+    // Skip collision check if invulnerable
+    if (isInvulnerable) {
+        if (gameSettings.showHitboxes) {
+            console.log("Collision check skipped - player is invulnerable");
+        }
+        return;
+    }
+
+    // Get consistent hitbox size based on difficulty level
+    const hitboxSize = getHitboxSize(gameSettings.hitboxSizeLevel);
+
+    // Calculate player hitbox with consistent reduction
+    const pLeft = player.x + player.width * (1-hitboxSize) / 2;
+    const pTop = player.y + player.height * (1-hitboxSize) / 2;
+    const pWidth = player.width * hitboxSize;
+    const pHeight = player.height * hitboxSize;
+
+    // Visualize hitboxes if enabled
+    if (gameSettings.showHitboxes && debugOverlay) {
+        debugOverlay.innerHTML = ''; // Clear previous hitboxes
+
+        // Draw player hitbox
+        const playerBox = document.createElement('div');
+        playerBox.style.position = 'absolute';
+        playerBox.style.left = pLeft + 'px';
+        playerBox.style.top = pTop + 'px';
+        playerBox.style.width = pWidth + 'px';
+        playerBox.style.height = pHeight + 'px';
+        playerBox.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+        playerBox.style.border = '2px solid lime';
+        playerBox.style.zIndex = '100';
+        debugOverlay.appendChild(playerBox);
+    }
+
+    // Check each obstacle
+    for (const obstacle of obstacles) {
+        // Use consistent hitbox reduction for obstacles
+        const obstacleHitboxReduction = 0.2; // 20% smaller than visual size
+
+        // Calculate obstacle hitbox
+        const oLeft = obstacle.x + obstacle.width * obstacleHitboxReduction / 2;
+        const oTop = obstacle.y + obstacle.height * obstacleHitboxReduction / 2;
+        const oWidth = obstacle.width * (1 - obstacleHitboxReduction);
+        const oHeight = obstacle.height * (1 - obstacleHitboxReduction);
+
+        // Visualize obstacle hitboxes if enabled
+        if (gameSettings.showHitboxes && debugOverlay) {
+            const obstacleBox = document.createElement('div');
+            obstacleBox.style.position = 'absolute';
+            obstacleBox.style.left = oLeft + 'px';
+            obstacleBox.style.top = oTop + 'px';
+            obstacleBox.style.width = oWidth + 'px';
+            obstacleBox.style.height = oHeight + 'px';
+            obstacleBox.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+            obstacleBox.style.border = '2px solid red';
+            obstacleBox.style.zIndex = '100';
+            debugOverlay.appendChild(obstacleBox);
         }
 
-        // --- drawBackground - Nutzt neue BG Logik ---
+        // AABB collision detection (Axis-Aligned Bounding Box)
+        if (
+            pLeft < oLeft + oWidth &&
+            pLeft + pWidth > oLeft &&
+            pTop < oTop + oHeight &&
+            pTop + pHeight > oTop
+        ) {
+            // Collision detected!
+            console.log("COLLISION DETECTED with:", obstacle.type);
+            loseLife();
+            return; // Exit after collision processing
+        }
+    }
+}
+
+// --- Draw ---
+function draw() {
+    if(!ctx) return;
+    drawBackground();
+    drawClouds();
+    drawGround();
+    drawObstacles();
+    drawPlayer();
+}
+
+// --- drawBackground - Fallback-Logik angepasst ---
         function drawBackground() {
-            const img = isNight ? nightBgImg : dayBgImg;
+            if(!ctx) return;
+
+            // Hole das korrekte Hintergrundbild basierend auf der Spielzeit
+            const img = getCurrentBackground();
+
             if (img && img.complete && img.naturalWidth > 0){
                 const h = canvas.height;
                 const r = img.naturalWidth / img.naturalHeight;
                 let sw = h * r;
                 let sh = h;
                 let y = 0;
+
                 if(sw < canvas.width){
                     sw = canvas.width;
                     sh = sw / r;
                     y = h - sh;
                 }
+
                 const copies = Math.ceil(canvas.width / sw) + 1;
                 for(let i = 0; i < copies; i++) {
                     try {
                         ctx.drawImage(img, backgroundX + (sw * i), y, sw, sh);
                     } catch(e){
-                        console.error("BG Draw Err:", e);
-                        ctx.fillStyle = isNight ? '#2d2d3a' : '#87CEEB';
+                        console.error("BG Draw Err:", e, "Image:", img.src);
+                        // Fallback: Fülle mit einer Farbe basierend auf dem *erwarteten* Thema (zeitbasiert)
+                        const minutesPassed = Math.floor(gameTime / 60);
+                        const backgroundIndex = minutesPassed % 4;
+                        const isExpectedNight = (backgroundIndex === 1 || backgroundIndex === 3); // Indizes 1 und 3 sind Nacht
+                        const fallbackColor = isExpectedNight ? '#2d2d3a' : '#87CEEB';
+                        ctx.fillStyle = fallbackColor;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
                         break;
                     }
                 }
             } else {
-                ctx.fillStyle = isNight ? '#2d2d3a' : '#87CEEB';
+                // Fallback, wenn das Bild nicht verfügbar ist
+                const minutesPassed = Math.floor(gameTime / 60);
+                const backgroundIndex = minutesPassed % 4;
+                const isExpectedNight = (backgroundIndex === 1 || backgroundIndex === 3); // Indizes 1 und 3 sind Nacht
+                const fallbackColor = isExpectedNight ? '#2d2d3a' : '#87CEEB';
+                ctx.fillStyle = fallbackColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                 if (!img) console.warn("drawBackground: Image object is null or undefined.");
             }
         }
 
-        function drawGround() {
+function drawGround() {
             if(!ctx) return;
+            // Nutzt jetzt die ZEITBASIERTE isNight Variable
             ctx.fillStyle = isNight ? 'rgba(40,40,50,0.8)' : 'rgba(100,140,80,0.7)';
             ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
             ctx.fillStyle = isNight ? 'rgba(50,50,60,0.8)' : 'rgba(120,160,100,0.7)';
             ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 2 * scaleFactor);
         }
 
-        function drawPlayer() {
-            if(!ctx || !player || !player.image) return;
-            ctx.globalAlpha = (isInvulnerable && currentState === GameState.PLAYING) ? (0.6 + Math.sin(Date.now() / 100) * 0.4) : 1;
-            if(player.image.complete && player.image.naturalWidth > 0){
-                ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+function drawPlayer() {
+    if(!ctx || !player || !player.image) return;
+    ctx.globalAlpha = (isInvulnerable && currentState === GameState.PLAYING) ? (0.6 + Math.sin(Date.now() / 100) * 0.4) : 1;
+    if(player.image.complete && player.image.naturalWidth > 0){
+        ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+    } else {
+        ctx.fillStyle = (character === 'fuchs' ? '#ff6f00' : '#8d6e63');
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        /*Face*/
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.35, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
+        ctx.arc(player.x + player.width * 0.65, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1 * scaleFactor;
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.5, player.y + player.height * 0.6, player.width * 0.15, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+}
+
+function drawObstacles() {
+    if (!ctx) return;
+    for (const obstacle of obstacles) {
+        try {
+            if (obstacle.image && obstacle.image.complete && obstacle.image.naturalWidth > 0) {
+                ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
             } else {
-                ctx.fillStyle = (character === 'fuchs' ? '#ff6f00' : '#8d6e63');
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-                /*Face*/
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(player.x + player.width * 0.35, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
-                ctx.arc(player.x + player.width * 0.65, player.y + player.height * 0.3, player.width * 0.08, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1 * scaleFactor;
-                ctx.beginPath();
-                ctx.arc(player.x + player.width * 0.5, player.y + player.height * 0.6, player.width * 0.15, 0.2 * Math.PI, 0.8 * Math.PI);
-                ctx.stroke();
+                ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                ctx.fillStyle = '#000';
+                ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
             }
-            ctx.globalAlpha = 1;
+        } catch (drawErr) {
+            console.error("Fehler beim Zeichnen des Hindernisses:", obstacle.type, drawErr);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        } finally {
+             ctx.textAlign = 'start';
+             ctx.textBaseline = 'alphabetic';
         }
+    }
+}
 
-        function drawObstacles() {
-            if (!ctx) return;
-            for (const obstacle of obstacles) {
-                try {
-                    if (obstacle.image && obstacle.image.complete && obstacle.image.naturalWidth > 0) {
-                        ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                    } else {
-                        ctx.fillStyle = obstacle.category === 'sky' ? '#ADD8E6' : '#A0522D';
-                        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                        ctx.fillStyle = '#000';
-                        ctx.font = `${Math.max(10, obstacle.height * 0.2)}px Courier New`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(obstacle.type.substring(0, 3), obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
-                    }
-                } catch (drawErr) {
-                    console.error("Fehler beim Zeichnen des Hindernisses:", obstacle.type, drawErr);
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                } finally {
-                     ctx.textAlign = 'start';
-                     ctx.textBaseline = 'alphabetic';
-                }
-            }
-        }
-
-        function drawClouds() {
+function drawClouds() {
             if(!ctx) return;
+             // Nutzt jetzt die ZEITBASIERTE isNight Variable
             ctx.fillStyle = isNight ? 'rgba(100,100,100,0.6)' : 'rgba(255,255,255,0.7)';
             ctx.strokeStyle = isNight ? 'rgba(80,80,80,0.6)' : 'rgba(220,220,220,0.7)';
             ctx.lineWidth = 1 * scaleFactor;
             for(const c of clouds){
                 ctx.beginPath();
                 ctx.ellipse(c.x + c.width / 2, c.y + c.height / 2, c.width / 2, c.height / 2, 0, 0, Math.PI * 2);
-                ctx.ellipse(c.x + c.width * 0.3, c.y + c.height * 0.3, c.width * 0.3, c.height * 0.4, 0, 0, Math.PI * 2);
-                ctx.ellipse(c.x + c.width * 0.7, c.y + c.height * 0.4, c.width * 0.4, c.height * 0.5, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // Optional
             }
         }
 
-        // --- UI Update --- Updated for settings panel and back button
-        function updateUI() {
-            try {
-                const pl = currentState === GameState.PLAYING;
-                const pa = currentState === GameState.PAUSED;
-                const go = currentState === GameState.GAMEOVER;
-                const re = currentState === GameState.READY;
-                const se = currentState === GameState.SETTINGS;
+// --- UI Update --- Updated for settings panel and back button
+function updateUI() {
+    try {
+        const pl = currentState === GameState.PLAYING;
+        const pa = currentState === GameState.PAUSED;
+        const go = currentState === GameState.GAMEOVER;
+        const re = currentState === GameState.READY;
+        const se = currentState === GameState.SETTINGS;
 
-                if(startButton) startButton.style.display = (re || go) ? 'inline-block' : 'none';
-                if(settingsButton) settingsButton.style.display = (re || go) ? 'inline-block' : 'none';
-                if(characterSelectContainer) characterSelectContainer.style.display = (re || go) ? 'flex' : 'none';
-                if(restartButton) restartButton.style.display = go ? 'inline-block' : 'none';
-                if(gameOverElement) gameOverElement.style.display = go ? 'flex' : 'none';
-                if(pauseOverlay) pauseOverlay.style.display = pa ? 'flex' : 'none';
-                if(settingsPanel) settingsPanel.style.display = se ? 'flex' : 'none';
-                if(duckButton) duckButton.style.display = pl ? 'flex' : 'none';
-                if(backButton) backButton.style.display = (pl || pa) ? 'flex' : 'none';
+        if(startButton) startButton.style.display = (re || go) ? 'inline-block' : 'none';
+        if(settingsButton) settingsButton.style.display = (re || go) ? 'inline-block' : 'none';
+        if(characterSelectContainer) characterSelectContainer.style.display = (re || go) ? 'flex' : 'none';
+        if(restartButton) restartButton.style.display = go ? 'inline-block' : 'none';
+        if(gameOverElement) gameOverElement.style.display = go ? 'flex' : 'none';
+        if(pauseOverlay) pauseOverlay.style.display = pa ? 'flex' : 'none';
+        if(settingsPanel) settingsPanel.style.display = se ? 'flex' : 'none';
+        if(duckButton) duckButton.style.display = pl ? 'flex' : 'none';
+        if(backButton) backButton.style.display = (pl || pa) ? 'flex' : 'none';
+        if(backgroundInfo) backgroundInfo.style.display = (pl && gameSettings.showBackgroundInfo) ? 'block' : 'none';
 
-                const instructionsElement = document.getElementById('instructions');
-                if(instructionsElement) {
-                    instructionsElement.style.display = (re || go) ? 'block' : 'none';
-                }
+        const instructionsElement = document.getElementById('instructions');
+        if(instructionsElement) {
+            instructionsElement.style.display = (re || go) ? 'block' : 'none';
+        }
 
-                if(fuchsSelect) fuchsSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
-                if(waschbaerSelect) waschbaerSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
-            } catch(err) {
-                console.error("Fehler in updateUI:", err);
+        if(fuchsSelect) fuchsSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
+        if(waschbaerSelect) waschbaerSelect.style.pointerEvents = (re || go) ? 'auto' : 'none';
+    } catch(err) {
+        console.error("Fehler in updateUI:", err);
+    }
+}
+
+// --- ROBUSTERE GAME LOOP mit besserer Fehlerbehandlung ---
+function gameLoop(timestamp) {
+    // Sicherheitsüberprüfung für lastTime und timestamp
+    if(typeof lastTime === 'undefined' || isNaN(timestamp)){
+        console.error("Loop Error: Ungültiger Timestamp oder lastTime", { timestamp, lastTime });
+        lastTime = performance.now();
+        if(animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        // Neustart der Animation nach einer kurzen Verzögerung
+        setTimeout(() => {
+            console.log("Loop wird nach Fehler neu gestartet");
+            lastTime = performance.now();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }, 100);
+        return;
+    }
+
+    // Berechnung der Zeitdifferenz mit Sicherheitsbegrenzung
+    const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+    lastTime = timestamp;
+
+    // Hauptspiellogik mit Fehlerbehandlung
+    try {
+        // Update nur im PLAYING-Zustand
+        if (currentState === GameState.PLAYING) {
+            update(dt);
+
+            // Regelmäßige Überprüfung der Herz-Anzeige
+            if (Math.random() < 0.02) { // Etwa alle 50 Frames
+                updateLivesDisplay();
             }
         }
 
-        // --- ROBUSTERE GAME LOOP mit besserer Fehlerbehandlung ---
-        function gameLoop(timestamp) {
-            // Sicherheitsüberprüfung für lastTime und timestamp
-            if(typeof lastTime === 'undefined' || isNaN(timestamp)){
-                console.error("Loop Error: Ungültiger Timestamp oder lastTime", { timestamp, lastTime });
-                lastTime = performance.now();
-                if(animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                // Neustart der Animation nach einer kurzen Verzögerung
-                setTimeout(() => {
-                    console.log("Loop wird nach Fehler neu gestartet");
-                    lastTime = performance.now();
-                    animationFrameId = requestAnimationFrame(gameLoop);
-                }, 100);
-                return;
+        // Zeichnen in allen Zuständen
+        draw();
+
+        // Anzeigedebug für mobile Geräte
+        if (currentState === GameState.PLAYING && Math.random() < 0.005) {
+            console.log(`Spielstatus: ${lives} Leben, Unverwundbar: ${isInvulnerable}, Spielzeit: ${Math.floor(gameTime / 60)} Minuten`);
+        }
+    } catch (error) {
+        console.error("!!! KRITISCHER LAUFZEIT-FEHLER IN DER SPIELSCHLEIFE:", error);
+        console.error("Fehlerdetails:", error.message, error.stack);
+
+        // Fehlerbehandlung für den Spieler
+        if(currentState === GameState.PLAYING) {
+            alert("Es ist ein Fehler aufgetreten. Das Spiel wird zurückgesetzt.");
+        }
+
+        if(animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        currentState = GameState.GAMEOVER;
+        updateUI();
+        return;
+    }
+
+    // Animation fortsetzen, wenn wir in einem aktiven Zustand sind
+    if (currentState === GameState.PLAYING || currentState === GameState.READY || currentState === GameState.INIT) {
+        animationFrameId = requestAnimationFrame(gameLoop);
+    } else {
+        if(animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+    }
+}
+
+// --- Event Handlers ---
+function handleKeyDown(e) {
+    try{
+        let a = false;
+        if(e.key === 'p' || e.key === 'P' || e.key === 'Escape'){
+            if(currentState === GameState.PLAYING || currentState === GameState.PAUSED)
+                togglePause();
+            a = true;
+        } else if(e.key === ' ' || e.key === 'ArrowUp'){
+            if(currentState === GameState.READY || currentState === GameState.GAMEOVER)
+                startGame();
+            else if(currentState === GameState.PLAYING)
+                jump();
+            a = true;
+        } else if(e.key === 'ArrowDown'){
+            if(currentState === GameState.PLAYING)
+                setDucking(true);
+            a = true;
+        }
+        if(a) e.preventDefault();
+    } catch(err){}
+}
+
+function handleKeyUp(e) {
+    try{
+        let a = false;
+        if(e.key === 'ArrowDown'){
+            if(currentState === GameState.PLAYING)
+                setDucking(false);
+            a = true;
+        }
+        if(a) e.preventDefault();
+    } catch(err){}
+}
+
+// --- VERBESSERTE Touch-Behandlung für Mobilgeräte ---
+function handleCanvasPointerDown(e) {
+    try {
+        // Visuelle Rückmeldung für Touch-Ereignisse hinzufügen
+        if (gameContainer && currentState === GameState.PLAYING) {
+            const touchFeedback = document.createElement('div');
+            touchFeedback.className = 'touch-feedback';
+            touchFeedback.style.position = 'absolute';
+            touchFeedback.style.left = `${e.clientX - 20}px`;
+            touchFeedback.style.top = `${e.clientY - 20}px`;
+            touchFeedback.style.width = '40px';
+            touchFeedback.style.height = '40px';
+            touchFeedback.style.borderRadius = '50%';
+            touchFeedback.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+            touchFeedback.style.pointerEvents = 'none';
+            touchFeedback.style.zIndex = '50';
+            touchFeedback.style.animation = 'touch-ripple 0.6s forwards';
+
+            // Animation hinzufügen
+            if (!document.getElementById('touchRippleAnimation')) {
+                const style = document.createElement('style');
+                style.id = 'touchRippleAnimation';
+                style.textContent = '@keyframes touch-ripple { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }';
+                document.head.appendChild(style);
             }
 
-            // Berechnung der Zeitdifferenz mit Sicherheitsbegrenzung
-            const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
-            lastTime = timestamp;
+            document.body.appendChild(touchFeedback);
 
-            // Hauptspiellogik mit Fehlerbehandlung
-            try {
-                // Update nur im PLAYING-Zustand
-                if (currentState === GameState.PLAYING) {
-                    update(dt);
-
-                    // Regelmäßige Überprüfung der Herz-Anzeige
-                    if (Math.random() < 0.02) { // Etwa alle 50 Frames
-                        updateLivesDisplay();
-                    }
+            // Touch-Feedback nach Animation entfernen
+            setTimeout(() => {
+                if (touchFeedback.parentNode) {
+                    touchFeedback.parentNode.removeChild(touchFeedback);
                 }
+            }, 600);
+        }
 
-                // Zeichnen in allen Zuständen
+        // Spielzustandslogik
+        if (currentState === GameState.PAUSED) {
+            togglePause();
+            console.log("Spiel fortgesetzt durch Touch");
+        }
+        else if (currentState === GameState.READY || currentState === GameState.GAMEOVER) {
+            startGame();
+            console.log("Spiel gestartet durch Touch");
+        }
+        else if (currentState === GameState.PLAYING) {
+            jump();
+            console.log("Sprung ausgelöst durch Touch");
+        }
+
+        e.preventDefault();
+    } catch(err) {
+        console.error("Fehler bei Touch-Verarbeitung:", err);
+    }
+}
+
+function handleDuckButtonPointerDown(e) {
+    try{
+        if(currentState === GameState.PLAYING && e.target){
+            setDucking(true);
+            e.target.setPointerCapture(e.pointerId);
+        }
+        e.preventDefault();
+    } catch(err){}
+}
+
+function handleDuckButtonPointerUp(e) {
+    try{
+        if(currentState === GameState.PLAYING && e.target){
+            setDucking(false);
+            if(e.target.hasPointerCapture(e.pointerId))
+                e.target.releasePointerCapture(e.pointerId);
+        }
+        e.preventDefault();
+    } catch(err){}
+}
+
+function handleDuckButtonPointerCancel(e) {
+    try{
+        if(currentState === GameState.PLAYING && e.target){
+            setDucking(false);
+            if(e.target.hasPointerCapture(e.pointerId))
+                e.target.releasePointerCapture(e.pointerId);
+        }
+        e.preventDefault();
+    } catch(err){}
+}
+
+function handleCharacterSelect(e) {
+    try{
+        if((currentState !== GameState.READY && currentState !== GameState.GAMEOVER) || !e.target || e.target.tagName !== 'IMG')
+            return;
+        const nc = (e.target.id === 'fuchs') ? 'fuchs' : 'waschbaer';
+        if(nc !== character){
+            character = nc;
+            if(fuchsSelect) fuchsSelect.classList.toggle('selected', character === 'fuchs');
+            if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
+            if(player) player.image = (character === 'fuchs' ? fuchsImg : waschbaerImg);
+            if(currentState === GameState.READY){
+                resetGame();
                 draw();
-
-                // Anzeigedebug für mobile Geräte
-                if (currentState === GameState.PLAYING && Math.random() < 0.005) {
-                    console.log(`Spielstatus: ${lives} Leben, Unverwundbar: ${isInvulnerable}`);
-                }
-            } catch (error) {
-                console.error("!!! KRITISCHER LAUFZEIT-FEHLER IN DER SPIELSCHLEIFE:", error);
-                console.error("Fehlerdetails:", error.message, error.stack);
-
-                // Fehlerbehandlung für den Spieler
-                if(currentState === GameState.PLAYING) {
-                    alert("Es ist ein Fehler aufgetreten. Das Spiel wird zurückgesetzt.");
-                }
-
-                if(animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-
-                currentState = GameState.GAMEOVER;
-                updateUI();
-                return;
-            }
-
-            // Animation fortsetzen, wenn wir in einem aktiven Zustand sind
-            if (currentState === GameState.PLAYING || currentState === GameState.READY || currentState === GameState.INIT) {
-                animationFrameId = requestAnimationFrame(gameLoop);
-            } else {
-                if(animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
             }
         }
+    } catch(err){}
+}
 
-        // --- Event Handlers ---
-        function handleKeyDown(e) {
-            try{
-                let a = false;
-                if(e.key === 'p' || e.key === 'P' || e.key === 'Escape'){
-                    if(currentState === GameState.PLAYING || currentState === GameState.PAUSED)
-                        togglePause();
-                    a = true;
-                } else if(e.key === ' ' || e.key === 'ArrowUp'){
-                    if(currentState === GameState.READY || currentState === GameState.GAMEOVER)
-                        startGame();
-                    else if(currentState === GameState.PLAYING)
-                        jump();
-                    a = true;
-                } else if(e.key === 'ArrowDown'){
-                    if(currentState === GameState.PLAYING)
-                        setDucking(true);
-                    a = true;
-                }
-                if(a) e.preventDefault();
-            } catch(err){}
+// --- ENHANCED FUNCTION: Improved resize handler that calls orientation handler ---
+function handleResize() {
+    try {
+        console.log("Window resized");
+        // Delegate to orientation handler for consistent behavior
+        handleOrientationChange();
+    } catch(err) {
+        console.error("Error in resize handler:", err);
+    }
+}
+
+// --- ENHANCED FUNCTION: Event listeners with orientation change handler ---
+function addEventListeners() {
+    console.log("Listeners: Adding...");
+    try {
+        // Existing event listeners
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        if(canvas) canvas.addEventListener('pointerdown', handleCanvasPointerDown);
+        if(startButton) startButton.addEventListener('click', startGame);
+        if(restartButton) restartButton.addEventListener('click', startGame);
+        if(quitButton) quitButton.addEventListener('click', quitGame);
+        if(backButton) backButton.addEventListener('click', backToMenu);
+        if(settingsButton) settingsButton.addEventListener('click', toggleSettingsPanel);
+        if(settingsCloseButton) settingsCloseButton.addEventListener('click', toggleSettingsPanel);
+        if(settingsResetButton) settingsResetButton.addEventListener('click', resetGameSettings);
+
+        // Event-Listener für den Settings-Zurück-Button
+        if(settingsBackButton) settingsBackButton.addEventListener('click', toggleSettingsPanel);
+
+        if(duckButton) {
+            duckButton.addEventListener('pointerdown', handleDuckButtonPointerDown);
+            duckButton.addEventListener('pointerup', handleDuckButtonPointerUp);
+            duckButton.addEventListener('pointercancel', handleDuckButtonPointerCancel);
+            duckButton.addEventListener('contextmenu', (e) => e.preventDefault());
         }
 
-        function handleKeyUp(e) {
-            try{
-                let a = false;
-                if(e.key === 'ArrowDown'){
-                    if(currentState === GameState.PLAYING)
-                        setDucking(false);
-                    a = true;
-                }
-                if(a) e.preventDefault();
-            } catch(err){}
-        }
+        if(characterSelectContainer) characterSelectContainer.addEventListener('click', handleCharacterSelect);
 
-        // --- VERBESSERTE Touch-Behandlung für Mobilgeräte ---
-        function handleCanvasPointerDown(e) {
-            try {
-                // Visuelle Rückmeldung für Touch-Ereignisse hinzufügen
-                if (gameContainer && currentState === GameState.PLAYING) {
-                    const touchFeedback = document.createElement('div');
-                    touchFeedback.className = 'touch-feedback';
-                    touchFeedback.style.position = 'absolute';
-                    touchFeedback.style.left = `${e.clientX - 20}px`;
-                    touchFeedback.style.top = `${e.clientY - 20}px`;
-                    touchFeedback.style.width = '40px';
-                    touchFeedback.style.height = '40px';
-                    touchFeedback.style.borderRadius = '50%';
-                    touchFeedback.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
-                    touchFeedback.style.pointerEvents = 'none';
-                    touchFeedback.style.zIndex = '50';
-                    touchFeedback.style.animation = 'touch-ripple 0.6s forwards';
+        // ADD THIS: Orientation change handler - IMPORTANT FOR RELIABLE HITBOXES
+        window.addEventListener('orientationchange', handleOrientationChange);
 
-                    // Animation hinzufügen
-                    if (!document.getElementById('touchRippleAnimation')) {
-                        const style = document.createElement('style');
-                        style.id = 'touchRippleAnimation';
-                        style.textContent = '@keyframes touch-ripple { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }';
-                        document.head.appendChild(style);
-                    }
+        // Keep the resize listener as a backup
+        window.addEventListener('resize', handleResize);
 
-                    document.body.appendChild(touchFeedback);
+        console.log("Listeners: Added.");
+    } catch(e) {
+        console.error("Listener Add Error", e);
+    }
+}
 
-                    // Touch-Feedback nach Animation entfernen
-                    setTimeout(() => {
-                        if (touchFeedback.parentNode) {
-                            touchFeedback.parentNode.removeChild(touchFeedback);
-                        }
-                    }, 600);
-                }
-
-                // Spielzustandslogik
-                if (currentState === GameState.PAUSED) {
-                    togglePause();
-                    console.log("Spiel fortgesetzt durch Touch");
-                }
-                else if (currentState === GameState.READY || currentState === GameState.GAMEOVER) {
-                    startGame();
-                    console.log("Spiel gestartet durch Touch");
-                }
-                else if (currentState === GameState.PLAYING) {
-                    jump();
-                    console.log("Sprung ausgelöst durch Touch");
-                }
-
-                e.preventDefault();
-            } catch(err) {
-                console.error("Fehler bei Touch-Verarbeitung:", err);
-            }
-        }
-
-        function handleDuckButtonPointerDown(e) {
-            try{
-                if(currentState === GameState.PLAYING && e.target){
-                    setDucking(true);
-                    e.target.setPointerCapture(e.pointerId);
-                }
-                e.preventDefault();
-            } catch(err){}
-        }
-
-        function handleDuckButtonPointerUp(e) {
-            try{
-                if(currentState === GameState.PLAYING && e.target){
-                    setDucking(false);
-                    if(e.target.hasPointerCapture(e.pointerId))
-                        e.target.releasePointerCapture(e.pointerId);
-                }
-                e.preventDefault();
-            } catch(err){}
-        }
-
-        function handleDuckButtonPointerCancel(e) {
-            try{
-                if(currentState === GameState.PLAYING && e.target){
-                    setDucking(false);
-                    if(e.target.hasPointerCapture(e.pointerId))
-                        e.target.releasePointerCapture(e.pointerId);
-                }
-                e.preventDefault();
-            } catch(err){}
-        }
-
-        function handleCharacterSelect(e) {
-            try{
-                if((currentState !== GameState.READY && currentState !== GameState.GAMEOVER) || !e.target || e.target.tagName !== 'IMG')
-                    return;
-                const nc = (e.target.id === 'fuchs') ? 'fuchs' : 'waschbaer';
-                if(nc !== character){
-                    character = nc;
-                    if(fuchsSelect) fuchsSelect.classList.toggle('selected', character === 'fuchs');
-                    if(waschbaerSelect) waschbaerSelect.classList.toggle('selected', character === 'waschbaer');
-                    if(player) player.image = (character === 'fuchs' ? fuchsImg : waschbaerImg);
-                    if(currentState === GameState.READY){
-                        resetGame();
-                        draw();
-                    }
-                }
-            } catch(err){}
-        }
-
-        // --- ENHANCED FUNCTION: Improved resize handler that calls orientation handler ---
-        function handleResize() {
-            try {
-                console.log("Window resized");
-                // Delegate to orientation handler for consistent behavior
-                handleOrientationChange();
-            } catch(err) {
-                console.error("Error in resize handler:", err);
-            }
-        }
-
-        // --- ENHANCED FUNCTION: Event listeners with orientation change handler ---
-        function addEventListeners() {
-            console.log("Listeners: Adding...");
-            try {
-                // Existing event listeners
-                document.addEventListener('keydown', handleKeyDown);
-                document.addEventListener('keyup', handleKeyUp);
-                if(canvas) canvas.addEventListener('pointerdown', handleCanvasPointerDown);
-                if(startButton) startButton.addEventListener('click', startGame);
-                if(restartButton) restartButton.addEventListener('click', startGame);
-                if(quitButton) quitButton.addEventListener('click', quitGame);
-                if(backButton) backButton.addEventListener('click', backToMenu);
-                if(settingsButton) settingsButton.addEventListener('click', toggleSettingsPanel);
-                if(settingsCloseButton) settingsCloseButton.addEventListener('click', toggleSettingsPanel);
-                if(settingsResetButton) settingsResetButton.addEventListener('click', resetGameSettings);
-
-                // Event-Listener für den Settings-Zurück-Button
-                if(settingsBackButton) settingsBackButton.addEventListener('click', toggleSettingsPanel);
-
-                if(duckButton) {
-                    duckButton.addEventListener('pointerdown', handleDuckButtonPointerDown);
-                    duckButton.addEventListener('pointerup', handleDuckButtonPointerUp);
-                    duckButton.addEventListener('pointercancel', handleDuckButtonPointerCancel);
-                    duckButton.addEventListener('contextmenu', (e) => e.preventDefault());
-                }
-
-                if(characterSelectContainer) characterSelectContainer.addEventListener('click', handleCharacterSelect);
-
-                // ADD THIS: Orientation change handler - IMPORTANT FOR RELIABLE HITBOXES
-                window.addEventListener('orientationchange', handleOrientationChange);
-
-                // Keep the resize listener as a backup
-                window.addEventListener('resize', handleResize);
-
-                console.log("Listeners: Added.");
-            } catch(e) {
-                console.error("Listener Add Error", e);
-            }
-        }
-
-        // --- Start ---
-        console.log("--- Script End ---");
+      console.log("--- Script End ---");
     </script>
 </body>
 </html>
