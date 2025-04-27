@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event-Wettkampf Anlagen Belegungsplan</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --settings-width-open: 300px;
+      --settings-width-closed: 0px;
+      --settings-width: var(--settings-width-open);
+      --delete-btn-size: 16px;
+      --primary-color: #2196F3;
+      --success-color: #4CAF50;
+      --danger-color: #F44336;
+      --warning-color: #FF9800;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: grid;
+      grid-template-columns: var(--settings-width) 1fr;
+      height: 100vh;
+      transition: grid-template-columns 0.3s ease;
+      position: relative;
+    }
+
+    body.settings-closed {
+      --settings-width: var(--settings-width-closed);
+    }
+
+    #toggle-settings {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 0.5rem;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: left 0.3s ease;
+    }
+
+    body:not(.settings-closed) #toggle-settings {
+      left: calc(var(--settings-width-open) + 10px);
+    }
+
+    #exports {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+
+    #exports button {
+      padding: 0.5rem;
+      background: var(--success-color);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #settings {
+      background: #f7f7f7;
+      padding: 1rem;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      width: var(--settings-width-open);
+      overflow-x: hidden;
+      transition: width 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    body.settings-closed #settings {
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    #main {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #disc-panel {
+      background: #fff;
+      padding: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .disc-item {
+      background: var(--primary-color);
+      color: #fff;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.1s ease;
+    }
+
+    .disc-item:active {
+      transform: scale(1.05);
+      cursor: grabbing;
+    }
+
+    #planner {
+      flex-grow: 1;
+      overflow: auto;
+      background: #fafafa;
+      padding: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      min-width: 800px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      position: relative;
+      min-height: 80px;
+      vertical-align: top;
+      padding: 0;
+    }
+
+    th:first-child, td:first-child {
+      width: 120px;
+      background: #f5f5f5;
+      font-weight: bold;
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    th:not(:first-child) {
+      background: #f5f5f5;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    td:not(:first-child) {
+      height: 90px;
+    }
+
+    /* Time markers */
+    .time-marker {
+      position: absolute;
+      font-size: 0.7rem;
+      color: #999;
+      top: 3px;
+    }
+
+    .time-marker.start {
+      left: 3px;
+    }
+
+    .time-marker.middle {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .time-marker.end {
+      right: 3px;
+    }
+
+    .hour-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #f0f0f0;
+      pointer-events: none;
+    }
+
+    .slot {
+      position: absolute;
+      top: 5px;
+      bottom: 5px;
+      height: calc(100% - 10px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 5px 0 calc(var(--delete-btn-size) + 5px);
+      border-radius: 4px;
+      color: #fff;
+      cursor: move;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      border: 1px solid rgba(0,0,0,0.2);
+      z-index: 5;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      font-weight: 500;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Improved conflict visualization */
+    .slot.conflict {
+      border: 2px solid var(--danger-color);
+      opacity: 0.8;
+      box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
+    }
+
+    .slot.conflict:hover {
+      opacity: 0.9;
+    }
+
+    .slot.has-conflict {
+      opacity: 0.8;
+    }
+
+    /* Ensure conflicting events have slightly different z-index to see both */
+    .slot.conflict-1 { z-index: 8; }
+    .slot.conflict-2 { z-index: 7; }
+    .slot.conflict-3 { z-index: 6; }
+
+    /* Make text more visible on semi-transparent slots */
+    .slot.conflict .slot-text {
+      text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
+      font-weight: bold;
+    }
+
+    .slot .delete-slot {
+      position: absolute;
+      left: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: var(--delete-btn-size);
+      height: var(--delete-btn-size);
+      background: rgba(0,0,0,0.3);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 10px;
+      line-height: var(--delete-btn-size);
+      text-align: center;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slot .delete-slot:hover {
+      background: var(--danger-color);
+    }
+
+    .slot .notes-indicator {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .ok { opacity: 0.9; }
+
+    .overflow {
+      outline: 2px solid var(--danger-color);
+      outline-offset: 1px;
+    }
+
+    .drop-target {
+      background: rgba(33, 150, 243, 0.1);
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      max-width: 300px;
+    }
+
+    #tooltip.visible {
+      opacity: 1;
+    }
+
+    .tooltip-section {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .tooltip-title {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+
+    .tooltip-notes {
+      font-style: italic;
+      margin-top: 5px;
+      white-space: pre-wrap;
+    }
+
+    /* Conflict info in tooltip */
+    .tooltip-conflict {
+      margin-top: 5px;
+      color: var(--danger-color);
+      font-weight: bold;
+    }
+
+    /* Settings Panel Specific Styles */
+    #settings h2, #settings h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    #settings label { display: block; margin-top: 0.5rem; }
+    #settings input[type="text"],
+    #settings input[type="number"],
+    #settings input[type="time"],
+    #settings input[type="color"],
+    #settings textarea {
+      width: calc(100% - 12px);
+      padding: 5px;
+      margin-bottom: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    #settings textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    #settings button {
+      padding: 0.5rem;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    #settings .list-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+
+    #settings .list-item input[type="text"] { flex-grow: 1; margin-bottom: 0; }
+    #settings .list-item button { margin-top: 0; }
+
+    #settings #discipline-list div,
+    #settings #facility-list div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      word-break: break-all;
+    }
+
+    #settings #discipline-list div span {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+      vertical-align: middle;
+      border: 1px solid #ccc;
+    }
+
+    #settings #discipline-list button,
+    #settings #facility-list button {
+      background: var(--danger-color);
+      padding: 2px 6px;
+      font-size: 12px;
+      line-height: 1;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+
+    #settings #generate {
+      margin-top: 1rem;
+      background: var(--success-color);
+      width: 100%;
+    }
+
+    /* Modal for viewing notes */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1100;
+    }
+
+    .modal.visible {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .modal-body {
+      margin-bottom: 15px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body class="settings-closed">
+  <button id="toggle-settings">☰</button>
+  <div id="exports">
+    <button id="export-csv">CSV Export</button>
+    <button id="export-pdf">PDF Export</button>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <!-- Modal for viewing notes -->
+  <div id="notes-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Notizen</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Content will be filled dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button id="modal-ok" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings">
+    <h2>Einstellungen</h2>
+    <button id="generate">Plan Neu Generieren</button>
+    <label for="days">Anzahl Tage</label>
+    <input type="number" id="days" min="1" max="30" value="7">
+    <label for="start-time">Startzeit</label>
+    <input type="time" id="start-time" value="08:00">
+    <label for="end-time">Endzeit</label>
+    <input type="time" id="end-time" value="22:00">
+
+    <h3>Anlagen</h3>
+    <div id="facility-list"></div>
+    <div class="list-item">
+      <input type="text" id="new-facility" placeholder="Neue Anlage">
+      <button id="add-facility">➕</button>
+    </div>
+
+    <h3>Disziplinen</h3>
+    <div id="discipline-list"></div>
+    <div class="list-item">
+      <input type="text" id="new-disc" placeholder="Name">
+    </div>
+    <div class="list-item">
+      <input type="number" id="new-duration" placeholder="Dauer (h)" min="0.1" step="0.1">
+    </div>
+    <div class="list-item">
+      <input type="text" id="new-tags" placeholder="Tags (kommasepariert)">
+    </div>
+    <div class="list-item">
+      <input type="color" id="new-color" value="#2196F3">
+    </div>
+    <div class="list-item">
+      <label for="new-notes">Notizen:</label>
+    </div>
+    <div class="list-item">
+      <textarea id="new-notes" placeholder="Zusätzliche Informationen zur Disziplin eingeben..."></textarea>
+    </div>
+    <div class="list-item">
+      <button id="add-disc">➕ Disziplin</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="disc-panel"></div>
+    <div id="planner">
+      <table id="plan-table">
+        <thead>
+          <tr>
+            <th>Anlage / Tag</th>
+            <!-- Day headers generated by JS -->
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Facility rows generated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // --- Utility Functions ---
+
+    // Parse "HH:MM" into hours (float)
+    function parseTime(timeString) {
+      if (!timeString) return 0;
+      const [hours, minutes] = timeString.split(':').map(Number);
+      return hours + (minutes || 0) / 60;
+    }
+
+    // Format hours (float) back to "HH:MM"
+    function formatTime(totalHours) {
+      const totalMinutes = Math.round(totalHours * 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    // Generate a unique ID
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- Global State ---
+
+    // Tooltip management
+    const tooltip = {
+      element: document.getElementById('tooltip'),
+      visible: false,
+
+      show(e, content) {
+        this.element.innerHTML = content;
+        this.element.classList.add('visible');
+        this.visible = true;
+        this.updatePosition(e);
+
+        document.addEventListener('mousemove', this.moveHandler);
+      },
+
+      moveHandler: function(e) {
+        tooltip.updatePosition(e);
+      },
+
+      updatePosition(e) {
+        if (!this.visible) return;
+
+        const x = e.clientX + 10;
+        const y = e.clientY + 10;
+
+        // Keep tooltip within viewport
+        const rect = this.element.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let finalX = x;
+        let finalY = y;
+
+        if (x + rect.width > viewportWidth) {
+          finalX = Math.max(0, e.clientX - rect.width - 10);
+        }
+
+        if (y + rect.height > viewportHeight) {
+          finalY = Math.max(0, e.clientY - rect.height - 10);
+        }
+
+        this.element.style.left = `${finalX}px`;
+        this.element.style.top = `${finalY}px`;
+      },
+
+      hide() {
+        this.element.classList.remove('visible');
+        this.visible = false;
+
+        document.removeEventListener('mousemove', this.moveHandler);
+      }
+    };
+
+    // Modal for viewing notes
+    const notesModal = {
+      modal: document.getElementById('notes-modal'),
+      title: document.getElementById('modal-title'),
+      body: document.getElementById('modal-body'),
+      closeBtn: document.getElementById('modal-close'),
+      okBtn: document.getElementById('modal-ok'),
+
+      show(title, content) {
+        this.title.textContent = title;
+        this.body.innerHTML = content;
+        this.modal.classList.add('visible');
+
+        // Set up close handlers if not already done
+        if (!this._initialized) {
+          this.closeBtn.addEventListener('click', () => this.hide());
+          this.okBtn.addEventListener('click', () => this.hide());
+          this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.hide();
+          });
+          this._initialized = true;
+        }
+      },
+
+      hide() {
+        this.modal.classList.remove('visible');
+      }
+    };
+
+    // Application state
+    let facilities = [];
+    let disciplines = [];
+    let plan = []; // Structure: [{ facility: "Name", allocations: [ [slot1, slot2], [slot3], ... ] }, ...]
+    // allocations index corresponds to day index (0-based)
+    // slot: { id, name, duration, tags, color, startHour, notes }
+
+    // --- DOM Element References ---
+    const elements = {
+      body: document.body,
+      toggleSettings: document.getElementById('toggle-settings'),
+      exportCsv: document.getElementById('export-csv'),
+      exportPdf: document.getElementById('export-pdf'),
+      settings: {
+        days: document.getElementById('days'),
+        start: document.getElementById('start-time'),
+        end: document.getElementById('end-time'),
+        generate: document.getElementById('generate'),
+        facilityList: document.getElementById('facility-list'),
+        newFacility: document.getElementById('new-facility'),
+        addFacility: document.getElementById('add-facility'),
+        disciplineList: document.getElementById('discipline-list'),
+        newDisc: document.getElementById('new-disc'),
+        newDuration: document.getElementById('new-duration'),
+        newTags: document.getElementById('new-tags'),
+        newColor: document.getElementById('new-color'),
+        newNotes: document.getElementById('new-notes'),
+        addDisc: document.getElementById('add-disc'),
+      },
+      discPanel: document.getElementById('disc-panel'),
+      planTable: document.getElementById('plan-table'),
+      tableBody: document.querySelector('#plan-table tbody'),
+      planner: document.getElementById('planner')
+    };
+
+    // --- Event Listeners ---
+
+    // Toggle settings panel
+    elements.toggleSettings.onclick = () => {
+      elements.body.classList.toggle('settings-closed');
+    };
+
+    // Add Facility
+    elements.settings.addFacility.onclick = () => {
+      const facilityName = elements.settings.newFacility.value.trim();
+      if (facilityName && !facilities.includes(facilityName)) {
+        facilities.push(facilityName);
+        elements.settings.newFacility.value = '';
+        renderSettingsLists();
+        generatePlanStructure(); // Regenerate plan structure (keeps existing slots)
+      } else if (facilities.includes(facilityName)) {
+        alert('Anlage existiert bereits.');
+      }
+    };
+
+    // Add Discipline
+    elements.settings.addDisc.onclick = () => {
+      const name = elements.settings.newDisc.value.trim();
+      const duration = parseFloat(elements.settings.newDuration.value);
+      const tags = elements.settings.newTags.value.split(',').map(t => t.trim()).filter(t => t);
+      const color = elements.settings.newColor.value;
+      const notes = elements.settings.newNotes.value.trim();
+
+      if (name && duration > 0) {
+        if (disciplines.some(d => d.name === name)) {
+          alert('Disziplin mit diesem Namen existiert bereits.');
+          return;
+        }
+        disciplines.push({
+          id: generateId(),
+          name,
+          duration,
+          tags,
+          color,
+          notes
+        });
+
+        // Reset input fields
+        elements.settings.newDisc.value = '';
+        elements.settings.newDuration.value = '';
+        elements.settings.newTags.value = '';
+        elements.settings.newColor.value = '#2196F3'; // Reset color
+        elements.settings.newNotes.value = '';
+
+        renderSettingsLists();
+        renderDiscPanel();
+        saveToLocalStorage();
+      } else {
+        alert('Bitte gültigen Namen und Dauer (> 0) für die Disziplin eingeben.');
+      }
+    };
+
+    // Generate/Regenerate Plan Button
+    elements.settings.generate.onclick = () => {
+      if (confirm('Möchten Sie den Plan wirklich neu generieren? Alle platzierten Events gehen verloren.')) {
+        generatePlanStructure(true); // Pass true to clear allocations
+      }
+    };
+
+    // Update plan on settings change
+    elements.settings.days.addEventListener('change', () => generatePlanStructure());
+    elements.settings.start.addEventListener('change', () => generatePlanStructure());
+    elements.settings.end.addEventListener('change', () => generatePlanStructure());
+
+    // Export to CSV
+    elements.exportCsv.onclick = exportToCsv;
+
+    // Export to PDF
+    elements.exportPdf.onclick = exportToPdf;
+
+    // --- Rendering Functions ---
+
+    // Render Facility and Discipline lists in Settings Panel
+    function renderSettingsLists() {
+      // Facilities
+      elements.settings.facilityList.innerHTML = '';
+      facilities.forEach((facilityName, index) => {
+        const div = document.createElement('div');
+        div.textContent = facilityName;
+        const btn = document.createElement('button');
+        btn.textContent = '✖';
+        btn.title = `Anlage "${facilityName}" löschen`;
+        btn.onclick = () => {
+          if (confirm(`Möchten Sie die Anlage "${facilityName}" wirklich löschen? Alle zugehörigen Events werden entfernt.`)) {
+            facilities.splice(index, 1);
+            // Remove corresponding entries from the plan data
+            plan = plan.filter((_, i) => i !== index);
+            renderSettingsLists();
+            generatePlanStructure(); // Regenerate table structure
+            saveToLocalStorage();
+          }
+        };
+        div.appendChild(btn);
+        elements.settings.facilityList.appendChild(div);
+      });
+
+      // Disciplines
+      elements.settings.disciplineList.innerHTML = '';
+      disciplines.forEach((disc, index) => {
+        const div = document.createElement('div');
+        const hasNotes = disc.notes && disc.notes.trim().length > 0;
+
+        div.innerHTML = `
+          <span style="background-color:${disc.color};"></span>
+          ${disc.name} (${disc.duration}h)
+          ${hasNotes ? '<span title="Hat Notizen">📝</span>' : ''}
+          [${disc.tags.join(', ') || '-'}]
+        `;
+
+        // If the discipline has notes, make it clickable to view them
+        if (hasNotes) {
+          div.style.cursor = 'pointer';
+          div.title = "Klicken Sie, um die Notizen anzuzeigen";
+          div.addEventListener('click', () => {
+            notesModal.show(
+              `Notizen: ${disc.name}`,
+              `<div style="white-space: pre-wrap;">${escapeHtml(disc.notes)}</div>`
+            );
+          });
+        }
+
+        const btn = document.createElement('button');
+        btn.textContent = '✖';
+        btn.title = `Disziplin "${disc.name}" löschen`;
+        btn.onclick = (e) => {
+          e.stopPropagation(); // Prevent showing notes modal
+          if (confirm(`Möchten Sie die Disziplin "${disc.name}" wirklich löschen? Alle zugehörigen Events im Plan werden ebenfalls entfernt.`)) {
+            const removedName = disciplines[index].name;
+            disciplines.splice(index, 1);
+            // Remove allocated slots for this discipline from plan data
+            plan.forEach(facilityPlan => {
+              facilityPlan.allocations.forEach(dailySlots => {
+                for (let i = dailySlots.length - 1; i >= 0; i--) {
+                  if (dailySlots[i].name === removedName) {
+                    dailySlots.splice(i, 1);
+                  }
+                }
+              });
+            });
+            renderSettingsLists();
+            renderDiscPanel();
+            drawSlots(); // Redraw the plan without the removed discipline slots
+            saveToLocalStorage();
+          }
+        };
+        div.appendChild(btn);
+        elements.settings.disciplineList.appendChild(div);
+      });
+    }
+
+    // Render Draggable Discipline Items in the Top Panel
+    function renderDiscPanel() {
+      elements.discPanel.innerHTML = '';
+
+      if (disciplines.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.textContent = 'Keine Disziplinen vorhanden. Fügen Sie über die Einstellungen neue Disziplinen hinzu.';
+        emptyMessage.style.padding = '0.5rem';
+        emptyMessage.style.color = '#666';
+        elements.discPanel.appendChild(emptyMessage);
+        return;
+      }
+
+      disciplines.forEach(disc => {
+        const div = document.createElement('div');
+        div.className = 'disc-item';
+        div.draggable = true;
+        div.style.backgroundColor = disc.color;
+        div.textContent = `${disc.name} (${disc.duration}h)`;
+        div.dataset.id = disc.id;
+
+        if (disc.notes && disc.notes.trim()) {
+          const notesIndicator = document.createElement('span');
+          notesIndicator.innerHTML = ' 📝';
+          notesIndicator.title = 'Hat Notizen';
+          div.appendChild(notesIndicator);
+        }
+
+        // Add tooltip information
+        div.addEventListener('mouseenter', e => {
+          let tooltipContent = `
+            <strong>${escapeHtml(disc.name)}</strong><br>
+            Dauer: ${disc.duration} Stunden<br>
+            ${disc.tags.length > 0 ? `Tags: ${escapeHtml(disc.tags.join(', '))}` : 'Keine Tags'}
+          `;
+
+          // Add notes to tooltip if they exist
+          if (disc.notes && disc.notes.trim().length > 0) {
+            tooltipContent += `
+              <div class="tooltip-section">
+                <div class="tooltip-title">Notizen:</div>
+                <div class="tooltip-notes">${escapeHtml(disc.notes)}</div>
+              </div>
+            `;
+          }
+
+          tooltip.show(e, tooltipContent);
+        });
+
+        div.addEventListener('mouseleave', () => {
+          tooltip.hide();
+        });
+
+        // Set up drag & drop functionality
+        div.addEventListener('dragstart', e => {
+          // Store discipline data for the drop handler
+          e.dataTransfer.setData('application/json', JSON.stringify({
+            type: 'discipline',
+            id: disc.id
+          }));
+        });
+
+        elements.discPanel.appendChild(div);
+      });
+    }
+
+    // --- Core Planning Logic ---
+
+    // Generate or update the plan structure based on settings
+    function generatePlanStructure(clearAllocations = false) {
+      const numDays = parseInt(elements.settings.days.value, 10) || 1;
+      const currentPlanLength = plan.length;
+
+      // Adjust plan data array size to match facilities
+      if (facilities.length > currentPlanLength) {
+        // Add new entries for new facilities
+        for (let i = currentPlanLength; i < facilities.length; i++) {
+          plan.push({ facility: facilities[i], allocations: Array.from({ length: numDays }, () => []) });
+        }
+      } else if (facilities.length < currentPlanLength) {
+        // This case is handled by facility deletion logic which filters `plan`
+      }
+
+      // Update facility names and day array length for existing entries
+      plan.forEach((facilityPlan, index) => {
+        facilityPlan.facility = facilities[index]; // Ensure name is up-to-date
+        const currentDays = facilityPlan.allocations.length;
+        if (numDays > currentDays) {
+          // Add empty day arrays if needed
+          for (let i = currentDays; i < numDays; i++) {
+            facilityPlan.allocations.push([]);
+          }
+        } else if (numDays < currentDays) {
+          // Remove excess day arrays (and their slots!)
+          facilityPlan.allocations.splice(numDays);
+        }
+        // Clear allocations if requested (full regeneration)
+        if (clearAllocations) {
+          facilityPlan.allocations = Array.from({ length: numDays }, () => []);
+        }
+      });
+
+      renderTableStructure(numDays);
+      drawSlots(); // Redraw existing slots
+      saveToLocalStorage();
+    }
+
+    // Render the basic HTML table structure (headers, rows, cells)
+    function renderTableStructure(numDays) {
+      const headerRow = elements.planTable.querySelector('thead tr');
+      // Clear existing headers except the first
+      headerRow.innerHTML = '<th>Anlage / Tag</th>';
+
+      // Add day headers
+      for (let i = 0; i < numDays; i++) {
+        const th = document.createElement('th');
+        th.textContent = `Tag ${i + 1}`;
+        headerRow.appendChild(th);
+      }
+
+      // Clear existing body rows
+      elements.tableBody.innerHTML = '';
+
+      // Add facility rows and day cells
+      plan.forEach((facilityPlan, facilityIndex) => {
+        const tr = document.createElement('tr');
+        tr.dataset.facilityIndex = facilityIndex;
+
+        // Facility name cell
+        const tdFacility = document.createElement('td');
+        tdFacility.textContent = facilityPlan.facility;
+        tr.appendChild(tdFacility);
+
+        // Day cells (droppable targets)
+        for (let dayIndex = 0; dayIndex < numDays; dayIndex++) {
+          const tdDay = document.createElement('td');
+          tdDay.dataset.facilityIndex = facilityIndex;
+          tdDay.dataset.dayIndex = dayIndex;
+
+          // Add time markers and hour lines
+          addTimeIndicators(tdDay);
+
+          // Add drop zone functionality
+          addDropZone(tdDay);
+
+          tr.appendChild(tdDay);
+        }
+
+        elements.tableBody.appendChild(tr);
+      });
+    }
+
+    // Add time indicators to a cell
+    function addTimeIndicators(cell) {
+      const startTime = parseTime(elements.settings.start.value);
+      const endTime = parseTime(elements.settings.end.value);
+      const totalHours = endTime - startTime;
+
+      if (totalHours <= 0) return;
+
+      // Add start time marker
+      const startMarker = document.createElement('div');
+      startMarker.className = 'time-marker start';
+      startMarker.textContent = formatTime(startTime);
+      cell.appendChild(startMarker);
+
+      // Add middle time marker
+      const middleTime = startTime + totalHours / 2;
+      const middleMarker = document.createElement('div');
+      middleMarker.className = 'time-marker middle';
+      middleMarker.textContent = formatTime(middleTime);
+      cell.appendChild(middleMarker);
+
+      // Add end time marker
+      const endMarker = document.createElement('div');
+      endMarker.className = 'time-marker end';
+      endMarker.textContent = formatTime(endTime);
+      cell.appendChild(endMarker);
+
+      // Add hour lines for better visual reference
+      for (let i = Math.ceil(startTime); i < endTime; i++) {
+        const position = ((i - startTime) / totalHours) * 100;
+        const hourLine = document.createElement('div');
+        hourLine.className = 'hour-line';
+        hourLine.style.left = `${position}%`;
+        cell.appendChild(hourLine);
+      }
+    }
+
+    // Set up drop zone functionality for a cell
+    function addDropZone(cell) {
+      // Allow drops
+      cell.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        cell.classList.add('drop-target');
+      });
+
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+
+      cell.addEventListener('drop', e => {
+        e.preventDefault();
+        cell.classList.remove('drop-target');
+
+        try {
+          // Get the data that was dragged
+          const dataString = e.dataTransfer.getData('application/json');
+          if (!dataString) return;
+
+          const data = JSON.parse(dataString);
+          const facilityIndex = parseInt(cell.dataset.facilityIndex, 10);
+          const dayIndex = parseInt(cell.dataset.dayIndex, 10);
+
+          // Calculate drop position in time
+          const rect = cell.getBoundingClientRect();
+          const dropX = e.clientX - rect.left;
+          const cellWidth = rect.width;
+
+          const startTime = parseTime(elements.settings.start.value);
+          const endTime = parseTime(elements.settings.end.value);
+          const totalHours = endTime - startTime;
+
+          // Calculate target hour based on drop position
+          let targetHour = startTime + (dropX / cellWidth) * totalHours;
+
+          // Snap to 15-minute intervals (0.25 hour)
+          targetHour = Math.round(targetHour * 4) / 4;
+
+          if (data.type === 'discipline') {
+            // Create a new slot from a discipline
+            const discipline = disciplines.find(d => d.id === data.id);
+            if (discipline) {
+              allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
+            }
+          } else if (data.type === 'slot') {
+            // Move an existing slot
+            moveSlot(data.id, facilityIndex, dayIndex, targetHour);
+          }
+        } catch (err) {
+          console.error('Error during drop handling:', err);
+        }
+      });
+    }
+
+    // Find a slot by ID
+    function findSlotById(slotId) {
+      for (let fi = 0; fi < plan.length; fi++) {
+        for (let di = 0; di < plan[fi].allocations.length; di++) {
+          const slotIndex = plan[fi].allocations[di].findIndex(s => s.id === slotId);
+          if (slotIndex !== -1) {
+            return {
+              slot: plan[fi].allocations[di][slotIndex],
+              facilityIndex: fi,
+              dayIndex: di,
+              slotIndex
+            };
+          }
+        }
+      }
+      return null;
+    }
+
+    // Check for time conflicts between slots
+    function checkSlotConflicts(daySlots) {
+      // Build conflict map to track which slots conflict with which others
+      const conflictMap = new Map();
+
+      // First, find all conflicts
+      for (let i = 0; i < daySlots.length; i++) {
+        const slotA = daySlots[i];
+        const startA = slotA.startHour;
+        const endA = startA + slotA.duration;
+
+        for (let j = i + 1; j < daySlots.length; j++) {
+          const slotB = daySlots[j];
+          const startB = slotB.startHour;
+          const endB = startB + slotB.duration;
+
+          // Check for overlap
+          if (startA < endB && startB < endA) {
+            // Add to conflict map for both slots
+            if (!conflictMap.has(slotA.id)) {
+              conflictMap.set(slotA.id, new Set());
+            }
+            if (!conflictMap.has(slotB.id)) {
+              conflictMap.set(slotB.id, new Set());
+            }
+
+            conflictMap.get(slotA.id).add(slotB.id);
+            conflictMap.get(slotB.id).add(slotA.id);
+          }
+        }
+      }
+
+      return conflictMap;
+    }
+
+    // Allocate a new slot in the plan data
+    function allocateSlot(facilityIndex, dayIndex, discipline, startHour) {
+      // Create new slot object
+      const newSlot = {
+        id: generateId(),
+        name: discipline.name,
+        duration: discipline.duration,
+        tags: discipline.tags || [],
+        color: discipline.color,
+        startHour: startHour,
+        notes: discipline.notes || ''
+      };
+
+      // Add to plan
+      plan[facilityIndex].allocations[dayIndex].push(newSlot);
+
+      // Sort slots by start time
+      plan[facilityIndex].allocations[dayIndex].sort((a, b) => a.startHour - b.startHour);
+
+      // Redraw all slots
+      drawSlots();
+
+      // Save to localStorage
+      saveToLocalStorage();
+    }
+
+    // Move an existing slot to a new position
+    function moveSlot(slotId, targetFacilityIndex, targetDayIndex, targetStartHour) {
+      const slotInfo = findSlotById(slotId);
+      if (!slotInfo) return;
+
+      const { slot, facilityIndex, dayIndex, slotIndex } = slotInfo;
+
+      // Remove from source
+      plan[facilityIndex].allocations[dayIndex].splice(slotIndex, 1);
+
+      // Clone the slot and update start hour
+      const movedSlot = { ...slot, startHour: targetStartHour };
+
+      // Add to target
+      plan[targetFacilityIndex].allocations[targetDayIndex].push(movedSlot);
+
+      // Sort target day slots by start time
+      plan[targetFacilityIndex].allocations[targetDayIndex].sort((a, b) => a.startHour - b.startHour);
+
+      // Redraw all slots
+      drawSlots();
+
+      // Save to localStorage
+      saveToLocalStorage();
+    }
+
+    // Delete a slot by its ID
+    function deleteSlot(slotId) {
+      const slotInfo = findSlotById(slotId);
+      if (!slotInfo) return;
+
+      const { facilityIndex, dayIndex, slotIndex } = slotInfo;
+
+      // Remove the slot
+      plan[facilityIndex].allocations[dayIndex].splice(slotIndex, 1);
+
+      // Redraw all slots
+      drawSlots();
+
+      // Save to localStorage
+      saveToLocalStorage();
+    }
+
+    // Draw all slots onto the table
+    function drawSlots() {
+      // Remove all existing slots first
+      document.querySelectorAll('.slot').forEach(s => s.remove());
+
+      const startTime = parseTime(elements.settings.start.value);
+      const endTime = parseTime(elements.settings.end.value);
+      const totalHours = endTime - startTime;
+
+      if (totalHours <= 0) return;
+
+      // Draw slots for each facility and day
+      plan.forEach((facilityPlan, facilityIndex) => {
+        const facilityRow = elements.tableBody.querySelector(`tr[data-facility-index="${facilityIndex}"]`);
+        if (!facilityRow) return;
+
+        facilityPlan.allocations.forEach((daySlots, dayIndex) => {
+          const dayCell = facilityRow.querySelector(`td[data-day-index="${dayIndex}"]`);
+          if (!dayCell) return;
+
+          // Sort slots by start time
+          daySlots.sort((a, b) => a.startHour - b.startHour);
+
+          // Find all conflicts
+          const conflictMap = checkSlotConflicts(daySlots);
+
+          // Draw each slot
+          daySlots.forEach((slot, slotIndex) => {
+            const slotElement = document.createElement('div');
+            slotElement.className = 'slot';
+
+            // Has conflict?
+            const hasConflicts = conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0;
+
+            if (hasConflicts) {
+              slotElement.classList.add('conflict');
+
+              // Assign different z-indexes to conflicting slots for proper layering
+              const conflictIndex = Array.from(conflictMap.get(slot.id)).indexOf(slot.id) % 3 + 1;
+              slotElement.classList.add(`conflict-${conflictIndex}`);
+            } else {
+              slotElement.classList.add('ok');
+            }
+
+            slotElement.draggable = true;
+            slotElement.style.backgroundColor = slot.color;
+            slotElement.dataset.id = slot.id;
+
+            // Calculate position and width
+            const leftPercent = ((slot.startHour - startTime) / totalHours) * 100;
+            const widthPercent = (slot.duration / totalHours) * 100;
+
+            slotElement.style.left = `${Math.max(0, leftPercent)}%`;
+            slotElement.style.width = `${widthPercent}%`;
+
+            // Add content with a span for better styling
+            const textSpan = document.createElement('span');
+            textSpan.className = 'slot-text';
+            textSpan.textContent = slot.name;
+            slotElement.appendChild(textSpan);
+
+            // Add delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-slot';
+            deleteBtn.innerHTML = '✖';
+            deleteBtn.title = 'Löschen';
+            deleteBtn.onclick = e => {
+              e.stopPropagation();
+              if (confirm(`Möchten Sie "${slot.name}" wirklich löschen?`)) {
+                deleteSlot(slot.id);
+              }
+            };
+            slotElement.appendChild(deleteBtn);
+
+            // Add notes indicator if present
+            if (slot.notes && slot.notes.trim()) {
+              const notesIndicator = document.createElement('span');
+              notesIndicator.className = 'notes-indicator';
+              notesIndicator.innerHTML = '📝';
+              notesIndicator.title = 'Doppelklick zum Anzeigen der Notizen';
+              slotElement.appendChild(notesIndicator);
+            }
+
+            // Add tooltip
+            slotElement.addEventListener('mouseenter', e => {
+              let tooltipContent = `
+                <strong>${escapeHtml(slot.name)}</strong><br>
+                Zeit: ${formatTime(slot.startHour)} - ${formatTime(slot.startHour + slot.duration)}<br>
+                Dauer: ${slot.duration} Stunden<br>
+                ${slot.tags.length > 0 ? `Tags: ${escapeHtml(slot.tags.join(', '))}` : ''}
+              `;
+
+              // Add notes to tooltip if they exist
+              if (slot.notes && slot.notes.trim().length > 0) {
+                tooltipContent += `
+                  <div class="tooltip-section">
+                    <div class="tooltip-title">Notizen:</div>
+                    <div class="tooltip-notes">${escapeHtml(slot.notes)}</div>
+                  </div>
+                `;
+              }
+
+              // Add conflict information if any
+              if (hasConflicts) {
+                const conflictingSlots = [];
+
+                // Get names of conflicting slots
+                daySlots.forEach(otherSlot => {
+                  if (conflictMap.get(slot.id).has(otherSlot.id)) {
+                    conflictingSlots.push(otherSlot.name);
+                  }
+                });
+
+                tooltipContent += `
+                  <div class="tooltip-conflict">
+                    Konflikt mit: ${escapeHtml(conflictingSlots.join(', '))}
+                  </div>
+                `;
+              }
+
+              tooltip.show(e, tooltipContent);
+            });
+
+            slotElement.addEventListener('mouseleave', () => {
+              tooltip.hide();
+            });
+
+            // Double-click to view notes in modal if present
+            if (slot.notes && slot.notes.trim().length > 0) {
+              slotElement.addEventListener('dblclick', () => {
+                notesModal.show(
+                  `Notizen: ${slot.name}`,
+                  `<div style="white-space: pre-wrap;">${escapeHtml(slot.notes)}</div>`
+                );
+              });
+            }
+
+            // Set up drag & drop for moving slots
+            slotElement.addEventListener('dragstart', e => {
+              if (e.target === deleteBtn) {
+                e.preventDefault();
+                return;
+              }
+
+              e.dataTransfer.setData('application/json', JSON.stringify({
+                type: 'slot',
+                id: slot.id
+              }));
+
+              slotElement.style.opacity = '0.5';
+            });
+
+            slotElement.addEventListener('dragend', () => {
+              slotElement.style.opacity = '1';
+            });
+
+            // Check for time overflow (outside start/end time)
+            if (slot.startHour < startTime || slot.startHour + slot.duration > endTime) {
+              slotElement.classList.add('overflow');
+            }
+
+            dayCell.appendChild(slotElement);
+          });
+        });
+      });
+    }
+
+    // --- Export Functions ---
+
+    // Export plan to CSV
+    function exportToCsv() {
+      let csvContent = 'Anlage;Tag;Startzeit;Endzeit;Dauer (h);Disziplin;Tags;Notizen;Konflikte\n';
+
+      plan.forEach(facilityPlan => {
+        facilityPlan.allocations.forEach((daySlots, dayIndex) => {
+          // Get conflict information
+          const conflictMap = checkSlotConflicts(daySlots);
+
+          daySlots.forEach(slot => {
+            const startTimeStr = formatTime(slot.startHour);
+            const endTimeStr = formatTime(slot.startHour + slot.duration);
+            const tagsStr = `"${slot.tags.join(', ')}"`;
+            // Escape quotes in notes for CSV
+            const notesStr = `"${(slot.notes || '').replace(/"/g, '""')}"`;
+
+            // Get conflict information
+            let conflictStr = '""';
+            if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
+              const conflictingSlots = [];
+              daySlots.forEach(otherSlot => {
+                if (conflictMap.get(slot.id).has(otherSlot.id)) {
+                  conflictingSlots.push(otherSlot.name);
+                }
+              });
+              conflictStr = `"${conflictingSlots.join(', ').replace(/"/g, '""')}"`;
+            }
+
+            csvContent += `${facilityPlan.facility};${dayIndex + 1};${startTimeStr};${endTimeStr};${slot.duration.toFixed(2)};${slot.name};${tagsStr};${notesStr};${conflictStr}\n`;
+          });
+        });
+      });
+
+      // Create download link
+      const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'belegungsplan.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Export plan to PDF
+    async function exportToPdf() {
+      if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+        alert("PDF Export-Bibliotheken nicht geladen.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const tableElement = elements.planTable;
+
+      // Show loading indicator
+      const originalButtonText = elements.exportPdf.textContent;
+      elements.exportPdf.textContent = 'Erstelle PDF...';
+      elements.exportPdf.disabled = true;
+
+      try {
+        const canvas = await html2canvas(tableElement, {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          windowWidth: tableElement.scrollWidth,
+          windowHeight: tableElement.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Create PDF with appropriate size
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+
+        // Calculate scaling to fit page while maintaining aspect ratio
+        const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+
+        // Center on page
+        const xPos = (pageWidth - imgWidth * ratio) / 2;
+        const yPos = 10; // Top margin
+
+        pdf.addImage(imgData, 'PNG', xPos, yPos, imgWidth * ratio, imgHeight * ratio);
+
+        // Add conflict information and notes
+        let hasConflicts = false;
+        let hasNotes = false;
+
+        plan.forEach(facilityPlan => {
+          facilityPlan.allocations.forEach(daySlots => {
+            const conflictMap = checkSlotConflicts(daySlots);
+
+            // Check for conflicts
+            if (!hasConflicts) {
+              for (let slot of daySlots) {
+                if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
+                  hasConflicts = true;
+                  break;
+                }
+              }
+            }
+
+            // Check for notes
+            if (!hasNotes) {
+              for (let slot of daySlots) {
+                if (slot.notes && slot.notes.trim()) {
+                  hasNotes = true;
+                  break;
+                }
+              }
+            }
+          });
+        });
+
+        // Add additional page if there are conflicts or notes
+        if (hasConflicts || hasNotes) {
+          pdf.addPage();
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(16);
+          pdf.text('Zusätzliche Informationen', 14, 20);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(11);
+
+          let yPosition = 30;
+
+          // Add conflicts section
+          if (hasConflicts) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Zeitkonflikte:', 14, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            yPosition += 10;
+
+            // List conflicts
+            let conflictListed = false;
+
+            plan.forEach(facilityPlan => {
+              facilityPlan.allocations.forEach((daySlots, dayIndex) => {
+                const conflictMap = checkSlotConflicts(daySlots);
+
+                // Process each slot for conflicts
+                daySlots.forEach(slot => {
+                  if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
+                    const conflictingSlots = [];
+                    daySlots.forEach(otherSlot => {
+                      if (conflictMap.get(slot.id).has(otherSlot.id)) {
+                        conflictingSlots.push(otherSlot.name);
+                      }
+                    });
+
+                    if (conflictingSlots.length > 0) {
+                      const conflictText = `${facilityPlan.facility}, Tag ${dayIndex + 1}: ${slot.name} ↔ ${conflictingSlots.join(', ')}`;
+
+                      // Check for page break
+                      if (yPosition > pageHeight - 20) {
+                        pdf.addPage();
+                        yPosition = 20;
+                      }
+
+                      pdf.text(conflictText, 14, yPosition);
+                      yPosition += 6;
+                      conflictListed = true;
+                    }
+                  }
+                });
+              });
+            });
+
+            if (!conflictListed) {
+              pdf.text('Keine Konflikte gefunden.', 14, yPosition);
+              yPosition += 6;
+            }
+
+            yPosition += 10; // Add space before notes section
+          }
+
+          // Add notes section
+          if (hasNotes) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Notizen zu Disziplinen:', 14, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            yPosition += 10;
+
+            // List discipline notes
+            disciplines.forEach(disc => {
+              if (disc.notes && disc.notes.trim()) {
+                // Check for page break
+                if (yPosition > pageHeight - 20) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`${disc.name} (${disc.duration}h)`, 14, yPosition);
+                pdf.setFont('helvetica', 'normal');
+
+                // Split notes into lines to fit the page width
+                const textLines = pdf.splitTextToSize(disc.notes, pageWidth - 28);
+                pdf.text(textLines, 14, yPosition + 6);
+
+                yPosition += 6 + (textLines.length * 6) + 10; // Add space for title + text + margin
+              }
+            });
+          }
+        }
+
+        pdf.save('belegungsplan.pdf');
+      } catch (error) {
+        console.error('Fehler beim PDF-Export:', error);
+        alert('Fehler beim Erstellen des PDFs.');
+      } finally {
+        // Restore button
+        elements.exportPdf.textContent = originalButtonText;
+        elements.exportPdf.disabled = false;
+      }
+    }
+
+    // --- LocalStorage Functions ---
+
+    // Save state to localStorage
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem('eventPlannerFacilities', JSON.stringify(facilities));
+        localStorage.setItem('eventPlannerDisciplines', JSON.stringify(disciplines));
+        localStorage.setItem('eventPlannerPlan', JSON.stringify(plan));
+      } catch (e) {
+        console.warn('Fehler beim Speichern im localStorage:', e);
+      }
+    }
+
+    // Load state from localStorage
+    function loadFromLocalStorage() {
+      try {
+        const savedFacilities = localStorage.getItem('eventPlannerFacilities');
+        const savedDisciplines = localStorage.getItem('eventPlannerDisciplines');
+        const savedPlan = localStorage.getItem('eventPlannerPlan');
+
+        if (savedFacilities) facilities = JSON.parse(savedFacilities);
+        if (savedDisciplines) disciplines = JSON.parse(savedDisciplines);
+        if (savedPlan) plan = JSON.parse(savedPlan);
+
+        // If nothing saved, use defaults
+        if (!facilities.length) {
+          facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
+        }
+
+        if (!disciplines.length) {
+          disciplines = [
+             {
+            id: generateId(),
+            name: '50m_einbein',
+            duration: 1.5,
+            tags: ['RACE', 'Indoor'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '10K_Marathon',
+            duration: 1.5,
+            tags: ['RACE', 'Outdoor', 'Street'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
+          },
+          {
+            id: generateId(),
+            name: 'Freestyle_J1',
+            duration: 6,
+            tags: ['Freestyle', 'Indoor'],
+            color: '#1f525d',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '100m_SPRINT',
+            duration: 2,
+            tags: ['RACE', 'Outdoor'],
+            color: '#9C27B0',
+            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_HOCKEY',
+            duration: 1,
+            tags: ['Mannschaft', 'Indoor'],
+            color: '#4CAF50',
+            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_BASKETBALL',
+            duration: 2.5,
+            tags: ['Mannschaft', 'Outdoor'],
+            color: '#2196F3',
+            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
+          }
+          ];
+        }
+
+        // Ensure plan structure matches current settings
+        const numDays = parseInt(elements.settings.days.value, 10) || 1;
+        if (!plan.length || plan.length !== facilities.length ||
+            plan.some((f, i) => f.facility !== facilities[i] || f.allocations.length !== numDays)) {
+          generatePlanStructure(false);
+        }
+      } catch (e) {
+        console.warn('Fehler beim Laden aus localStorage:', e);
+        facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
+        disciplines = [
+          {
+            id: generateId(),
+            name: '50m_einbein',
+            duration: 1.5,
+            tags: ['RACE', 'Indoor'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '10K_Marathon',
+            duration: 1.5,
+            tags: ['RACE', 'Outdoor', 'Street'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
+          },
+          {
+            id: generateId(),
+            name: 'Freestyle_J1',
+            duration: 6,
+            tags: ['Freestyle', 'Indoor'],
+            color: '#1f525d',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '100m_SPRINT',
+            duration: 2,
+            tags: ['RACE', 'Outdoor'],
+            color: '#9C27B0',
+            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_HOCKEY',
+            duration: 1,
+            tags: ['Mannschaft', 'Indoor'],
+            color: '#4CAF50',
+            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_BASKETBALL',
+            duration: 2.5,
+            tags: ['Mannschaft', 'Outdoor'],
+            color: '#2196F3',
+            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
+          }
+        ];
+        generatePlanStructure(true);
+      }
+    }
+
+    // --- Initialize Application ---
+    function initialize() {
+      // Load saved data
+      loadFromLocalStorage();
+
+      // Render UI components
+      renderSettingsLists();
+      renderDiscPanel();
+      renderTableStructure(parseInt(elements.settings.days.value, 10) || 1);
+      drawSlots();
+
+      // Set up save on unload
+      window.addEventListener('beforeunload', saveToLocalStorage);
+    }
+
+    // Start the application
+    initialize();
+  </script>
+</body>
+</html>
