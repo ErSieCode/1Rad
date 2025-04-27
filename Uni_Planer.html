@@ -569,10 +569,30 @@
 
     // Format hours (float) back to "HH:MM"
     function formatTime(totalHours) {
-      const totalMinutes = Math.round(totalHours * 60);
+      // Behandle Stunden größer 24 oder negativ
+      let normalizedHours = totalHours;
+      while (normalizedHours < 0) normalizedHours += 24;
+      normalizedHours = normalizedHours % 24;
+
+      const totalMinutes = Math.round(normalizedHours * 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    // Diese neue Funktion berechnet die Gesamtstunden unter Berücksichtigung von Übernacht-Zeiträumen
+    function calculateTotalHours(startTime, endTime) {
+      if (endTime < startTime) {
+        // Wenn die Endzeit kleiner als die Startzeit ist, gehen wir über Mitternacht
+        return (24 - startTime) + endTime;
+      } else {
+        return endTime - startTime;
+      }
+    }
+
+    // Überprüfe, ob ein Zeitbereich über Mitternacht geht
+    function isOvernightRange(startTime, endTime) {
+      return endTime < startTime;
     }
 
     // Generate a unique ID
@@ -1017,7 +1037,8 @@
     function addTimeIndicators(cell) {
       const startTime = parseTime(elements.settings.start.value);
       const endTime = parseTime(elements.settings.end.value);
-      const totalHours = endTime - startTime;
+      const totalHours = calculateTotalHours(startTime, endTime);
+      const isOvernight = isOvernightRange(startTime, endTime);
 
       if (totalHours <= 0) return;
 
@@ -1028,7 +1049,17 @@
       cell.appendChild(startMarker);
 
       // Add middle time marker
-      const middleTime = startTime + totalHours / 2;
+      let middleTime;
+      if (isOvernight) {
+        // Bei Übernacht-Zeiträumen muss der Mittelpunkt korrekt berechnet werden
+        middleTime = startTime + totalHours / 2;
+        if (middleTime >= 24) {
+          middleTime = middleTime - 24;
+        }
+      } else {
+        middleTime = startTime + totalHours / 2;
+      }
+
       const middleMarker = document.createElement('div');
       middleMarker.className = 'time-marker middle';
       middleMarker.textContent = formatTime(middleTime);
@@ -1041,12 +1072,33 @@
       cell.appendChild(endMarker);
 
       // Add hour lines for better visual reference
-      for (let i = Math.ceil(startTime); i < endTime; i++) {
-        const position = ((i - startTime) / totalHours) * 100;
-        const hourLine = document.createElement('div');
-        hourLine.className = 'hour-line';
-        hourLine.style.left = `${position}%`;
-        cell.appendChild(hourLine);
+      if (isOvernight) {
+        // Für Übernacht-Zeiträume: Zeichne Stundenlinien von Startzeit bis Mitternacht
+        for (let hour = Math.ceil(startTime); hour < 24; hour++) {
+          const position = ((hour - startTime) / totalHours) * 100;
+          const hourLine = document.createElement('div');
+          hourLine.className = 'hour-line';
+          hourLine.style.left = `${position}%`;
+          cell.appendChild(hourLine);
+        }
+
+        // Zeichne Stundenlinien von Mitternacht bis Endzeit
+        for (let hour = 0; hour < endTime; hour++) {
+          const position = ((hour + 24 - startTime) / totalHours) * 100;
+          const hourLine = document.createElement('div');
+          hourLine.className = 'hour-line';
+          hourLine.style.left = `${position}%`;
+          cell.appendChild(hourLine);
+        }
+      } else {
+        // Normaler Fall (nicht über Mitternacht)
+        for (let hour = Math.ceil(startTime); hour < endTime; hour++) {
+          const position = ((hour - startTime) / totalHours) * 100;
+          const hourLine = document.createElement('div');
+          hourLine.className = 'hour-line';
+          hourLine.style.left = `${position}%`;
+          cell.appendChild(hourLine);
+        }
       }
     }
 
@@ -1083,13 +1135,19 @@
 
           const startTime = parseTime(elements.settings.start.value);
           const endTime = parseTime(elements.settings.end.value);
-          const totalHours = endTime - startTime;
+          const totalHours = calculateTotalHours(startTime, endTime);
+          const isOvernight = isOvernightRange(startTime, endTime);
 
           // Calculate target hour based on drop position
           let targetHour = startTime + (dropX / cellWidth) * totalHours;
 
           // Snap to 15-minute intervals (0.25 hour)
           targetHour = Math.round(targetHour * 4) / 4;
+
+          // Bei Übernacht-Zeiträumen: Wenn die berechnete Zielzeit nach Mitternacht liegt
+          if (isOvernight && targetHour >= 24) {
+            targetHour = targetHour - 24;
+          }
 
           if (data.type === 'discipline') {
             // Create a new slot from a discipline
@@ -1236,7 +1294,8 @@
 
       const startTime = parseTime(elements.settings.start.value);
       const endTime = parseTime(elements.settings.end.value);
-      const totalHours = endTime - startTime;
+      const totalHours = calculateTotalHours(startTime, endTime);
+      const isOvernight = isOvernightRange(startTime, endTime);
 
       if (totalHours <= 0) return;
 
@@ -1278,7 +1337,14 @@
             slotElement.dataset.id = slot.id;
 
             // Calculate position and width
-            const leftPercent = ((slot.startHour - startTime) / totalHours) * 100;
+            let adjustedStartHour = slot.startHour;
+
+            // Für Übernacht-Zeiträume: Wenn der Slot nach Mitternacht und vor der Startzeit liegt
+            if (isOvernight && slot.startHour < startTime && slot.startHour <= endTime) {
+              adjustedStartHour = slot.startHour + 24;
+            }
+
+            const leftPercent = ((adjustedStartHour - startTime) / totalHours) * 100;
             const widthPercent = (slot.duration / totalHours) * 100;
 
             slotElement.style.left = `${Math.max(0, leftPercent)}%`;
@@ -1386,8 +1452,24 @@
             });
 
             // Check for time overflow (outside start/end time)
-            if (slot.startHour < startTime || slot.startHour + slot.duration > endTime) {
-              slotElement.classList.add('overflow');
+            if (isOvernight) {
+              // Für Übernacht-Zeiträume: Überprüfe, ob der Slot außerhalb des Zeitbereichs liegt
+              const adjustedEndHour = slot.startHour + slot.duration;
+
+              // Bei Übernacht-Zeitbereich müssen wir prüfen, ob der Slot zwischen endTime und startTime liegt
+              // oder außerhalb des gültigen Bereichs (startTime bis endTime+24) liegt
+              const isOutsideTimeRange = (slot.startHour > endTime && slot.startHour < startTime) ||
+                                         (adjustedEndHour > endTime && slot.startHour >= startTime) ||
+                                         (adjustedStartHour + slot.duration > startTime + totalHours);
+
+              if (isOutsideTimeRange) {
+                slotElement.classList.add('overflow');
+              }
+            } else {
+              // Normale Überprüfung für Zeitbereiche innerhalb eines Tages
+              if (slot.startHour < startTime || slot.startHour + slot.duration > endTime) {
+                slotElement.classList.add('overflow');
+              }
             }
 
             dayCell.appendChild(slotElement);
