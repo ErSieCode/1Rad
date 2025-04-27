@@ -6,6 +6,10 @@
   <title>Event-Wettkampf Anlagen Belegungsplan</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Füge mobileDragDrop Polyfill hinzu -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-drag-drop/2.3.0/index.min.js"></script>
+  <!-- Optional: Include default CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mobile-drag-drop/2.3.0/default.css">
   <style>
     :root {
       --settings-width-open: 300px;
@@ -17,6 +21,193 @@
       --danger-color: #F44336;
       --warning-color: #FF9800;
     }
+
+    // --- LocalStorage Functions ---
+
+    // Save state to localStorage
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem('eventPlannerFacilities', JSON.stringify(facilities));
+        localStorage.setItem('eventPlannerDisciplines', JSON.stringify(disciplines));
+        localStorage.setItem('eventPlannerPlan', JSON.stringify(plan));
+      } catch (e) {
+        console.warn('Fehler beim Speichern im localStorage:', e);
+      }
+    }
+
+    // Load state from localStorage
+    function loadFromLocalStorage() {
+      try {
+        const savedFacilities = localStorage.getItem('eventPlannerFacilities');
+        const savedDisciplines = localStorage.getItem('eventPlannerDisciplines');
+        const savedPlan = localStorage.getItem('eventPlannerPlan');
+
+        if (savedFacilities) facilities = JSON.parse(savedFacilities);
+        if (savedDisciplines) disciplines = JSON.parse(savedDisciplines);
+        if (savedPlan) plan = JSON.parse(savedPlan);
+
+        // If nothing saved, use defaults
+        if (!facilities.length) {
+          facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
+        }
+
+        if (!disciplines.length) {
+          disciplines = [
+             {
+            id: generateId(),
+            name: '50m_einbein',
+            duration: 1.5,
+            tags: ['RACE', 'Indoor'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '10K_Marathon',
+            duration: 1.5,
+            tags: ['RACE', 'Outdoor', 'Street'],
+            color: '#6850a4',
+            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
+          },
+          {
+            id: generateId(),
+            name: 'Freestyle_J1',
+            duration: 6,
+            tags: ['Freestyle', 'Indoor'],
+            color: '#1f525d',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '100m_SPRINT',
+            duration: 2,
+            tags: ['RACE', 'Outdoor'],
+            color: '#9C27B0',
+            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_HOCKEY',
+            duration: 1,
+            tags: ['Mannschaft', 'Indoor'],
+            color: '#4CAF50',
+            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_BASKETBALL',
+            duration: 2.5,
+            tags: ['Mannschaft', 'Outdoor'],
+            color: '#2196F3',
+            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
+          }
+          ];
+        }
+
+        // Ensure plan structure matches current settings
+        const numDays = parseInt(elements.settings.days.value, 10) || 1;
+        if (!plan.length || plan.length !== facilities.length ||
+            plan.some((f, i) => f.facility !== facilities[i] || f.allocations.length !== numDays)) {
+          generatePlanStructure(false);
+        }
+      } catch (e) {
+        console.warn('Fehler beim Laden aus localStorage:', e);
+        facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
+        disciplines = [
+          {
+            id: generateId(),
+            name: '50m_einbein',
+            duration: 1.5,
+            tags: ['RACE', 'Indoor'],
+            color: '#f44336',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '10K_Marathon',
+            duration: 1.5,
+            tags: ['RACE', 'Outdoor', 'Street'],
+            color: '#6850a4',
+            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
+          },
+          {
+            id: generateId(),
+            name: 'Freestyle_J1',
+            duration: 6,
+            tags: ['Freestyle', 'Indoor'],
+            color: '#1f525d',
+            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+          },
+          {
+            id: generateId(),
+            name: '100m_SPRINT',
+            duration: 2,
+            tags: ['RACE', 'Outdoor'],
+            color: '#9C27B0',
+            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_HOCKEY',
+            duration: 1,
+            tags: ['Mannschaft', 'Indoor'],
+            color: '#4CAF50',
+            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
+          },
+          {
+            id: generateId(),
+            name: 'UNI_BASKETBALL',
+            duration: 2.5,
+            tags: ['Mannschaft', 'Outdoor'],
+            color: '#2196F3',
+            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
+          }
+        ];
+        generatePlanStructure(true);
+      }
+    }
+
+    // --- Initialize Application ---
+    function initialize() {
+      // Initialisiere mobile Hilfsfunktionen
+      slotActions.initialize();
+      zoomControls.initialize();
+      disciplineSelector.initialize();
+
+      // Mobile Drag & Drop aktivieren
+      if (isTouchDevice()) {
+        window.addEventListener('touchmove', function(event) {
+          if (isDragging) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+      }
+
+      // Load saved data
+      loadFromLocalStorage();
+
+      // Render UI components
+      renderSettingsLists();
+      renderDiscPanel();
+      renderTableStructure(parseInt(elements.settings.days.value, 10) || 1);
+      drawSlots();
+
+      // Set up save on unload
+      window.addEventListener('beforeunload', saveToLocalStorage);
+
+      // Listen for orientation changes
+      window.addEventListener('orientationchange', function() {
+        // Kurze Verzögerung für das komplette Neuausrichten
+        setTimeout(function() {
+          // Setze Zoom zurück, wenn sich die Orientierung ändert
+          currentZoom = 1;
+          applyZoom();
+        }, 300);
+      });
+    }
+
+    // Start the application
+    initialize();
 
     * {
       box-sizing: border-box;
@@ -176,15 +367,41 @@
       border-radius: 4px;
       cursor: grab;
       user-select: none;
-      transition: transform 0.1s ease;
+      transition: transform 0.1s ease, opacity 0.2s ease;
       min-height: 44px; /* Größerer Tap-Bereich */
       min-width: 44px; /* Größerer Tap-Bereich */
       touch-action: none; /* Verbessert Drag-Funktionalität auf Touch-Geräten */
+      position: relative;
+    }
+
+    .disc-item.dragging {
+      opacity: 0.7;
+      transform: scale(1.05);
+      z-index: 100;
     }
 
     .disc-item:active {
       transform: scale(1.05);
       cursor: grabbing;
+    }
+
+    /* Drag-Indikator für besseres visuelles Feedback */
+    .disc-item::after {
+      content: "";
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 10px;
+      height: 10px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .disc-item::after {
+        display: block;
+      }
     }
 
     #planner {
@@ -291,6 +508,27 @@
       pointer-events: none;
     }
 
+    /* Verbesserte Drop-Zone-Visualisierung für Touch */
+    td[data-day-index] {
+      transition: background-color 0.2s;
+    }
+
+    .drop-target {
+      background: rgba(33, 150, 243, 0.2) !important;
+      box-shadow: inset 0 0 0 2px var(--primary-color);
+    }
+
+    /* Ghost-Element für Drag-Visualisierung auf Mobilgeräten */
+    .touch-drag-ghost {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.8;
+      transform: translate(-50%, -50%);
+      transition: none !important;
+    }
+
+    /* Slot-Styling mit grünen Rahmen */
     .slot {
       position: absolute;
       top: 5px;
@@ -308,7 +546,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
-      border: 1px solid rgba(0,0,0,0.2);
+      border: 2px solid var(--success-color); /* Grüner Rahmen für alle Slots */
       z-index: 5;
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
       font-weight: 500;
@@ -317,15 +555,22 @@
       min-height: 40px; /* Höher für bessere Touch-Bedienung */
     }
 
+    .slot.dragging {
+      opacity: 0.7;
+      transform: scale(1.02);
+      z-index: 100;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
     @media (max-width: 768px) {
       .slot {
         font-size: 0.7rem;
       }
     }
 
-    /* Improved conflict visualization */
+    /* Konflikt-Visualisierung mit roten Rahmen */
     .slot.conflict {
-      border: 2px solid var(--danger-color);
+      border: 2px solid var(--danger-color); /* Roter Rahmen für Konflikte */
       opacity: 0.8;
       box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
     }
@@ -382,15 +627,14 @@
       cursor: pointer;
     }
 
-    .ok { opacity: 0.9; }
+    .ok {
+      opacity: 0.9;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); /* Leichter grüner Schein */
+    }
 
     .overflow {
       outline: 2px solid var(--danger-color);
       outline-offset: 1px;
-    }
-
-    .drop-target {
-      background: rgba(33, 150, 243, 0.1);
     }
 
     /* Tooltip */
@@ -704,6 +948,72 @@
       font-size: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+
+    /* Hinweis-Box für Mobile */
+    #mobile-hint {
+      display: none;
+      background: rgba(255, 152, 0, 0.2);
+      border-left: 4px solid var(--warning-color);
+      padding: 10px 15px;
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      #mobile-hint {
+        display: block;
+      }
+    }
+
+    /* Neuer Auswahldialog für Disziplinen auf Mobilgeräten */
+    #discipline-selector {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      z-index: 1010;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+
+    #discipline-selector.visible {
+      transform: translateY(0);
+    }
+
+    #discipline-selector .selector-title {
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    #discipline-selector .selector-items {
+      max-height: 60vh;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+
+    .selector-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .selector-cancel {
+      width: 100%;
+      padding: 15px;
+      background: #ddd;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+    }
   </style>
 </head>
 <body class="settings-closed">
@@ -728,6 +1038,15 @@
       <p>Element verschieben...</p>
       <p>Halte und ziehe zum Verschieben</p>
     </div>
+  </div>
+
+  <!-- Disziplin-Auswahldialog für Mobilgeräte -->
+  <div id="discipline-selector">
+    <div class="selector-title">Disziplin auswählen</div>
+    <div class="selector-items" id="selector-items-container">
+      <!-- Wird dynamisch befüllt -->
+    </div>
+    <button class="selector-cancel" id="selector-cancel">Abbrechen</button>
   </div>
 
   <!-- Zoom Controls für mobile Ansicht -->
@@ -796,6 +1115,7 @@
 
   <div id="main">
     <div id="disc-panel"></div>
+    <div id="mobile-hint">Tippen Sie auf eine Disziplin und ziehen Sie sie in die Zeitraster.</div>
     <div class="swipe-indicator">← Nach links/rechts wischen für mehr Tage →</div>
     <div id="planner">
       <table id="plan-table">
@@ -870,12 +1190,51 @@
              (navigator.msMaxTouchPoints > 0);
     }
 
+    // Neues Element erstellen für mobiles Ziehen
+    function createDragGhostElement(element) {
+      const ghost = element.cloneNode(true);
+      ghost.classList.add('touch-drag-ghost');
+      ghost.style.width = `${element.offsetWidth}px`;
+      ghost.style.height = `${element.offsetHeight}px`;
+      ghost.style.backgroundColor = window.getComputedStyle(element).backgroundColor;
+      document.body.appendChild(ghost);
+      return ghost;
+    }
+
     // --- Global State ---
     let isMobile = window.innerWidth <= 768;
     let currentZoom = 1;
     let activeSlot = null; // Für mobile Slot-Aktionen
     let isDragging = false;
     let touchTimeout = null;
+    let currentTouchDragElement = null;
+    let ghostElement = null;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    let currentDropTarget = null;
+    let touchDragData = null;
+
+    // Neue Variablen für Disziplin-Auswahl und Tap-Ziel
+    let currentTapTarget = null;
+    let currentTapPositionHour = null;
+
+    // Initialisiere Mobile Drag&Drop Polyfill
+    if (isTouchDevice()) {
+      MobileDragDrop.polyfill({
+        dragImageTranslateOverride: (_, event) => {
+          // Wichtig für iOS, damit das Drag-Image korrekt positioniert wird
+          return { x: 0, y: 0 };
+        },
+        holdToDrag: 200 // Lange tippen um Drag zu starten
+      });
+
+      // Optional: Verhindere Scrollen während des Ziehens
+      window.addEventListener('touchmove', function(event) {
+        if (isDragging) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+    }
 
     // Tooltip management
     const tooltip = {
@@ -1018,6 +1377,61 @@
 
       hide() {
         this.element.classList.remove('visible');
+      }
+    };
+
+    // Neuer Disziplin-Selektor für Mobilgeräte
+    const disciplineSelector = {
+      element: document.getElementById('discipline-selector'),
+      container: document.getElementById('selector-items-container'),
+      cancelBtn: document.getElementById('selector-cancel'),
+
+      show(targetCell, targetHour) {
+        // Speichere das aktuelle Ziel für später
+        currentTapTarget = targetCell;
+        currentTapPositionHour = targetHour;
+
+        // Fülle den Container mit den verfügbaren Disziplinen
+        this.container.innerHTML = '';
+
+        disciplines.forEach(disc => {
+          const item = document.createElement('div');
+          item.className = 'selector-item';
+          item.style.backgroundColor = disc.color;
+          item.textContent = `${disc.name} (${disc.duration}h)`;
+
+          if (disc.notes && disc.notes.trim()) {
+            const notesIndicator = document.createElement('span');
+            notesIndicator.innerHTML = ' 📝';
+            notesIndicator.title = 'Hat Notizen';
+            item.appendChild(notesIndicator);
+          }
+
+          item.addEventListener('click', () => {
+            const facilityIndex = parseInt(currentTapTarget.dataset.facilityIndex, 10);
+            const dayIndex = parseInt(currentTapTarget.dataset.dayIndex, 10);
+            allocateSlot(facilityIndex, dayIndex, disc, currentTapPositionHour);
+            this.hide();
+          });
+
+          this.container.appendChild(item);
+        });
+
+        this.element.classList.add('visible');
+        document.body.style.overflow = 'hidden'; // Verhindere Scrollen
+      },
+
+      hide() {
+        this.element.classList.remove('visible');
+        currentTapTarget = null;
+        currentTapPositionHour = null;
+        document.body.style.overflow = ''; // Erlaube Scrollen wieder
+      },
+
+      initialize() {
+        this.cancelBtn.addEventListener('click', () => {
+          this.hide();
+        });
       }
     };
 
@@ -1257,6 +1671,235 @@
       });
     }
 
+    // Verbesserte Touch-Drag-Unterstützung für mobile Geräte
+    function setupTouchDragEvents(element, dragData) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let dragThreshold = 10; // Pixel, die bewegt werden müssen, bevor ein Drag beginnt
+      let dragStarted = false;
+
+      element.addEventListener('touchstart', function(e) {
+        if (isMobile) {
+          // Verhindere, dass der Standard-Drag-and-Drop startet, wir wollen unseren eigenen
+          e.preventDefault();
+
+          const touch = e.touches[0];
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+          dragStarted = false;
+
+          // Speichere Element und Daten für später
+          currentTouchDragElement = element;
+          touchDragData = dragData;
+
+          // Visuelles Feedback, dass etwas passiert
+          element.classList.add('touch-active');
+
+          // Starte einen Timer - wenn lange gedrückt, beginne mit Drag
+          touchTimeout = setTimeout(() => {
+            if (!dragStarted) {
+              startTouchDrag(e);
+            }
+          }, 300);
+        }
+      }, { passive: false });
+
+      element.addEventListener('touchmove', function(e) {
+        if (isMobile && currentTouchDragElement === element) {
+          const touch = e.touches[0];
+          const deltaX = Math.abs(touch.clientX - touchStartX);
+          const deltaY = Math.abs(touch.clientY - touchStartY);
+
+          // Wenn der Nutzer genug bewegt hat, starte Drag
+          if (!dragStarted && (deltaX > dragThreshold || deltaY > dragThreshold)) {
+            clearTimeout(touchTimeout); // Verhindere den Timer-basierten Drag-Start
+            startTouchDrag(e);
+          }
+
+          // Wenn bereits ein Drag läuft, bewege das Ghost-Element
+          if (dragStarted && ghostElement) {
+            moveGhostElement(touch.clientX, touch.clientY);
+
+            // Finde und markiere das Ziel unter dem Cursor
+            const elementsUnderTouch = document.elementsFromPoint(touch.clientX, touch.clientY);
+            findAndHighlightDropTarget(elementsUnderTouch);
+          }
+        }
+      }, { passive: false });
+
+      element.addEventListener('touchend', function(e) {
+        if (isMobile) {
+          clearTimeout(touchTimeout);
+          element.classList.remove('touch-active');
+
+          if (dragStarted) {
+            endTouchDrag(e);
+          } else if (currentTouchDragElement === element) {
+            // Dies war ein Tap, keine Drag-Aktion
+            // Für Disc-Items: Zeige den Selektor
+            if (element.classList.contains('disc-item') && disciplines.length > 0) {
+              // Keine Aktion hier, Taps nutzen wir nur für Slots
+            }
+          }
+
+          currentTouchDragElement = null;
+        }
+      });
+
+      element.addEventListener('touchcancel', function() {
+        if (isMobile) {
+          clearTimeout(touchTimeout);
+          element.classList.remove('touch-active');
+          if (dragStarted) {
+            cancelTouchDrag();
+          }
+          currentTouchDragElement = null;
+        }
+      });
+    }
+
+    function startTouchDrag(e) {
+      if (!currentTouchDragElement) return;
+
+      const touch = e.touches[0];
+      dragStarted = true;
+      isDragging = true;
+
+      // Visual enhancements
+      currentTouchDragElement.classList.add('dragging');
+      dragOverlay.show();
+
+      // Create ghost element for visual feedback
+      ghostElement = createDragGhostElement(currentTouchDragElement);
+      moveGhostElement(touch.clientX, touch.clientY);
+
+      document.body.style.overflow = 'hidden'; // Verhindere Scrollen während des Ziehens
+    }
+
+    function moveGhostElement(x, y) {
+      if (!ghostElement) return;
+
+      ghostElement.style.left = `${x}px`;
+      ghostElement.style.top = `${y}px`;
+
+      lastTouchX = x;
+      lastTouchY = y;
+    }
+
+    function findAndHighlightDropTarget(elementsUnderTouch) {
+      // Reset current drop target if exists
+      if (currentDropTarget) {
+        currentDropTarget.classList.remove('drop-target');
+        currentDropTarget = null;
+      }
+
+      // Find a valid drop target in the elements under the touch
+      for (const element of elementsUnderTouch) {
+        if (element.tagName === 'TD' && element.dataset.dayIndex !== undefined) {
+          element.classList.add('drop-target');
+          currentDropTarget = element;
+          break;
+        }
+      }
+    }
+
+    function endTouchDrag(e) {
+      dragStarted = false;
+      isDragging = false;
+
+      // Clean up visual effects
+      if (currentTouchDragElement) {
+        currentTouchDragElement.classList.remove('dragging');
+      }
+      dragOverlay.hide();
+
+      // Process drop if we have a target
+      if (currentDropTarget && touchDragData) {
+        processTouchDrop(currentDropTarget);
+      }
+
+      // Cleanup
+      if (ghostElement) {
+        document.body.removeChild(ghostElement);
+        ghostElement = null;
+      }
+
+      if (currentDropTarget) {
+        currentDropTarget.classList.remove('drop-target');
+        currentDropTarget = null;
+      }
+
+      document.body.style.overflow = ''; // Erlaube Scrollen wieder
+    }
+
+    function cancelTouchDrag() {
+      dragStarted = false;
+      isDragging = false;
+
+      // Clean up visual effects
+      if (currentTouchDragElement) {
+        currentTouchDragElement.classList.remove('dragging');
+      }
+      dragOverlay.hide();
+
+      // Cleanup
+      if (ghostElement) {
+        document.body.removeChild(ghostElement);
+        ghostElement = null;
+      }
+
+      if (currentDropTarget) {
+        currentDropTarget.classList.remove('drop-target');
+        currentDropTarget = null;
+      }
+
+      document.body.style.overflow = ''; // Erlaube Scrollen wieder
+    }
+
+    function processTouchDrop(targetCell) {
+      try {
+        const data = touchDragData;
+        const facilityIndex = parseInt(targetCell.dataset.facilityIndex, 10);
+        const dayIndex = parseInt(targetCell.dataset.dayIndex, 10);
+
+        // Calculate drop position in time
+        const rect = targetCell.getBoundingClientRect();
+        const dropX = lastTouchX - rect.left;
+        const cellWidth = rect.width;
+
+        const startTime = parseTime(elements.settings.start.value);
+        const endTime = parseTime(elements.settings.end.value);
+        const totalHours = calculateTotalHours(startTime, endTime);
+        const isOvernight = isOvernightRange(startTime, endTime);
+
+        // Calculate target hour based on drop position
+        let targetHour = startTime + (dropX / cellWidth) * totalHours;
+
+        // Snap to 15-minute intervals (0.25 hour)
+        targetHour = Math.round(targetHour * 4) / 4;
+
+        // Bei Übernacht-Zeiträumen: Wenn die berechnete Zielzeit nach Mitternacht liegt
+        if (isOvernight && targetHour >= 24) {
+          targetHour = targetHour - 24;
+        }
+
+        if (data.type === 'discipline') {
+          // Create a new slot from a discipline
+          const discipline = disciplines.find(d => d.id === data.id);
+          if (discipline) {
+            allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
+          }
+        } else if (data.type === 'slot') {
+          // Move an existing slot
+          moveSlot(data.id, facilityIndex, dayIndex, targetHour);
+        }
+
+        touchDragData = null;
+      } catch (err) {
+        console.error('Error during touch drop handling:', err);
+      }
+    }
+
     // Render Draggable Discipline Items in the Top Panel
     function renderDiscPanel() {
       elements.discPanel.innerHTML = '';
@@ -1310,40 +1953,7 @@
           tooltip.hide();
         });
 
-        // Touch Interaktionen für Smartphones
-        if (isTouchDevice()) {
-          // Long press to show notes on mobile
-          div.addEventListener('touchstart', function(e) {
-            if (isMobile) {
-              touchTimeout = setTimeout(() => {
-                if (disc.notes && disc.notes.trim()) {
-                  notesModal.show(
-                    `Notizen: ${disc.name}`,
-                    `<div style="white-space: pre-wrap;">${escapeHtml(disc.notes)}</div>`
-                  );
-                }
-              }, 800); // 800ms long press
-
-              div.classList.add('touch-active');
-            }
-          });
-
-          div.addEventListener('touchend', function() {
-            clearTimeout(touchTimeout);
-            div.classList.remove('touch-active');
-          });
-
-          div.addEventListener('touchmove', function() {
-            clearTimeout(touchTimeout);
-          });
-
-          div.addEventListener('touchcancel', function() {
-            clearTimeout(touchTimeout);
-            div.classList.remove('touch-active');
-          });
-        }
-
-        // Set up drag & drop functionality
+        // Set up HTML5 drag & drop functionality for desktop
         div.addEventListener('dragstart', e => {
           // Store discipline data for the drop handler
           e.dataTransfer.setData('application/json', JSON.stringify({
@@ -1351,16 +1961,33 @@
             id: disc.id
           }));
 
-          if (isMobile && isTouchDevice()) {
-            dragOverlay.show();
-          }
+          // Für besseres visuelles Feedback
+          setTimeout(() => {
+            div.classList.add('dragging');
+          }, 0);
         });
 
         div.addEventListener('dragend', () => {
-          if (isMobile && isTouchDevice()) {
-            dragOverlay.hide();
-          }
+          div.classList.remove('dragging');
         });
+
+        // Set up custom touch drag events for mobile
+        if (isTouchDevice() && isMobile) {
+          setupTouchDragEvents(div, {
+            type: 'discipline',
+            id: disc.id
+          });
+
+          // Show notes on long press
+          div.addEventListener('click', function(e) {
+            if (disc.notes && disc.notes.trim()) {
+              notesModal.show(
+                `Notizen: ${disc.name}`,
+                `<div style="white-space: pre-wrap;">${escapeHtml(disc.notes)}</div>`
+              );
+            }
+          });
+        }
 
         elements.discPanel.appendChild(div);
       });
@@ -1527,7 +2154,7 @@
 
     // Set up drop zone functionality for a cell
     function addDropZone(cell) {
-      // Allow drops
+      // Allow HTML5 drops for desktop
       cell.addEventListener('dragover', e => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
@@ -1541,7 +2168,6 @@
       cell.addEventListener('drop', e => {
         e.preventDefault();
         cell.classList.remove('drop-target');
-        dragOverlay.hide(); // Verstecke das Overlay, wenn vorhanden
 
         try {
           // Get the data that was dragged
@@ -1589,43 +2215,32 @@
       });
 
       // Touch-Tap zum Hinzufügen für Mobilgeräte
-      if (isTouchDevice()) {
+      if (isTouchDevice() && isMobile) {
         cell.addEventListener('click', function(e) {
-          if (isMobile) {
-            // Wenn wir auf eine leere Stelle in der Zelle klicken und nicht auf einen Slot
-            if (e.target === cell) {
-              // Zeige Auswahldialog für Disziplinen
-              if (disciplines.length > 0) {
-                const rect = cell.getBoundingClientRect();
-                const tapX = e.clientX - rect.left;
-                const cellWidth = rect.width;
+          // Wenn wir auf eine leere Stelle in der Zelle klicken und nicht auf einen Slot
+          if (e.target === cell && disciplines.length > 0) {
+            const rect = cell.getBoundingClientRect();
+            const tapX = e.clientX - rect.left;
+            const cellWidth = rect.width;
 
-                const startTime = parseTime(elements.settings.start.value);
-                const endTime = parseTime(elements.settings.end.value);
-                const totalHours = calculateTotalHours(startTime, endTime);
+            const startTime = parseTime(elements.settings.start.value);
+            const endTime = parseTime(elements.settings.end.value);
+            const totalHours = calculateTotalHours(startTime, endTime);
 
-                // Berechne Zielzeit basierend auf Tap-Position
-                let targetHour = startTime + (tapX / cellWidth) * totalHours;
+            // Berechne Zielzeit basierend auf Tap-Position
+            let targetHour = startTime + (tapX / cellWidth) * totalHours;
 
-                // Auf 15-Minuten-Intervalle (0,25 Stunden) runden
-                targetHour = Math.round(targetHour * 4) / 4;
+            // Auf 15-Minuten-Intervalle (0,25 Stunden) runden
+            targetHour = Math.round(targetHour * 4) / 4;
 
-                // Bei Übernacht-Zeiträumen korrigieren
-                const isOvernight = isOvernightRange(startTime, endTime);
-                if (isOvernight && targetHour >= 24) {
-                  targetHour = targetHour - 24;
-                }
-
-                // Erstelle Disziplinauswahl-Dialog
-                const facilityIndex = parseInt(cell.dataset.facilityIndex, 10);
-                const dayIndex = parseInt(cell.dataset.dayIndex, 10);
-
-                // Für dieses Beispiel nehmen wir die erste Disziplin
-                // In einer kompletten Implementation würde hier ein Auswahldialog gezeigt werden
-                const discipline = disciplines[0];
-                allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
-              }
+            // Bei Übernacht-Zeiträumen korrigieren
+            const isOvernight = isOvernightRange(startTime, endTime);
+            if (isOvernight && targetHour >= 24) {
+              targetHour = targetHour - 24;
             }
+
+            // Zeige Disziplin-Auswahldialog
+            disciplineSelector.show(cell, targetHour);
           }
         });
       }
@@ -1896,42 +2511,34 @@
               });
             }
 
-            // Touch-Interaktionen für Mobilgeräte
-            if (isTouchDevice()) {
-              slotElement.addEventListener('touchstart', function(e) {
-                if (isMobile) {
-                  touchTimeout = setTimeout(() => {
-                    isDragging = true;
-                    dragOverlay.show();
-                  }, 500); // 500ms für Drag-Start
+            // HTML5 Drag-and-Drop für Desktop
+            slotElement.addEventListener('dragstart', e => {
+              e.dataTransfer.setData('application/json', JSON.stringify({
+                type: 'slot',
+                id: slot.id
+              }));
 
-                  slotElement.classList.add('touch-active');
-                }
+              // Für besseres visuelles Feedback
+              setTimeout(() => {
+                slotElement.classList.add('dragging');
+              }, 0);
+            });
+
+            slotElement.addEventListener('dragend', () => {
+              slotElement.classList.remove('dragging');
+            });
+
+            // Custom Touch Drag Events für mobile Geräte
+            if (isTouchDevice() && isMobile) {
+              setupTouchDragEvents(slotElement, {
+                type: 'slot',
+                id: slot.id
               });
 
-              slotElement.addEventListener('touchend', function(e) {
-                clearTimeout(touchTimeout);
-                slotElement.classList.remove('touch-active');
-
-                if (!isDragging) {
-                  // Zeige Slot-Aktionsmenü
-                  slotActions.show(slot);
-                } else {
-                  isDragging = false;
-                  dragOverlay.hide();
-                }
-              });
-
-              slotElement.addEventListener('touchmove', function() {
-                clearTimeout(touchTimeout);
-                slotElement.classList.remove('touch-active');
-              });
-
-              slotElement.addEventListener('touchcancel', function() {
-                clearTimeout(touchTimeout);
-                slotElement.classList.remove('touch-active');
-                isDragging = false;
-                dragOverlay.hide();
+              // Tap zur Anzeige des Aktionsmenüs
+              slotElement.addEventListener('click', function(e) {
+                e.stopPropagation();
+                slotActions.show(slot);
               });
             } else {
               // Double-click to view notes in modal (für Desktop)
@@ -1944,32 +2551,6 @@
                 });
               }
             }
-
-            // Set up drag & drop for moving slots
-            slotElement.addEventListener('dragstart', e => {
-              if (e.target.classList.contains('delete-slot')) {
-                e.preventDefault();
-                return;
-              }
-
-              e.dataTransfer.setData('application/json', JSON.stringify({
-                type: 'slot',
-                id: slot.id
-              }));
-
-              slotElement.style.opacity = '0.5';
-
-              if (isMobile && isTouchDevice()) {
-                dragOverlay.show();
-              }
-            });
-
-            slotElement.addEventListener('dragend', () => {
-              slotElement.style.opacity = '1';
-              if (isMobile && isTouchDevice()) {
-                dragOverlay.hide();
-              }
-            });
 
             // Check for time overflow (outside start/end time)
             if (isOvernight) {
@@ -2227,8 +2808,7 @@
       } finally {
         // Restore button
         elements.exportPdf.textContent = originalButtonText;
-        elements.exportPdf.disabled = false;
-      }
+              }
     }
 
     // --- LocalStorage Functions ---
@@ -2381,6 +2961,16 @@
       // Initialisiere mobile Hilfsfunktionen
       slotActions.initialize();
       zoomControls.initialize();
+      disciplineSelector.initialize();
+
+      // Mobile Drag & Drop aktivieren
+      if (isTouchDevice()) {
+        window.addEventListener('touchmove', function(event) {
+          if (isDragging) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+      }
 
       // Load saved data
       loadFromLocalStorage();
