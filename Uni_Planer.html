@@ -6,208 +6,25 @@
   <title>Event-Wettkampf Anlagen Belegungsplan</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- Füge mobileDragDrop Polyfill hinzu -->
+  <!-- Mobile DragDrop Polyfill -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-drag-drop/2.3.0/index.min.js"></script>
-  <!-- Optional: Include default CSS -->
+  <!-- Excel-Bibliothek (SheetJS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- PapaParse für CSV-Verarbeitung -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <!-- Standard CSS für Mobile DragDrop -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mobile-drag-drop/2.3.0/default.css">
   <style>
     :root {
       --settings-width-open: 300px;
       --settings-width-closed: 0px;
       --settings-width: var(--settings-width-open);
-      --delete-btn-size: 24px; /* Vergrößert für bessere Touch-Bedienung */
+      --delete-btn-size: 24px; /* Größerer Touch-Bereich */
       --primary-color: #2196F3;
       --success-color: #4CAF50;
       --danger-color: #F44336;
       --warning-color: #FF9800;
     }
-
-    // --- LocalStorage Functions ---
-
-    // Save state to localStorage
-    function saveToLocalStorage() {
-      try {
-        localStorage.setItem('eventPlannerFacilities', JSON.stringify(facilities));
-        localStorage.setItem('eventPlannerDisciplines', JSON.stringify(disciplines));
-        localStorage.setItem('eventPlannerPlan', JSON.stringify(plan));
-      } catch (e) {
-        console.warn('Fehler beim Speichern im localStorage:', e);
-      }
-    }
-
-    // Load state from localStorage
-    function loadFromLocalStorage() {
-      try {
-        const savedFacilities = localStorage.getItem('eventPlannerFacilities');
-        const savedDisciplines = localStorage.getItem('eventPlannerDisciplines');
-        const savedPlan = localStorage.getItem('eventPlannerPlan');
-
-        if (savedFacilities) facilities = JSON.parse(savedFacilities);
-        if (savedDisciplines) disciplines = JSON.parse(savedDisciplines);
-        if (savedPlan) plan = JSON.parse(savedPlan);
-
-        // If nothing saved, use defaults
-        if (!facilities.length) {
-          facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
-        }
-
-        if (!disciplines.length) {
-          disciplines = [
-             {
-            id: generateId(),
-            name: '50m_einbein',
-            duration: 1.5,
-            tags: ['RACE', 'Indoor'],
-            color: '#f44336',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '10K_Marathon',
-            duration: 1.5,
-            tags: ['RACE', 'Outdoor', 'Street'],
-            color: '#6850a4',
-            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
-          },
-          {
-            id: generateId(),
-            name: 'Freestyle_J1',
-            duration: 6,
-            tags: ['Freestyle', 'Indoor'],
-            color: '#1f525d',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '100m_SPRINT',
-            duration: 2,
-            tags: ['RACE', 'Outdoor'],
-            color: '#9C27B0',
-            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_HOCKEY',
-            duration: 1,
-            tags: ['Mannschaft', 'Indoor'],
-            color: '#4CAF50',
-            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_BASKETBALL',
-            duration: 2.5,
-            tags: ['Mannschaft', 'Outdoor'],
-            color: '#2196F3',
-            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
-          }
-          ];
-        }
-
-        // Ensure plan structure matches current settings
-        const numDays = parseInt(elements.settings.days.value, 10) || 1;
-        if (!plan.length || plan.length !== facilities.length ||
-            plan.some((f, i) => f.facility !== facilities[i] || f.allocations.length !== numDays)) {
-          generatePlanStructure(false);
-        }
-      } catch (e) {
-        console.warn('Fehler beim Laden aus localStorage:', e);
-        facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
-        disciplines = [
-          {
-            id: generateId(),
-            name: '50m_einbein',
-            duration: 1.5,
-            tags: ['RACE', 'Indoor'],
-            color: '#f44336',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '10K_Marathon',
-            duration: 1.5,
-            tags: ['RACE', 'Outdoor', 'Street'],
-            color: '#6850a4',
-            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
-          },
-          {
-            id: generateId(),
-            name: 'Freestyle_J1',
-            duration: 6,
-            tags: ['Freestyle', 'Indoor'],
-            color: '#1f525d',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '100m_SPRINT',
-            duration: 2,
-            tags: ['RACE', 'Outdoor'],
-            color: '#9C27B0',
-            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_HOCKEY',
-            duration: 1,
-            tags: ['Mannschaft', 'Indoor'],
-            color: '#4CAF50',
-            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_BASKETBALL',
-            duration: 2.5,
-            tags: ['Mannschaft', 'Outdoor'],
-            color: '#2196F3',
-            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
-          }
-        ];
-        generatePlanStructure(true);
-      }
-    }
-
-    // --- Initialize Application ---
-    function initialize() {
-      // Initialisiere mobile Hilfsfunktionen
-      slotActions.initialize();
-      zoomControls.initialize();
-      disciplineSelector.initialize();
-
-      // Mobile Drag & Drop aktivieren
-      if (isTouchDevice()) {
-        window.addEventListener('touchmove', function(event) {
-          if (isDragging) {
-            event.preventDefault();
-          }
-        }, { passive: false });
-      }
-
-      // Load saved data
-      loadFromLocalStorage();
-
-      // Render UI components
-      renderSettingsLists();
-      renderDiscPanel();
-      renderTableStructure(parseInt(elements.settings.days.value, 10) || 1);
-      drawSlots();
-
-      // Set up save on unload
-      window.addEventListener('beforeunload', saveToLocalStorage);
-
-      // Listen for orientation changes
-      window.addEventListener('orientationchange', function() {
-        // Kurze Verzögerung für das komplette Neuausrichten
-        setTimeout(function() {
-          // Setze Zoom zurück, wenn sich die Orientierung ändert
-          currentZoom = 1;
-          applyZoom();
-        }, 300);
-      });
-    }
-
-    // Start the application
-    initialize();
 
     * {
       box-sizing: border-box;
@@ -274,8 +91,8 @@
       cursor: pointer;
       z-index: 1001;
       transition: left 0.3s ease;
-      width: 44px; /* Größerer Tap-Bereich */
-      height: 44px; /* Größerer Tap-Bereich */
+      width: 44px; /* Größerer Touch-Bereich */
+      height: 44px; /* Größerer Touch-Bereich */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -311,8 +128,8 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      min-height: 44px; /* Größerer Tap-Bereich */
-      min-width: 44px; /* Größerer Tap-Bereich */
+      min-height: 44px; /* Größerer Touch-Bereich */
+      min-width: 44px; /* Größerer Touch-Bereich */
     }
 
     @media (max-width: 480px) {
@@ -368,9 +185,9 @@
       cursor: grab;
       user-select: none;
       transition: transform 0.1s ease, opacity 0.2s ease;
-      min-height: 44px; /* Größerer Tap-Bereich */
-      min-width: 44px; /* Größerer Tap-Bereich */
-      touch-action: none; /* Verbessert Drag-Funktionalität auf Touch-Geräten */
+      min-height: 44px; /* Größerer Touch-Bereich */
+      min-width: 44px; /* Größerer Touch-Bereich */
+      touch-action: none; /* Verbessert Drag-Funktionalität */
       position: relative;
     }
 
@@ -439,7 +256,7 @@
     }
 
     th:first-child, td:first-child {
-      width: 80px; /* Reduziert für mobile Ansicht */
+      width: 80px; /* Schmaler für mobile Ansicht */
       background: #f5f5f5;
       font-weight: bold;
       padding: 0.75rem 0.25rem;
@@ -478,7 +295,7 @@
       }
     }
 
-    /* Time markers */
+    /* Zeitmarkierungen */
     .time-marker {
       position: absolute;
       font-size: 0.7rem;
@@ -508,7 +325,7 @@
       pointer-events: none;
     }
 
-    /* Verbesserte Drop-Zone-Visualisierung für Touch */
+    /* Drop-Zone-Visualisierung */
     td[data-day-index] {
       transition: background-color 0.2s;
     }
@@ -518,7 +335,7 @@
       box-shadow: inset 0 0 0 2px var(--primary-color);
     }
 
-    /* Ghost-Element für Drag-Visualisierung auf Mobilgeräten */
+    /* Ghost-Element für Drag-Visualisierung */
     .touch-drag-ghost {
       position: fixed;
       pointer-events: none;
@@ -528,7 +345,7 @@
       transition: none !important;
     }
 
-    /* Slot-Styling mit grünen Rahmen */
+    /* Slot-Styling */
     .slot {
       position: absolute;
       top: 5px;
@@ -546,13 +363,13 @@
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
-      border: 2px solid var(--success-color); /* Grüner Rahmen für alle Slots */
+      border: 2px solid var(--success-color); /* Grüner Rahmen */
       z-index: 5;
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
       font-weight: 500;
       transition: opacity 0.2s ease;
       touch-action: none; /* Verbessert Touch-Bedienung */
-      min-height: 40px; /* Höher für bessere Touch-Bedienung */
+      min-height: 40px; /* Besser für Touch */
     }
 
     .slot.dragging {
@@ -568,9 +385,9 @@
       }
     }
 
-    /* Konflikt-Visualisierung mit roten Rahmen */
+    /* Konflikt-Visualisierung */
     .slot.conflict {
-      border: 2px solid var(--danger-color); /* Roter Rahmen für Konflikte */
+      border: 2px solid var(--danger-color); /* Roter Rahmen */
       opacity: 0.8;
       box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
     }
@@ -583,12 +400,12 @@
       opacity: 0.8;
     }
 
-    /* Ensure conflicting events have slightly different z-index to see both */
+    /* Z-Index für überlappende Konflikte */
     .slot.conflict-1 { z-index: 8; }
     .slot.conflict-2 { z-index: 7; }
     .slot.conflict-3 { z-index: 6; }
 
-    /* Make text more visible on semi-transparent slots */
+    /* Text in transparenten Slots verbessern */
     .slot.conflict .slot-text {
       text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
       font-weight: bold;
@@ -673,23 +490,24 @@
       white-space: pre-wrap;
     }
 
-    /* Conflict info in tooltip */
+    /* Konflikt-Info im Tooltip */
     .tooltip-conflict {
       margin-top: 5px;
       color: var(--danger-color);
       font-weight: bold;
     }
 
-    /* Settings Panel Specific Styles */
+    /* Einstellungsbereich Styles */
     #settings h2, #settings h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
     #settings label { display: block; margin-top: 0.5rem; }
     #settings input[type="text"],
     #settings input[type="number"],
     #settings input[type="time"],
     #settings input[type="color"],
-    #settings textarea {
+    #settings textarea,
+    #settings select {
       width: calc(100% - 12px);
-      padding: 10px; /* Größer für Touch-Bedienung */
+      padding: 10px; /* Größer für Touch */
       margin-bottom: 0.5rem;
       box-sizing: border-box;
       font-size: 16px; /* Verhindert Zoom auf iOS */
@@ -710,7 +528,7 @@
       border-radius: 4px;
       cursor: pointer;
       margin-top: 5px;
-      min-height: 44px; /* Größerer Tap-Bereich */
+      min-height: 44px; /* Größerer Touch-Bereich */
     }
 
     #settings .list-item {
@@ -728,7 +546,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0; /* Größer für Touch-Bedienung */
+      padding: 8px 0; /* Größer für Touch */
       word-break: break-all;
     }
 
@@ -759,7 +577,222 @@
       width: 100%;
     }
 
-    /* Modal for viewing notes */
+    /* Excel Import Bereich */
+    #import-section {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: #f0f8ff;
+      border-radius: 8px;
+      border: 1px solid #cce;
+    }
+
+    #import-section h3 {
+      margin-top: 0;
+    }
+
+    #file-input-wrapper {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1rem;
+    }
+
+    #excel-file {
+      display: none;
+    }
+
+    #file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e0e0e0;
+      color: #333;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      min-height: 44px;
+      margin-bottom: 10px;
+      transition: background-color 0.2s;
+    }
+
+    #file-input-label:hover {
+      background-color: #d0d0d0;
+    }
+
+    #file-input-name {
+      margin-top: 5px;
+      font-size: 0.8rem;
+      color: #666;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    #import-options {
+      margin-bottom: 1rem;
+    }
+
+    #import-results {
+      margin-top: 1rem;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #f5f5f5;
+      display: none;
+    }
+
+    #import-results.success {
+      background-color: #e8f5e9;
+      border-left: 4px solid var(--success-color);
+      display: block;
+    }
+
+    #import-results.error {
+      background-color: #ffebee;
+      border-left: 4px solid var(--danger-color);
+      display: block;
+    }
+
+    /* Excel-Vorschau Modal */
+    #preview-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1200;
+    }
+
+    #preview-modal.visible {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #preview-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    #preview-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    #preview-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 10px;
+      line-height: 1;
+      margin: -10px;
+    }
+
+    #preview-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 15px;
+    }
+
+    .preview-tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+      background-color: #f5f5f5;
+    }
+
+    .preview-tab.active {
+      background-color: white;
+      border-color: #ddd;
+      border-bottom-color: white;
+      margin-bottom: -1px;
+      font-weight: bold;
+    }
+
+    #preview-data {
+      overflow-x: auto;
+    }
+
+    #preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    #preview-table th, #preview-table td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+      min-height: auto;
+      position: relative;
+    }
+
+    #preview-table th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .preview-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .preview-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 15px;
+      gap: 10px;
+    }
+
+    .preview-actions button {
+      padding: 10px 15px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .preview-actions .import-btn {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .preview-actions .cancel-btn {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+
+    /* Notizen Modal */
     .modal {
       display: none;
       position: fixed;
@@ -807,9 +840,9 @@
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      padding: 10px; /* Größerer Tap-Bereich */
+      padding: 10px; /* Größerer Touch-Bereich */
       line-height: 1;
-      margin: -10px; /* Kompensiert das größere Padding */
+      margin: -10px; /* Kompensiert größeres Padding */
     }
 
     .modal-body {
@@ -831,12 +864,12 @@
       min-width: 80px;
     }
 
-    /* Touch-friendly Features */
+    /* Touch-freundliche Features */
     .touch-active {
       background-color: rgba(33, 150, 243, 0.2) !important;
     }
 
-    /* Mobile Action Menu für Slots */
+    /* Mobile Slot Aktionsmenü */
     #slot-actions {
       position: fixed;
       bottom: 0;
@@ -876,7 +909,7 @@
       background: #ddd;
     }
 
-    /* Overlay für Drag-Operationen auf Mobilgeräten */
+    /* Drag-Overlay für Mobilgeräte */
     #mobile-drag-overlay {
       position: fixed;
       top: 0;
@@ -903,7 +936,7 @@
       max-width: 80%;
     }
 
-    /* Swipe Indicator */
+    /* Indikator für Wischen */
     .swipe-indicator {
       text-align: center;
       padding: 10px;
@@ -949,7 +982,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    /* Hinweis-Box für Mobile */
+    /* Mobile Hinweis-Box */
     #mobile-hint {
       display: none;
       background: rgba(255, 152, 0, 0.2);
@@ -965,7 +998,7 @@
       }
     }
 
-    /* Neuer Auswahldialog für Disziplinen auf Mobilgeräten */
+    /* Disziplin-Auswahldialog für Mobilgeräte */
     #discipline-selector {
       position: fixed;
       bottom: 0;
@@ -1014,18 +1047,60 @@
       font-size: 16px;
       text-align: center;
     }
+
+    /* Loader für Ladezeiten */
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1500;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .loader-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .loader {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 5px solid transparent;
+      border-top-color: #fff;
+      border-bottom-color: #fff;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="settings-closed">
+  <div class="loader-overlay" id="loader-overlay">
+    <div class="loader"></div>
+  </div>
+
   <button id="toggle-settings">☰</button>
   <div id="exports">
+    <button id="import-excel">Excel Import</button>
     <button id="export-csv">CSV</button>
     <button id="export-pdf">PDF</button>
   </div>
 
   <div id="tooltip"></div>
 
-  <!-- Mobile-Action-Menu für Slots -->
+  <!-- Mobile Slot-Aktionsmenü -->
   <div id="slot-actions">
     <button class="slot-action-button" id="slot-action-edit">Bearbeiten</button>
     <button class="slot-action-button slot-action-delete" id="slot-action-delete">Löschen</button>
@@ -1049,13 +1124,47 @@
     <button class="selector-cancel" id="selector-cancel">Abbrechen</button>
   </div>
 
+  <!-- Excel Vorschau Modal -->
+  <div id="preview-modal">
+    <div id="preview-content">
+      <div id="preview-header">
+        <h3 id="preview-title">Excel-Vorschau</h3>
+        <button id="preview-close">&times;</button>
+      </div>
+      <div id="preview-tabs">
+        <!-- Wird dynamisch befüllt -->
+      </div>
+      <div id="preview-data">
+        <!-- Hier wird die Excel-Vorschau angezeigt -->
+      </div>
+      <div class="preview-checkboxes">
+        <div class="preview-checkbox-item">
+          <input type="checkbox" id="clear-existing" checked>
+          <label for="clear-existing">Bestehende Daten ersetzen</label>
+        </div>
+        <div class="preview-checkbox-item">
+          <input type="checkbox" id="update-options" checked>
+          <label for="update-options">Zeiteinstellungen übernehmen (falls vorhanden)</label>
+        </div>
+        <div class="preview-checkbox-item">
+          <input type="checkbox" id="import-schedule" checked>
+          <label for="import-schedule">Zeitplan automatisch eintragen</label>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button class="cancel-btn" id="preview-cancel">Abbrechen</button>
+        <button class="import-btn" id="preview-import">Importieren</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Zoom Controls für mobile Ansicht -->
   <div id="zoom-controls">
     <button class="zoom-button" id="zoom-in">+</button>
     <button class="zoom-button" id="zoom-out">-</button>
   </div>
 
-  <!-- Modal for viewing notes -->
+  <!-- Notizen Modal -->
   <div id="notes-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -1063,7 +1172,7 @@
         <button class="modal-close" id="modal-close">&times;</button>
       </div>
       <div class="modal-body" id="modal-body">
-        <!-- Content will be filled dynamically -->
+        <!-- Wird dynamisch befüllt -->
       </div>
       <div class="modal-footer">
         <button id="modal-ok" class="btn btn-primary">OK</button>
@@ -1080,6 +1189,28 @@
     <input type="time" id="start-time" value="08:00">
     <label for="end-time">Endzeit</label>
     <input type="time" id="end-time" value="22:00">
+
+    <!-- Excel Import Bereich -->
+    <div id="import-section">
+      <h3>Excel Import</h3>
+      <div id="file-input-wrapper">
+        <input type="file" id="excel-file" accept=".xlsx, .xls, .csv">
+        <label for="excel-file" id="file-input-label">Excel/CSV Datei auswählen</label>
+        <div id="file-input-name"></div>
+      </div>
+      <div id="import-options">
+        <label for="sheet-select">Datenimport:</label>
+        <select id="sheet-select">
+          <option value="auto">Automatisch erkennen</option>
+          <option value="disciplines">Nur Disziplinen</option>
+          <option value="facilities">Nur Anlagen</option>
+          <option value="both">Anlagen und Disziplinen</option>
+          <option value="schedule">Nur Zeitplan</option>
+        </select>
+      </div>
+      <button id="import-preview">Vorschau anzeigen</button>
+      <div id="import-results"></div>
+    </div>
 
     <h3>Anlagen</h3>
     <div id="facility-list"></div>
@@ -1122,27 +1253,27 @@
         <thead>
           <tr>
             <th>Anlage / Tag</th>
-            <!-- Day headers generated by JS -->
+            <!-- Day headers werden per JS generiert -->
           </tr>
         </thead>
         <tbody>
-          <!-- Facility rows generated by JS -->
+          <!-- Facility rows werden per JS generiert -->
         </tbody>
       </table>
     </div>
   </div>
 
   <script>
-    // --- Utility Functions ---
+    // --- Hilfsfunktionen ---
 
-    // Parse "HH:MM" into hours (float)
+    // "HH:MM" in Stunden (float) umwandeln
     function parseTime(timeString) {
       if (!timeString) return 0;
       const [hours, minutes] = timeString.split(':').map(Number);
       return hours + (minutes || 0) / 60;
     }
 
-    // Format hours (float) back to "HH:MM"
+    // Stunden (float) zurück zu "HH:MM" formatieren
     function formatTime(totalHours) {
       // Behandle Stunden größer 24 oder negativ
       let normalizedHours = totalHours;
@@ -1155,7 +1286,7 @@
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
 
-    // Diese neue Funktion berechnet die Gesamtstunden unter Berücksichtigung von Übernacht-Zeiträumen
+    // Gesamtstunden unter Berücksichtigung von Übernacht-Zeiträumen berechnen
     function calculateTotalHours(startTime, endTime) {
       if (endTime < startTime) {
         // Wenn die Endzeit kleiner als die Startzeit ist, gehen wir über Mitternacht
@@ -1170,12 +1301,12 @@
       return endTime < startTime;
     }
 
-    // Generate a unique ID
+    // Eindeutige ID generieren
     function generateId() {
       return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 
-    // Escape HTML to prevent XSS
+    // HTML-Escaping zur Vermeidung von XSS
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -1183,14 +1314,14 @@
       return div.innerHTML;
     }
 
-    // Detect Touch Device
+    // Touch-Gerät erkennen
     function isTouchDevice() {
       return ('ontouchstart' in window) ||
              (navigator.maxTouchPoints > 0) ||
              (navigator.msMaxTouchPoints > 0);
     }
 
-    // Neues Element erstellen für mobiles Ziehen
+    // Element für mobiles Ziehen erstellen
     function createDragGhostElement(element) {
       const ghost = element.cloneNode(true);
       ghost.classList.add('touch-drag-ghost');
@@ -1201,7 +1332,16 @@
       return ghost;
     }
 
-    // --- Global State ---
+    // Ladeanimation zeigen/verstecken
+    function showLoading() {
+      document.getElementById('loader-overlay').classList.add('visible');
+    }
+
+    function hideLoading() {
+      document.getElementById('loader-overlay').classList.remove('visible');
+    }
+
+    // --- Globaler Zustand ---
     let isMobile = window.innerWidth <= 768;
     let currentZoom = 1;
     let activeSlot = null; // Für mobile Slot-Aktionen
@@ -1214,11 +1354,15 @@
     let currentDropTarget = null;
     let touchDragData = null;
 
-    // Neue Variablen für Disziplin-Auswahl und Tap-Ziel
+    // Variablen für Disziplin-Auswahl und Tap-Ziel
     let currentTapTarget = null;
     let currentTapPositionHour = null;
 
-    // Initialisiere Mobile Drag&Drop Polyfill
+    // Variablen für Excel-Import
+    let excelData = null;
+    let currentPreviewSheet = 'disciplines';
+
+    // Mobile Drag&Drop Polyfill initialisieren
     if (isTouchDevice()) {
       MobileDragDrop.polyfill({
         dragImageTranslateOverride: (_, event) => {
@@ -1228,7 +1372,7 @@
         holdToDrag: 200 // Lange tippen um Drag zu starten
       });
 
-      // Optional: Verhindere Scrollen während des Ziehens
+      // Verhindere Scrollen während des Ziehens
       window.addEventListener('touchmove', function(event) {
         if (isDragging) {
           event.preventDefault();
@@ -1236,13 +1380,13 @@
       }, { passive: false });
     }
 
-    // Tooltip management
+    // Tooltip-Verwaltung
     const tooltip = {
       element: document.getElementById('tooltip'),
       visible: false,
 
       show(e, content) {
-        // Don't show tooltips on touch devices
+        // Keine Tooltips auf Touch-Geräten
         if (isTouchDevice() && isMobile) return;
 
         this.element.innerHTML = content;
@@ -1263,7 +1407,7 @@
         const x = e.clientX + 10;
         const y = e.clientY + 10;
 
-        // Keep tooltip within viewport
+        // Tooltip im Viewport halten
         const rect = this.element.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
@@ -1291,7 +1435,7 @@
       }
     };
 
-    // Modal for viewing notes
+    // Modal für Notizen
     const notesModal = {
       modal: document.getElementById('notes-modal'),
       title: document.getElementById('modal-title'),
@@ -1304,7 +1448,7 @@
         this.body.innerHTML = content;
         this.modal.classList.add('visible');
 
-        // Set up close handlers if not already done
+        // Schließen-Handler einrichten, falls noch nicht geschehen
         if (!this._initialized) {
           this.closeBtn.addEventListener('click', () => this.hide());
           this.okBtn.addEventListener('click', () => this.hide());
@@ -1320,7 +1464,7 @@
       }
     };
 
-    // Mobile slot actions
+    // Mobile Slot-Aktionen
     const slotActions = {
       element: document.getElementById('slot-actions'),
       editBtn: document.getElementById('slot-action-edit'),
@@ -1331,7 +1475,7 @@
         this.element.classList.add('visible');
         activeSlot = slot;
 
-        // Stelle sicher, dass Scrolling blockiert wird
+        // Scrolling blockieren
         document.body.style.overflow = 'hidden';
       },
 
@@ -1339,7 +1483,7 @@
         this.element.classList.remove('visible');
         activeSlot = null;
 
-        // Stelle Scrolling wieder her
+        // Scrolling wiederherstellen
         document.body.style.overflow = '';
       },
 
@@ -1367,7 +1511,7 @@
       }
     };
 
-    // Mobile drag overlay
+    // Mobile Drag-Overlay
     const dragOverlay = {
       element: document.getElementById('mobile-drag-overlay'),
 
@@ -1380,18 +1524,18 @@
       }
     };
 
-    // Neuer Disziplin-Selektor für Mobilgeräte
+    // Disziplin-Selektor für Mobilgeräte
     const disciplineSelector = {
       element: document.getElementById('discipline-selector'),
       container: document.getElementById('selector-items-container'),
       cancelBtn: document.getElementById('selector-cancel'),
 
       show(targetCell, targetHour) {
-        // Speichere das aktuelle Ziel für später
+        // Aktuelles Ziel für später speichern
         currentTapTarget = targetCell;
         currentTapPositionHour = targetHour;
 
-        // Fülle den Container mit den verfügbaren Disziplinen
+        // Container mit verfügbaren Disziplinen füllen
         this.container.innerHTML = '';
 
         disciplines.forEach(disc => {
@@ -1418,14 +1562,14 @@
         });
 
         this.element.classList.add('visible');
-        document.body.style.overflow = 'hidden'; // Verhindere Scrollen
+        document.body.style.overflow = 'hidden'; // Scrollen verhindern
       },
 
       hide() {
         this.element.classList.remove('visible');
         currentTapTarget = null;
         currentTapPositionHour = null;
-        document.body.style.overflow = ''; // Erlaube Scrollen wieder
+        document.body.style.overflow = ''; // Scrollen erlauben
       },
 
       initialize() {
@@ -1435,7 +1579,7 @@
       }
     };
 
-    // Zoom controls
+    // Zoom-Steuerung
     const zoomControls = {
       zoomIn: document.getElementById('zoom-in'),
       zoomOut: document.getElementById('zoom-out'),
@@ -1457,23 +1601,192 @@
       }
     };
 
+    // Excel-Vorschau Modal
+    const previewModal = {
+      modal: document.getElementById('preview-modal'),
+      content: document.getElementById('preview-content'),
+      title: document.getElementById('preview-title'),
+      closeBtn: document.getElementById('preview-close'),
+      tabs: document.getElementById('preview-tabs'),
+      dataContainer: document.getElementById('preview-data'),
+      importBtn: document.getElementById('preview-import'),
+      cancelBtn: document.getElementById('preview-cancel'),
+      clearExisting: document.getElementById('clear-existing'),
+      updateOptions: document.getElementById('update-options'),
+      importSchedule: document.getElementById('import-schedule'),
+
+      show(data) {
+        this.modal.classList.add('visible');
+        excelData = data;
+
+        // Tabs generieren
+        this.generateTabs(data);
+
+        // Ersten Tab anzeigen
+        if (data.disciplines) {
+          currentPreviewSheet = 'disciplines';
+        } else if (data.facilities) {
+          currentPreviewSheet = 'facilities';
+        } else if (data.schedule) {
+          currentPreviewSheet = 'schedule';
+        } else if (data.settings) {
+          currentPreviewSheet = 'settings';
+        }
+
+        this.renderPreview(currentPreviewSheet);
+        document.body.style.overflow = 'hidden'; // Scrollen verhindern
+      },
+
+      hide() {
+        this.modal.classList.remove('visible');
+        document.body.style.overflow = ''; // Scrollen erlauben
+      },
+
+      generateTabs(data) {
+        this.tabs.innerHTML = '';
+
+        if (data.disciplines) {
+          const tab = document.createElement('div');
+          tab.className = 'preview-tab';
+          tab.dataset.sheet = 'disciplines';
+          tab.textContent = 'Disziplinen';
+          this.tabs.appendChild(tab);
+        }
+
+        if (data.facilities) {
+          const tab = document.createElement('div');
+          tab.className = 'preview-tab';
+          tab.dataset.sheet = 'facilities';
+          tab.textContent = 'Anlagen';
+          this.tabs.appendChild(tab);
+        }
+
+        if (data.schedule) {
+          const tab = document.createElement('div');
+          tab.className = 'preview-tab';
+          tab.dataset.sheet = 'schedule';
+          tab.textContent = 'Zeitplan';
+          this.tabs.appendChild(tab);
+        }
+
+        if (data.settings) {
+          const tab = document.createElement('div');
+          tab.className = 'preview-tab';
+          tab.dataset.sheet = 'settings';
+          tab.textContent = 'Einstellungen';
+          this.tabs.appendChild(tab);
+        }
+
+        // Ersten Tab aktivieren
+        const firstTab = this.tabs.querySelector('.preview-tab');
+        if (firstTab) {
+          firstTab.classList.add('active');
+        }
+      },
+
+      renderPreview(sheetName) {
+        if (!excelData || !excelData[sheetName]) {
+          this.dataContainer.innerHTML = '<p>Keine Daten vorhanden oder ungültiges Format.</p>';
+          return;
+        }
+
+        // Aktiven Tab aktualisieren
+        const tabs = this.tabs.querySelectorAll('.preview-tab');
+        tabs.forEach(tab => {
+          if (tab.dataset.sheet === sheetName) {
+            tab.classList.add('active');
+          } else {
+            tab.classList.remove('active');
+          }
+        });
+
+        const data = excelData[sheetName];
+
+        // Unterschiedliche Darstellung je nach Datentyp
+        if (sheetName === 'settings') {
+          // Einstellungen als Schlüssel-Wert-Paare anzeigen
+          let html = '<table id="preview-table">';
+          html += '<thead><tr><th>Einstellung</th><th>Wert</th></tr></thead><tbody>';
+
+          for (const [key, value] of Object.entries(data)) {
+            html += `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(value !== null && value !== undefined ? value.toString() : '')}</td></tr>`;
+          }
+
+          html += '</tbody></table>';
+          this.dataContainer.innerHTML = html;
+        } else {
+          // Reguläre Tabellendaten anzeigen
+          let html = '<table id="preview-table">';
+
+          // Tabellenkopf
+          html += '<thead><tr>';
+          for (const header of data.headers) {
+            html += `<th>${escapeHtml(header)}</th>`;
+          }
+          html += '</tr></thead>';
+
+          // Tabelleninhalt
+          html += '<tbody>';
+          for (const row of data.rows) {
+            html += '<tr>';
+            for (const cell of row) {
+              html += `<td>${escapeHtml(cell !== null && cell !== undefined ? cell.toString() : '')}</td>`;
+            }
+            html += '</tr>';
+          }
+          html += '</tbody></table>';
+
+          this.dataContainer.innerHTML = html;
+        }
+      },
+
+      initialize() {
+        this.closeBtn.addEventListener('click', () => this.hide());
+        this.cancelBtn.addEventListener('click', () => this.hide());
+
+        // Tab-Wechsel
+        this.tabs.addEventListener('click', (e) => {
+          if (e.target.classList.contains('preview-tab')) {
+            currentPreviewSheet = e.target.dataset.sheet;
+            this.renderPreview(currentPreviewSheet);
+          }
+        });
+
+        // Import-Button
+        this.importBtn.addEventListener('click', () => {
+          const clearExisting = this.clearExisting.checked;
+          const updateOptions = this.updateOptions.checked;
+          const importSchedule = this.importSchedule.checked;
+
+          importExcelData(excelData, {
+            clearExisting,
+            updateOptions,
+            importSchedule
+          });
+
+          this.hide();
+        });
+      }
+    };
+
     function applyZoom() {
       const table = document.getElementById('plan-table');
       table.style.transform = `scale(${currentZoom})`;
       table.style.transformOrigin = 'top left';
     }
 
-    // Application state
+    // Anwendungszustand
     let facilities = [];
     let disciplines = [];
-    let plan = []; // Structure: [{ facility: "Name", allocations: [ [slot1, slot2], [slot3], ... ] }, ...]
-    // allocations index corresponds to day index (0-based)
+    let plan = []; // Struktur: [{ facility: "Name", allocations: [ [slot1, slot2], [slot3], ... ] }, ...]
+    // allocations index entspricht dem Tag (0-basiert)
     // slot: { id, name, duration, tags, color, startHour, notes }
 
-    // --- DOM Element References ---
+    // --- DOM-Element-Referenzen ---
     const elements = {
       body: document.body,
       toggleSettings: document.getElementById('toggle-settings'),
+      importExcel: document.getElementById('import-excel'),
       exportCsv: document.getElementById('export-csv'),
       exportPdf: document.getElementById('export-pdf'),
       settings: {
@@ -1491,6 +1804,13 @@
         newColor: document.getElementById('new-color'),
         newNotes: document.getElementById('new-notes'),
         addDisc: document.getElementById('add-disc'),
+        // Excel Import
+        excelFile: document.getElementById('excel-file'),
+        fileInputLabel: document.getElementById('file-input-label'),
+        fileInputName: document.getElementById('file-input-name'),
+        sheetSelect: document.getElementById('sheet-select'),
+        importPreview: document.getElementById('import-preview'),
+        importResults: document.getElementById('import-results')
       },
       discPanel: document.getElementById('disc-panel'),
       planTable: document.getElementById('plan-table'),
@@ -1500,7 +1820,7 @@
 
     // --- Event Listeners ---
 
-    // Toggle settings panel
+    // Einstellungsmenü ein-/ausklappen
     elements.toggleSettings.onclick = () => {
       if (isMobile) {
         elements.body.classList.toggle('settings-open');
@@ -1509,11 +1829,68 @@
       }
     };
 
-    // Window resize handler
+    // Excel-Import-Button in der Toolbar
+    elements.importExcel.onclick = () => {
+      // Einstellungspanel öffnen
+      if (isMobile) {
+        elements.body.classList.add('settings-open');
+      } else {
+        elements.body.classList.remove('settings-closed');
+      }
+
+      // Zum Import-Bereich scrollen
+      document.getElementById('import-section').scrollIntoView({ behavior: 'smooth' });
+
+      // Verzögertes Fokussieren des Datei-Input-Buttons
+      setTimeout(() => {
+        elements.settings.fileInputLabel.focus();
+      }, 500);
+    };
+
+    // Datei-Input Änderung
+    elements.settings.excelFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        elements.settings.fileInputName.textContent = file.name;
+      } else {
+        elements.settings.fileInputName.textContent = '';
+      }
+    });
+
+    // Import-Vorschau-Button
+    elements.settings.importPreview.addEventListener('click', () => {
+      const file = elements.settings.excelFile.files[0];
+      if (!file) {
+        showImportResult('Bitte wählen Sie eine Excel- oder CSV-Datei aus.', 'error');
+        return;
+      }
+
+      showLoading();
+
+      parseExcelFile(file)
+        .then(data => {
+          hideLoading();
+
+          if (!data) {
+            showImportResult('Die Datei konnte nicht gelesen werden oder hat ein ungültiges Format.', 'error');
+            return;
+          }
+
+          // Excel-Vorschau anzeigen
+          previewModal.show(data);
+        })
+        .catch(error => {
+          hideLoading();
+          console.error('Excel-Parsing Fehler:', error);
+          showImportResult(`Fehler beim Lesen der Datei: ${error.message}`, 'error');
+        });
+    });
+
+    // Fenstergrößen-Handler
     window.addEventListener('resize', () => {
       isMobile = window.innerWidth <= 768;
 
-      // Wenn die Größe sich ändert, ggf. Settings-Panel anpassen
+      // Bei Größenänderung Einstellungspanel anpassen
       if (!isMobile && elements.body.classList.contains('settings-open')) {
         elements.body.classList.remove('settings-open');
         elements.body.classList.remove('settings-closed');
@@ -1523,20 +1900,20 @@
       }
     });
 
-    // Add Facility
+    // Anlage hinzufügen
     elements.settings.addFacility.onclick = () => {
       const facilityName = elements.settings.newFacility.value.trim();
       if (facilityName && !facilities.includes(facilityName)) {
         facilities.push(facilityName);
         elements.settings.newFacility.value = '';
         renderSettingsLists();
-        generatePlanStructure(); // Regenerate plan structure (keeps existing slots)
+        generatePlanStructure(); // Planstruktur neu generieren (behält vorhandene Slots)
       } else if (facilities.includes(facilityName)) {
         alert('Anlage existiert bereits.');
       }
     };
 
-    // Add Discipline
+    // Disziplin hinzufügen
     elements.settings.addDisc.onclick = () => {
       const name = elements.settings.newDisc.value.trim();
       const duration = parseFloat(elements.settings.newDuration.value);
@@ -1558,11 +1935,11 @@
           notes
         });
 
-        // Reset input fields
+        // Eingabefelder zurücksetzen
         elements.settings.newDisc.value = '';
         elements.settings.newDuration.value = '';
         elements.settings.newTags.value = '';
-        elements.settings.newColor.value = '#2196F3'; // Reset color
+        elements.settings.newColor.value = '#2196F3'; // Farbe zurücksetzen
         elements.settings.newNotes.value = '';
 
         renderSettingsLists();
@@ -1573,29 +1950,632 @@
       }
     };
 
-    // Generate/Regenerate Plan Button
+    // Plan neu generieren Button
     elements.settings.generate.onclick = () => {
       if (confirm('Möchten Sie den Plan wirklich neu generieren? Alle platzierten Events gehen verloren.')) {
-        generatePlanStructure(true); // Pass true to clear allocations
+        generatePlanStructure(true); // true = Belegungen löschen
       }
     };
 
-    // Update plan on settings change
+    // Plan bei Einstellungsänderung aktualisieren
     elements.settings.days.addEventListener('change', () => generatePlanStructure());
     elements.settings.start.addEventListener('change', () => generatePlanStructure());
     elements.settings.end.addEventListener('change', () => generatePlanStructure());
 
-    // Export to CSV
+    // CSV Export
     elements.exportCsv.onclick = exportToCsv;
 
-    // Export to PDF
+    // PDF Export
     elements.exportPdf.onclick = exportToPdf;
 
-    // --- Rendering Functions ---
+    // --- Excel-Import-Funktionen ---
 
-    // Render Facility and Discipline lists in Settings Panel
+    // Excel-Datei parsen
+    async function parseExcelFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          try {
+            const data = e.target.result;
+            let workbook;
+
+            // Unterscheide zwischen CSV und Excel
+            if (file.name.toLowerCase().endsWith('.csv')) {
+              // CSV mit PapaParse verarbeiten
+              Papa.parse(data, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                  // Fehlerbehandlung
+                  if (results.errors && results.errors.length > 0) {
+                    console.warn('CSV parsing errors:', results.errors);
+                  }
+
+                  const parsedData = analyzeAndConvertCSV(results.data);
+                  resolve(parsedData);
+                },
+                error: function(error) {
+                  reject(error);
+                }
+              });
+            } else {
+              // Excel mit SheetJS verarbeiten
+              workbook = XLSX.read(data, {
+                type: 'binary',
+                cellDates: true,
+                cellNF: true
+              });
+
+              const parsedData = analyzeAndConvertWorkbook(workbook);
+              resolve(parsedData);
+            }
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.onerror = (error) => {
+          reject(error);
+        };
+
+        // Datei lesen
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsBinaryString(file);
+        }
+      });
+    }
+
+    // Workbook-Daten analysieren und konvertieren
+    function analyzeAndConvertWorkbook(workbook) {
+      const result = {
+        disciplines: null,
+        facilities: null,
+        settings: null,
+        schedule: null
+      };
+
+      // Blätter durchsuchen
+      const sheetNames = workbook.SheetNames;
+
+      // Blätter nach bestimmten Namen oder Inhalten durchsuchen
+      for (const sheetName of sheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Leere Blätter überspringen
+        if (jsonData.length === 0 || (jsonData.length === 1 && jsonData[0].length === 0)) {
+          continue;
+        }
+
+        // Header-Zeile holen
+        const headers = jsonData[0];
+
+        // Blatttyp identifizieren
+        if (identifyDisciplineSheet(headers)) {
+          result.disciplines = convertToDisciplinesFormat(jsonData);
+        }
+        else if (identifyFacilitySheet(headers)) {
+          result.facilities = convertToFacilitiesFormat(jsonData);
+        }
+        else if (identifySettingsSheet(headers)) {
+          result.settings = extractSettings(jsonData);
+        }
+        else if (identifyScheduleSheet(headers)) {
+          result.schedule = convertToScheduleFormat(jsonData);
+        }
+      }
+
+      return result;
+    }
+
+    // CSV-Daten analysieren und konvertieren
+    function analyzeAndConvertCSV(data) {
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      const result = {
+        disciplines: null,
+        facilities: null,
+        settings: null,
+        schedule: null
+      };
+
+      // Header aus dem ersten Objekt extrahieren
+      const headers = Object.keys(data[0]);
+
+      // Datentyp bestimmen
+      if (identifyDisciplineSheet(headers)) {
+        // Zu Disziplinen-Format konvertieren
+        const rows = data.map(row => Object.values(row));
+        result.disciplines = {
+          headers: headers,
+          rows: rows
+        };
+      } else if (identifyFacilitySheet(headers)) {
+        // Zu Anlagen-Format konvertieren
+        const rows = data.map(row => Object.values(row));
+        result.facilities = {
+          headers: headers,
+          rows: rows
+        };
+      } else if (identifyScheduleSheet(headers)) {
+        // Zu Zeitplan-Format konvertieren
+        const rows = data.map(row => Object.values(row));
+        result.schedule = {
+          headers: headers,
+          rows: rows
+        };
+      }
+
+      return result;
+    }
+
+    // Erkennen ob es sich um Disziplinen-Daten handelt
+    function identifyDisciplineSheet(headers) {
+      if (!headers || headers.length === 0) return false;
+
+      const requiredFields = ['name', 'dauer', 'duration'];
+      const headerLower = headers.map(h => (h || '').toString().toLowerCase());
+
+      // Prüfen ob mindestens ein erforderliches Feld vorhanden ist
+      return requiredFields.some(field => headerLower.includes(field));
+    }
+
+    // Erkennen ob es sich um Anlagen-Daten handelt
+    function identifyFacilitySheet(headers) {
+      if (!headers || headers.length === 0) return false;
+
+      const requiredFields = ['anlage', 'anlagen', 'facility', 'facilities', 'name'];
+      const headerLower = headers.map(h => (h || '').toString().toLowerCase());
+
+      // Prüfen ob mindestens ein erforderliches Feld vorhanden ist
+      return requiredFields.some(field => headerLower.includes(field)) && !identifyDisciplineSheet(headers);
+    }
+
+    // Erkennen ob es sich um Einstellungs-Daten handelt
+    function identifySettingsSheet(headers) {
+      if (!headers || headers.length === 0) return false;
+
+      const requiredFields = ['setting', 'einstellung', 'option', 'wert', 'value'];
+      const headerLower = headers.map(h => (h || '').toString().toLowerCase());
+
+      // Prüfen ob mindestens ein erforderliches Feld vorhanden ist
+      return requiredFields.some(field => headerLower.includes(field));
+    }
+
+    // Erkennen ob es sich um Zeitplan-Daten handelt
+    function identifyScheduleSheet(headers) {
+      if (!headers || headers.length === 0) return false;
+
+      const headerLower = headers.map(h => (h || '').toString().toLowerCase());
+
+      // Prüfen ob notwendige Felder vorhanden sind
+      const hasFacility = headerLower.some(h => ['anlage', 'facility', 'ort', 'location'].includes(h));
+      const hasDay = headerLower.some(h => ['tag', 'day', 'datum', 'date'].includes(h));
+      const hasTime = headerLower.some(h => ['zeit', 'time', 'start', 'beginn', 'startzeit'].includes(h));
+      const hasDiscipline = headerLower.some(h => ['disziplin', 'discipline', 'aktivität', 'activity'].includes(h));
+
+      return hasFacility && hasDay && hasTime && hasDiscipline;
+    }
+
+    // Daten in Disziplinen-Format konvertieren
+    function convertToDisciplinesFormat(jsonData) {
+      if (!jsonData || jsonData.length < 2) return null;
+
+      const headers = jsonData[0];
+      const rows = jsonData.slice(1).filter(row => row.length > 0 && row[0] !== undefined);
+
+      return {
+        headers: headers,
+        rows: rows
+      };
+    }
+
+    // Daten in Anlagen-Format konvertieren
+    function convertToFacilitiesFormat(jsonData) {
+      if (!jsonData || jsonData.length < 2) return null;
+
+      const headers = jsonData[0];
+      const rows = jsonData.slice(1).filter(row => row.length > 0 && row[0] !== undefined);
+
+      return {
+        headers: headers,
+        rows: rows
+      };
+    }
+
+    // Daten in Zeitplan-Format konvertieren
+    function convertToScheduleFormat(jsonData) {
+      if (!jsonData || jsonData.length < 2) return null;
+
+      const headers = jsonData[0];
+      const rows = jsonData.slice(1).filter(row => row.length > 0);
+
+      return {
+        headers: headers,
+        rows: rows
+      };
+    }
+
+    // Einstellungen aus Daten extrahieren
+    function extractSettings(jsonData) {
+      if (!jsonData || jsonData.length < 2) return null;
+
+      const settings = {};
+      const headers = jsonData[0].map(h => h.toLowerCase());
+
+      const nameIndex = headers.findIndex(h => ['setting', 'einstellung', 'option', 'name'].includes(h));
+      const valueIndex = headers.findIndex(h => ['wert', 'value', 'val'].includes(h));
+
+      if (nameIndex === -1 || valueIndex === -1) return null;
+
+      for (let i = 1; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        if (row && row.length > Math.max(nameIndex, valueIndex)) {
+          const name = row[nameIndex];
+          const value = row[valueIndex];
+
+          if (name && value !== undefined) {
+            settings[name.toString().toLowerCase()] = value;
+          }
+        }
+      }
+
+      return settings;
+    }
+
+    // Excel-Daten in die Anwendung importieren
+    function importExcelData(data, options = {}) {
+      if (!data) {
+        showImportResult('Keine Daten zum Importieren vorhanden.', 'error');
+        return;
+      }
+
+      const { clearExisting, updateOptions, importSchedule } = options;
+      let importedFacilities = 0;
+      let importedDisciplines = 0;
+      let importedScheduleItems = 0;
+
+      showLoading();
+
+      try {
+        // Einstellungen importieren, falls vorhanden
+        if (updateOptions && data.settings) {
+          importSettings(data.settings);
+        }
+
+        // Anlagen importieren, falls vorhanden
+        if (data.facilities) {
+          importedFacilities = importFacilities(data.facilities, clearExisting);
+        }
+
+        // Disziplinen importieren, falls vorhanden
+        if (data.disciplines) {
+          importedDisciplines = importDisciplines(data.disciplines, clearExisting);
+        }
+
+        // Zeitplan importieren, falls vorhanden und gewünscht
+        if (importSchedule && data.schedule) {
+          importedScheduleItems = importScheduleItems(data.schedule);
+        }
+
+        // Anzeige aktualisieren
+        renderSettingsLists();
+        renderDiscPanel();
+        generatePlanStructure(false); // Plan-Struktur regenerieren, bestehende Slots behalten
+
+        // Ergebnis anzeigen
+        let resultMessage = `Import erfolgreich abgeschlossen. ${importedFacilities} Anlagen und ${importedDisciplines} Disziplinen importiert.`;
+        if (importedScheduleItems > 0) {
+          resultMessage += ` ${importedScheduleItems} Zeitplan-Einträge platziert.`;
+        }
+        showImportResult(resultMessage, 'success');
+
+        // In localStorage speichern
+        saveToLocalStorage();
+      } catch (error) {
+        console.error('Fehler beim Importieren der Daten:', error);
+        showImportResult(`Fehler beim Importieren: ${error.message}`, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Einstellungen importieren
+    function importSettings(settings) {
+      // Prüfe auf relevante Einstellungen
+      if (settings['anzahl_tage'] || settings['days'] || settings['tage']) {
+        const days = parseInt(settings['anzahl_tage'] || settings['days'] || settings['tage']);
+        if (!isNaN(days) && days > 0 && days <= 30) {
+          elements.settings.days.value = days;
+        }
+      }
+
+      if (settings['startzeit'] || settings['start_time'] || settings['start']) {
+        const startTime = settings['startzeit'] || settings['start_time'] || settings['start'];
+        // Prüfe ob gültiges Zeitformat
+        if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(startTime)) {
+          elements.settings.start.value = startTime;
+        }
+      }
+
+      if (settings['endzeit'] || settings['end_time'] || settings['end']) {
+        const endTime = settings['endzeit'] || settings['end_time'] || settings['end'];
+        // Prüfe ob gültiges Zeitformat
+        if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(endTime)) {
+          elements.settings.end.value = endTime;
+        }
+      }
+    }
+
+    // Anlagen importieren
+    function importFacilities(data, clearExisting) {
+      if (!data || !data.headers || !data.rows || data.rows.length === 0) {
+        return 0;
+      }
+
+      // Index der Namen-Spalte bestimmen
+      const headers = data.headers.map(h => (h || '').toString().toLowerCase());
+      let nameIndex = headers.findIndex(h => ['anlage', 'anlagen', 'facility', 'facilities', 'name'].includes(h));
+
+      // Falls kein Name-Header gefunden, erste Spalte nehmen
+      if (nameIndex === -1) nameIndex = 0;
+
+      // Bestehende Anlagen löschen, wenn gewünscht
+      if (clearExisting) {
+        facilities = [];
+      }
+
+      // Gültige Anlagen sammeln
+      let importCount = 0;
+
+      for (const row of data.rows) {
+        if (row && row.length > nameIndex) {
+          const name = row[nameIndex];
+
+          if (name && typeof name === 'string' && name.trim() !== '') {
+            const facilityName = name.trim();
+
+            // Prüfen ob Anlage bereits existiert
+            if (!facilities.includes(facilityName)) {
+              facilities.push(facilityName);
+              importCount++;
+            }
+          }
+        }
+      }
+
+      return importCount;
+    }
+
+    // Disziplinen importieren
+    function importDisciplines(data, clearExisting) {
+      if (!data || !data.headers || !data.rows || data.rows.length === 0) {
+        return 0;
+      }
+
+      // Indizes der relevanten Spalten bestimmen
+      const headers = data.headers.map(h => (h || '').toString().toLowerCase());
+
+      const nameIndex = headers.findIndex(h => ['name', 'disziplin', 'discipline'].includes(h));
+      const durationIndex = headers.findIndex(h => ['dauer', 'duration', 'zeit', 'time'].includes(h));
+      const tagsIndex = headers.findIndex(h => ['tags', 'kategorien', 'categories'].includes(h));
+      const colorIndex = headers.findIndex(h => ['farbe', 'color', 'colour'].includes(h));
+      const notesIndex = headers.findIndex(h => ['notizen', 'notes', 'bemerkungen', 'comments'].includes(h));
+
+      // Namen- und Dauer-Spalte sind erforderlich
+      if (nameIndex === -1 || durationIndex === -1) {
+        return 0;
+      }
+
+      // Bestehende Disziplinen löschen, wenn gewünscht
+      if (clearExisting) {
+        disciplines = [];
+      }
+
+      // Gültige Disziplinen sammeln
+      let importCount = 0;
+      const existingNames = new Set(disciplines.map(d => d.name));
+
+      for (const row of data.rows) {
+        if (row && row.length > Math.max(nameIndex, durationIndex)) {
+          const name = row[nameIndex];
+          const durationValue = row[durationIndex];
+
+          // Prüfen ob Name und Dauer gültig sind
+          if (name && typeof name === 'string' && name.trim() !== '' &&
+              durationValue !== undefined && durationValue !== null) {
+
+            const disciplineName = name.trim();
+
+            // Bereits existierende Disziplinen überspringen
+            if (existingNames.has(disciplineName)) {
+              continue;
+            }
+
+            // Dauer in Zahl konvertieren
+            let duration = parseFloat(durationValue);
+
+            // Falls Dauer als String mit ":" formatiert (z.B. "1:30"), zu Stunden konvertieren
+            if (isNaN(duration) && typeof durationValue === 'string' && durationValue.includes(':')) {
+              const [hours, minutes] = durationValue.split(':').map(Number);
+              if (!isNaN(hours) && !isNaN(minutes)) {
+                duration = hours + (minutes / 60);
+              }
+            }
+
+            // Prüfen ob Dauer gültig
+            if (isNaN(duration) || duration <= 0) {
+              continue;
+            }
+
+            // Tags extrahieren, falls vorhanden
+            let tags = [];
+            if (tagsIndex !== -1 && row.length > tagsIndex && row[tagsIndex]) {
+              tags = row[tagsIndex].toString().split(/[,;]/).map(tag => tag.trim()).filter(Boolean);
+            }
+
+            // Farbe extrahieren, falls vorhanden
+            let color = getRandomColor();
+            if (colorIndex !== -1 && row.length > colorIndex && row[colorIndex]) {
+              const colorValue = row[colorIndex].toString().trim();
+
+              // Prüfen ob gültiger Hex-Farbcode
+              if (/^#[0-9A-F]{6}$/i.test(colorValue)) {
+                color = colorValue;
+              }
+            }
+
+            // Notizen extrahieren, falls vorhanden
+            let notes = '';
+            if (notesIndex !== -1 && row.length > notesIndex && row[notesIndex]) {
+              notes = row[notesIndex].toString().trim();
+            }
+
+            // Neue Disziplin erstellen
+            disciplines.push({
+              id: generateId(),
+              name: disciplineName,
+              duration: duration,
+              tags: tags,
+              color: color,
+              notes: notes
+            });
+
+            existingNames.add(disciplineName);
+            importCount++;
+          }
+        }
+      }
+
+      return importCount;
+    }
+
+    // Zeitplan-Einträge importieren
+    function importScheduleItems(data) {
+      if (!data || !data.headers || !data.rows || data.rows.length === 0) {
+        return 0;
+      }
+
+      // Indizes der relevanten Spalten bestimmen
+      const headers = data.headers.map(h => (h || '').toString().toLowerCase());
+
+      const facilityIndex = headers.findIndex(h => ['anlage', 'facility', 'ort', 'location'].includes(h));
+      const dayIndex = headers.findIndex(h => ['tag', 'day', 'datum', 'date'].includes(h));
+      const timeIndex = headers.findIndex(h => ['zeit', 'time', 'start', 'beginn', 'startzeit'].includes(h));
+      const disciplineIndex = headers.findIndex(h => ['disziplin', 'discipline', 'aktivität', 'activity'].includes(h));
+
+      // Alle wichtigen Spalten müssen vorhanden sein
+      if (facilityIndex === -1 || dayIndex === -1 || timeIndex === -1 || disciplineIndex === -1) {
+        return 0;
+      }
+
+      let importCount = 0;
+
+      // Gültige Zeitplan-Einträge sammeln
+      for (const row of data.rows) {
+        if (row && row.length > Math.max(facilityIndex, dayIndex, timeIndex, disciplineIndex)) {
+          const facilityName = row[facilityIndex];
+          const dayValue = row[dayIndex];
+          const timeValue = row[timeIndex];
+          const disciplineName = row[disciplineIndex];
+
+          // Prüfen ob alle Werte gültig
+          if (!facilityName || !dayValue || !timeValue || !disciplineName) {
+            continue;
+          }
+
+          // Anlage finden
+          const facilityIndex = facilities.findIndex(f =>
+            f.toLowerCase() === facilityName.toString().toLowerCase()
+          );
+
+          if (facilityIndex === -1) {
+            continue; // Anlage nicht gefunden
+          }
+
+          // Tag bestimmen
+          let day = 0;
+          if (typeof dayValue === 'number') {
+            day = Math.max(1, Math.round(dayValue)) - 1; // In 0-basierten Index umwandeln
+          } else {
+            // Versuche eine Zahl aus dem String zu extrahieren
+            const matches = dayValue.toString().match(/\d+/);
+            if (matches) {
+              day = parseInt(matches[0], 10) - 1;
+            }
+          }
+
+          // Prüfen ob Tag gültig
+          if (day < 0 || day >= plan[facilityIndex].allocations.length) {
+            continue;
+          }
+
+          // Startzeit bestimmen
+          let startHour = 0;
+          if (typeof timeValue === 'number') {
+            startHour = timeValue;
+          } else if (typeof timeValue === 'string') {
+            // String im Format "HH:MM" parsen
+            const timeParts = timeValue.toString().trim().split(':');
+            if (timeParts.length >= 2) {
+              startHour = parseInt(timeParts[0], 10) + parseInt(timeParts[1], 10) / 60;
+            }
+          } else if (timeValue instanceof Date) {
+            startHour = timeValue.getHours() + timeValue.getMinutes() / 60;
+          }
+
+          // Disziplin finden
+          const disciplineObj = disciplines.find(d =>
+            d.name.toLowerCase() === disciplineName.toString().toLowerCase()
+          );
+
+          if (!disciplineObj) {
+            continue; // Disziplin nicht gefunden
+          }
+
+          // Slot platzieren
+          allocateSlot(facilityIndex, day, disciplineObj, startHour);
+          importCount++;
+        }
+      }
+
+      return importCount;
+    }
+
+    // Zufällige Farbe für Disziplinen generieren
+    function getRandomColor() {
+      const colors = [
+        '#f44336', '#e91e63', '#9c27b0', '#673ab7',
+        '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4',
+        '#009688', '#4caf50', '#8bc34a', '#cddc39',
+        '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'
+      ];
+
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Import-Ergebnis anzeigen
+    function showImportResult(message, type) {
+      elements.settings.importResults.innerHTML = message;
+      elements.settings.importResults.className = type;
+
+      // Nachricht nach einiger Zeit ausblenden
+      setTimeout(() => {
+        elements.settings.importResults.classList.remove(type);
+      }, 6000);
+    }
+
+    // --- Rendering-Funktionen ---
+
+    // Anlagen- und Disziplinlisten in den Einstellungen rendern
     function renderSettingsLists() {
-      // Facilities
+      // Anlagen
       elements.settings.facilityList.innerHTML = '';
       facilities.forEach((facilityName, index) => {
         const div = document.createElement('div');
@@ -1606,10 +2586,10 @@
         btn.onclick = () => {
           if (confirm(`Möchten Sie die Anlage "${facilityName}" wirklich löschen? Alle zugehörigen Events werden entfernt.`)) {
             facilities.splice(index, 1);
-            // Remove corresponding entries from the plan data
+            // Entsprechende Einträge aus den Plandaten entfernen
             plan = plan.filter((_, i) => i !== index);
             renderSettingsLists();
-            generatePlanStructure(); // Regenerate table structure
+            generatePlanStructure(); // Tabellenstruktur neu generieren
             saveToLocalStorage();
           }
         };
@@ -1617,7 +2597,7 @@
         elements.settings.facilityList.appendChild(div);
       });
 
-      // Disciplines
+      // Disziplinen
       elements.settings.disciplineList.innerHTML = '';
       disciplines.forEach((disc, index) => {
         const div = document.createElement('div');
@@ -1630,7 +2610,7 @@
           [${disc.tags.join(', ') || '-'}]
         `;
 
-        // If the discipline has notes, make it clickable to view them
+        // Falls die Disziplin Notizen hat, anklickbar machen
         if (hasNotes) {
           div.style.cursor = 'pointer';
           div.title = "Klicken Sie, um die Notizen anzuzeigen";
@@ -1646,11 +2626,11 @@
         btn.textContent = '✖';
         btn.title = `Disziplin "${disc.name}" löschen`;
         btn.onclick = (e) => {
-          e.stopPropagation(); // Prevent showing notes modal
+          e.stopPropagation(); // Verhindern, dass Notizen-Modal erscheint
           if (confirm(`Möchten Sie die Disziplin "${disc.name}" wirklich löschen? Alle zugehörigen Events im Plan werden ebenfalls entfernt.`)) {
             const removedName = disciplines[index].name;
             disciplines.splice(index, 1);
-            // Remove allocated slots for this discipline from plan data
+            // Slots für diese Disziplin aus Plandaten entfernen
             plan.forEach(facilityPlan => {
               facilityPlan.allocations.forEach(dailySlots => {
                 for (let i = dailySlots.length - 1; i >= 0; i--) {
@@ -1662,7 +2642,7 @@
             });
             renderSettingsLists();
             renderDiscPanel();
-            drawSlots(); // Redraw the plan without the removed discipline slots
+            drawSlots(); // Plan ohne die entfernte Disziplin neuzeichnen
             saveToLocalStorage();
           }
         };
@@ -1680,7 +2660,7 @@
 
       element.addEventListener('touchstart', function(e) {
         if (isMobile) {
-          // Verhindere, dass der Standard-Drag-and-Drop startet, wir wollen unseren eigenen
+          // Verhindere Standard-Drag-and-Drop, wir nutzen unseren eigenen
           e.preventDefault();
 
           const touch = e.touches[0];
@@ -1688,14 +2668,14 @@
           touchStartY = touch.clientY;
           dragStarted = false;
 
-          // Speichere Element und Daten für später
+          // Element und Daten für später speichern
           currentTouchDragElement = element;
           touchDragData = dragData;
 
-          // Visuelles Feedback, dass etwas passiert
+          // Visuelles Feedback
           element.classList.add('touch-active');
 
-          // Starte einen Timer - wenn lange gedrückt, beginne mit Drag
+          // Timer starten - bei langem Drücken Drag starten
           touchTimeout = setTimeout(() => {
             if (!dragStarted) {
               startTouchDrag(e);
@@ -1710,17 +2690,17 @@
           const deltaX = Math.abs(touch.clientX - touchStartX);
           const deltaY = Math.abs(touch.clientY - touchStartY);
 
-          // Wenn der Nutzer genug bewegt hat, starte Drag
+          // Bei ausreichender Bewegung Drag starten
           if (!dragStarted && (deltaX > dragThreshold || deltaY > dragThreshold)) {
-            clearTimeout(touchTimeout); // Verhindere den Timer-basierten Drag-Start
+            clearTimeout(touchTimeout); // Timer-basierten Drag-Start verhindern
             startTouchDrag(e);
           }
 
-          // Wenn bereits ein Drag läuft, bewege das Ghost-Element
+          // Falls Drag läuft, Ghost-Element bewegen
           if (dragStarted && ghostElement) {
             moveGhostElement(touch.clientX, touch.clientY);
 
-            // Finde und markiere das Ziel unter dem Cursor
+            // Ziel unter dem Cursor finden und markieren
             const elementsUnderTouch = document.elementsFromPoint(touch.clientX, touch.clientY);
             findAndHighlightDropTarget(elementsUnderTouch);
           }
@@ -1736,9 +2716,9 @@
             endTouchDrag(e);
           } else if (currentTouchDragElement === element) {
             // Dies war ein Tap, keine Drag-Aktion
-            // Für Disc-Items: Zeige den Selektor
+            // Für Disc-Items: Zeige Selektor
             if (element.classList.contains('disc-item') && disciplines.length > 0) {
-              // Keine Aktion hier, Taps nutzen wir nur für Slots
+              // Keine Aktion hier, Taps für Slots verwenden wir separat
             }
           }
 
@@ -1765,15 +2745,15 @@
       dragStarted = true;
       isDragging = true;
 
-      // Visual enhancements
+      // Visuelle Effekte
       currentTouchDragElement.classList.add('dragging');
       dragOverlay.show();
 
-      // Create ghost element for visual feedback
+      // Ghost-Element für visuelles Feedback erstellen
       ghostElement = createDragGhostElement(currentTouchDragElement);
       moveGhostElement(touch.clientX, touch.clientY);
 
-      document.body.style.overflow = 'hidden'; // Verhindere Scrollen während des Ziehens
+      document.body.style.overflow = 'hidden'; // Scrollen während des Ziehens verhindern
     }
 
     function moveGhostElement(x, y) {
@@ -1787,13 +2767,13 @@
     }
 
     function findAndHighlightDropTarget(elementsUnderTouch) {
-      // Reset current drop target if exists
+      // Aktuelles Drop-Target zurücksetzen
       if (currentDropTarget) {
         currentDropTarget.classList.remove('drop-target');
         currentDropTarget = null;
       }
 
-      // Find a valid drop target in the elements under the touch
+      // Gültiges Drop-Target in den Elementen unter dem Touch suchen
       for (const element of elementsUnderTouch) {
         if (element.tagName === 'TD' && element.dataset.dayIndex !== undefined) {
           element.classList.add('drop-target');
@@ -1807,18 +2787,18 @@
       dragStarted = false;
       isDragging = false;
 
-      // Clean up visual effects
+      // Visuelle Effekte aufräumen
       if (currentTouchDragElement) {
         currentTouchDragElement.classList.remove('dragging');
       }
       dragOverlay.hide();
 
-      // Process drop if we have a target
+      // Drop verarbeiten, falls Ziel vorhanden
       if (currentDropTarget && touchDragData) {
         processTouchDrop(currentDropTarget);
       }
 
-      // Cleanup
+      // Aufräumen
       if (ghostElement) {
         document.body.removeChild(ghostElement);
         ghostElement = null;
@@ -1829,20 +2809,20 @@
         currentDropTarget = null;
       }
 
-      document.body.style.overflow = ''; // Erlaube Scrollen wieder
+      document.body.style.overflow = ''; // Scrollen wieder erlauben
     }
 
     function cancelTouchDrag() {
       dragStarted = false;
       isDragging = false;
 
-      // Clean up visual effects
+      // Visuelle Effekte aufräumen
       if (currentTouchDragElement) {
         currentTouchDragElement.classList.remove('dragging');
       }
       dragOverlay.hide();
 
-      // Cleanup
+      // Aufräumen
       if (ghostElement) {
         document.body.removeChild(ghostElement);
         ghostElement = null;
@@ -1853,7 +2833,7 @@
         currentDropTarget = null;
       }
 
-      document.body.style.overflow = ''; // Erlaube Scrollen wieder
+      document.body.style.overflow = ''; // Scrollen wieder erlauben
     }
 
     function processTouchDrop(targetCell) {
@@ -1862,7 +2842,7 @@
         const facilityIndex = parseInt(targetCell.dataset.facilityIndex, 10);
         const dayIndex = parseInt(targetCell.dataset.dayIndex, 10);
 
-        // Calculate drop position in time
+        // Drop-Position in Zeit berechnen
         const rect = targetCell.getBoundingClientRect();
         const dropX = lastTouchX - rect.left;
         const cellWidth = rect.width;
@@ -1872,35 +2852,35 @@
         const totalHours = calculateTotalHours(startTime, endTime);
         const isOvernight = isOvernightRange(startTime, endTime);
 
-        // Calculate target hour based on drop position
+        // Zielstunde basierend auf Drop-Position berechnen
         let targetHour = startTime + (dropX / cellWidth) * totalHours;
 
-        // Snap to 15-minute intervals (0.25 hour)
+        // Auf 15-Minuten-Intervalle (0,25 Stunde) runden
         targetHour = Math.round(targetHour * 4) / 4;
 
-        // Bei Übernacht-Zeiträumen: Wenn die berechnete Zielzeit nach Mitternacht liegt
+        // Bei Übernacht-Zeiträumen: Wenn berechnete Zielzeit nach Mitternacht liegt
         if (isOvernight && targetHour >= 24) {
           targetHour = targetHour - 24;
         }
 
         if (data.type === 'discipline') {
-          // Create a new slot from a discipline
+          // Neuen Slot aus einer Disziplin erstellen
           const discipline = disciplines.find(d => d.id === data.id);
           if (discipline) {
             allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
           }
         } else if (data.type === 'slot') {
-          // Move an existing slot
+          // Bestehenden Slot verschieben
           moveSlot(data.id, facilityIndex, dayIndex, targetHour);
         }
 
         touchDragData = null;
       } catch (err) {
-        console.error('Error during touch drop handling:', err);
+        console.error('Fehler bei der Touch-Drop-Verarbeitung:', err);
       }
     }
 
-    // Render Draggable Discipline Items in the Top Panel
+    // Ziehbare Disziplin-Elemente im oberen Panel rendern
     function renderDiscPanel() {
       elements.discPanel.innerHTML = '';
 
@@ -1928,7 +2908,7 @@
           div.appendChild(notesIndicator);
         }
 
-        // Add tooltip information for desktop
+        // Tooltip-Informationen für Desktop
         div.addEventListener('mouseenter', e => {
           let tooltipContent = `
             <strong>${escapeHtml(disc.name)}</strong><br>
@@ -1936,7 +2916,7 @@
             ${disc.tags.length > 0 ? `Tags: ${escapeHtml(disc.tags.join(', '))}` : 'Keine Tags'}
           `;
 
-          // Add notes to tooltip if they exist
+          // Notizen im Tooltip anzeigen, falls vorhanden
           if (disc.notes && disc.notes.trim().length > 0) {
             tooltipContent += `
               <div class="tooltip-section">
@@ -1953,9 +2933,9 @@
           tooltip.hide();
         });
 
-        // Set up HTML5 drag & drop functionality for desktop
+        // HTML5 Drag & Drop für Desktop einrichten
         div.addEventListener('dragstart', e => {
-          // Store discipline data for the drop handler
+          // Disziplin-Daten für den Drop-Handler speichern
           e.dataTransfer.setData('application/json', JSON.stringify({
             type: 'discipline',
             id: disc.id
@@ -1971,14 +2951,14 @@
           div.classList.remove('dragging');
         });
 
-        // Set up custom touch drag events for mobile
+        // Touch-Drag-Events für Mobilgeräte einrichten
         if (isTouchDevice() && isMobile) {
           setupTouchDragEvents(div, {
             type: 'discipline',
             id: disc.id
           });
 
-          // Show notes on long press
+          // Notizen bei langem Drücken anzeigen
           div.addEventListener('click', function(e) {
             if (disc.notes && disc.notes.trim()) {
               notesModal.show(
@@ -1993,87 +2973,87 @@
       });
     }
 
-    // --- Core Planning Logic ---
+    // --- Core Planungs-Logik ---
 
-    // Generate or update the plan structure based on settings
+    // Planstruktur basierend auf Einstellungen generieren oder aktualisieren
     function generatePlanStructure(clearAllocations = false) {
       const numDays = parseInt(elements.settings.days.value, 10) || 1;
       const currentPlanLength = plan.length;
 
-      // Adjust plan data array size to match facilities
+      // Planarray-Größe an Anlagen anpassen
       if (facilities.length > currentPlanLength) {
-        // Add new entries for new facilities
+        // Neue Einträge für neue Anlagen hinzufügen
         for (let i = currentPlanLength; i < facilities.length; i++) {
           plan.push({ facility: facilities[i], allocations: Array.from({ length: numDays }, () => []) });
         }
       } else if (facilities.length < currentPlanLength) {
-        // This case is handled by facility deletion logic which filters `plan`
+        // Dieser Fall wird durch die Facility-Löschlogik behandelt, die `plan` filtert
       }
 
-      // Update facility names and day array length for existing entries
+      // Anlagennamen und Tag-Array-Länge für vorhandene Einträge aktualisieren
       plan.forEach((facilityPlan, index) => {
-        facilityPlan.facility = facilities[index]; // Ensure name is up-to-date
+        facilityPlan.facility = facilities[index]; // Name aktualisieren
         const currentDays = facilityPlan.allocations.length;
         if (numDays > currentDays) {
-          // Add empty day arrays if needed
+          // Bei Bedarf leere Tag-Arrays hinzufügen
           for (let i = currentDays; i < numDays; i++) {
             facilityPlan.allocations.push([]);
           }
         } else if (numDays < currentDays) {
-          // Remove excess day arrays (and their slots!)
+          // Überschüssige Tag-Arrays entfernen (und deren Slots!)
           facilityPlan.allocations.splice(numDays);
         }
-        // Clear allocations if requested (full regeneration)
+        // Belegungen löschen, falls angefordert (vollständige Neugenerierung)
         if (clearAllocations) {
           facilityPlan.allocations = Array.from({ length: numDays }, () => []);
         }
       });
 
       renderTableStructure(numDays);
-      drawSlots(); // Redraw existing slots
+      drawSlots(); // Vorhandene Slots neuzeichnen
       saveToLocalStorage();
 
-      // Setze Zoom auf Standardwert zurück
+      // Zoom auf Standardwert zurücksetzen
       currentZoom = 1;
       applyZoom();
     }
 
-    // Render the basic HTML table structure (headers, rows, cells)
+    // Grundlegende HTML-Tabellenstruktur rendern (Kopfzeilen, Zeilen, Zellen)
     function renderTableStructure(numDays) {
       const headerRow = elements.planTable.querySelector('thead tr');
-      // Clear existing headers except the first
+      // Vorhandene Header außer dem ersten löschen
       headerRow.innerHTML = '<th>Anlage / Tag</th>';
 
-      // Add day headers
+      // Tag-Header hinzufügen
       for (let i = 0; i < numDays; i++) {
         const th = document.createElement('th');
         th.textContent = `Tag ${i + 1}`;
         headerRow.appendChild(th);
       }
 
-      // Clear existing body rows
+      // Vorhandene Tabellenzeilen löschen
       elements.tableBody.innerHTML = '';
 
-      // Add facility rows and day cells
+      // Anlagenzeilen und Tag-Zellen hinzufügen
       plan.forEach((facilityPlan, facilityIndex) => {
         const tr = document.createElement('tr');
         tr.dataset.facilityIndex = facilityIndex;
 
-        // Facility name cell
+        // Anlagenname-Zelle
         const tdFacility = document.createElement('td');
         tdFacility.textContent = facilityPlan.facility;
         tr.appendChild(tdFacility);
 
-        // Day cells (droppable targets)
+        // Tag-Zellen (Drop-Targets)
         for (let dayIndex = 0; dayIndex < numDays; dayIndex++) {
           const tdDay = document.createElement('td');
           tdDay.dataset.facilityIndex = facilityIndex;
           tdDay.dataset.dayIndex = dayIndex;
 
-          // Add time markers and hour lines
+          // Zeitmarkierungen und Stundenlinien hinzufügen
           addTimeIndicators(tdDay);
 
-          // Add drop zone functionality
+          // Drop-Zone-Funktionalität hinzufügen
           addDropZone(tdDay);
 
           tr.appendChild(tdDay);
@@ -2083,7 +3063,7 @@
       });
     }
 
-    // Add time indicators to a cell
+    // Zeitindikatoren zu einer Zelle hinzufügen
     function addTimeIndicators(cell) {
       const startTime = parseTime(elements.settings.start.value);
       const endTime = parseTime(elements.settings.end.value);
@@ -2092,16 +3072,16 @@
 
       if (totalHours <= 0) return;
 
-      // Add start time marker
+      // Start-Zeitmarkierung hinzufügen
       const startMarker = document.createElement('div');
       startMarker.className = 'time-marker start';
       startMarker.textContent = formatTime(startTime);
       cell.appendChild(startMarker);
 
-      // Add middle time marker
+      // Mittlere Zeitmarkierung hinzufügen
       let middleTime;
       if (isOvernight) {
-        // Bei Übernacht-Zeiträumen muss der Mittelpunkt korrekt berechnet werden
+        // Bei Übernacht-Zeiträumen Mittelpunkt korrekt berechnen
         middleTime = startTime + totalHours / 2;
         if (middleTime >= 24) {
           middleTime = middleTime - 24;
@@ -2115,15 +3095,15 @@
       middleMarker.textContent = formatTime(middleTime);
       cell.appendChild(middleMarker);
 
-      // Add end time marker
+      // End-Zeitmarkierung hinzufügen
       const endMarker = document.createElement('div');
       endMarker.className = 'time-marker end';
       endMarker.textContent = formatTime(endTime);
       cell.appendChild(endMarker);
 
-      // Add hour lines for better visual reference
+      // Stundenlinien für bessere visuelle Referenz hinzufügen
       if (isOvernight) {
-        // Für Übernacht-Zeiträume: Zeichne Stundenlinien von Startzeit bis Mitternacht
+        // Für Übernacht-Zeiträume: Stundenlinien von Startzeit bis Mitternacht
         for (let hour = Math.ceil(startTime); hour < 24; hour++) {
           const position = ((hour - startTime) / totalHours) * 100;
           const hourLine = document.createElement('div');
@@ -2132,7 +3112,7 @@
           cell.appendChild(hourLine);
         }
 
-        // Zeichne Stundenlinien von Mitternacht bis Endzeit
+        // Stundenlinien von Mitternacht bis Endzeit
         for (let hour = 0; hour < endTime; hour++) {
           const position = ((hour + 24 - startTime) / totalHours) * 100;
           const hourLine = document.createElement('div');
@@ -2152,9 +3132,9 @@
       }
     }
 
-    // Set up drop zone functionality for a cell
+    // Drop-Zone-Funktionalität für eine Zelle einrichten
     function addDropZone(cell) {
-      // Allow HTML5 drops for desktop
+      // HTML5 Drops für Desktop erlauben
       cell.addEventListener('dragover', e => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
@@ -2170,7 +3150,7 @@
         cell.classList.remove('drop-target');
 
         try {
-          // Get the data that was dragged
+          // Gezogene Daten abrufen
           const dataString = e.dataTransfer.getData('application/json');
           if (!dataString) return;
 
@@ -2178,7 +3158,7 @@
           const facilityIndex = parseInt(cell.dataset.facilityIndex, 10);
           const dayIndex = parseInt(cell.dataset.dayIndex, 10);
 
-          // Calculate drop position in time
+          // Drop-Position in Zeit berechnen
           const rect = cell.getBoundingClientRect();
           const dropX = e.clientX - rect.left;
           const cellWidth = rect.width;
@@ -2188,29 +3168,29 @@
           const totalHours = calculateTotalHours(startTime, endTime);
           const isOvernight = isOvernightRange(startTime, endTime);
 
-          // Calculate target hour based on drop position
+          // Zielstunde basierend auf Drop-Position berechnen
           let targetHour = startTime + (dropX / cellWidth) * totalHours;
 
-          // Snap to 15-minute intervals (0.25 hour)
+          // Auf 15-Minuten-Intervalle runden (0,25 Stunde)
           targetHour = Math.round(targetHour * 4) / 4;
 
-          // Bei Übernacht-Zeiträumen: Wenn die berechnete Zielzeit nach Mitternacht liegt
+          // Bei Übernacht-Zeiträumen: Wenn berechnete Zielzeit nach Mitternacht liegt
           if (isOvernight && targetHour >= 24) {
             targetHour = targetHour - 24;
           }
 
           if (data.type === 'discipline') {
-            // Create a new slot from a discipline
+            // Neuen Slot aus einer Disziplin erstellen
             const discipline = disciplines.find(d => d.id === data.id);
             if (discipline) {
               allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
             }
           } else if (data.type === 'slot') {
-            // Move an existing slot
+            // Bestehenden Slot verschieben
             moveSlot(data.id, facilityIndex, dayIndex, targetHour);
           }
         } catch (err) {
-          console.error('Error during drop handling:', err);
+          console.error('Fehler bei der Drop-Verarbeitung:', err);
         }
       });
 
@@ -2227,10 +3207,10 @@
             const endTime = parseTime(elements.settings.end.value);
             const totalHours = calculateTotalHours(startTime, endTime);
 
-            // Berechne Zielzeit basierend auf Tap-Position
+            // Zielzeit basierend auf Tap-Position berechnen
             let targetHour = startTime + (tapX / cellWidth) * totalHours;
 
-            // Auf 15-Minuten-Intervalle (0,25 Stunden) runden
+            // Auf 15-Minuten-Intervalle runden (0,25 Stunde)
             targetHour = Math.round(targetHour * 4) / 4;
 
             // Bei Übernacht-Zeiträumen korrigieren
@@ -2239,14 +3219,14 @@
               targetHour = targetHour - 24;
             }
 
-            // Zeige Disziplin-Auswahldialog
+            // Disziplin-Auswahldialog anzeigen
             disciplineSelector.show(cell, targetHour);
           }
         });
       }
     }
 
-    // Find a slot by ID
+    // Slot anhand ID finden
     function findSlotById(slotId) {
       for (let fi = 0; fi < plan.length; fi++) {
         for (let di = 0; di < plan[fi].allocations.length; di++) {
@@ -2264,12 +3244,12 @@
       return null;
     }
 
-    // Check for time conflicts between slots
+    // Zeitkonflikte zwischen Slots prüfen
     function checkSlotConflicts(daySlots) {
-      // Build conflict map to track which slots conflict with which others
+      // Konflikt-Map erstellen, um zu verfolgen, welche Slots mit welchen anderen in Konflikt stehen
       const conflictMap = new Map();
 
-      // First, find all conflicts
+      // Zuerst alle Konflikte finden
       for (let i = 0; i < daySlots.length; i++) {
         const slotA = daySlots[i];
         const startA = slotA.startHour;
@@ -2280,9 +3260,9 @@
           const startB = slotB.startHour;
           const endB = startB + slotB.duration;
 
-          // Check for overlap
+          // Auf Überlappung prüfen
           if (startA < endB && startB < endA) {
-            // Add to conflict map for both slots
+            // Zu Konflikt-Map für beide Slots hinzufügen
             if (!conflictMap.has(slotA.id)) {
               conflictMap.set(slotA.id, new Set());
             }
@@ -2299,9 +3279,9 @@
       return conflictMap;
     }
 
-    // Allocate a new slot in the plan data
+    // Neuen Slot in den Plandaten zuweisen
     function allocateSlot(facilityIndex, dayIndex, discipline, startHour) {
-      // Create new slot object
+      // Neues Slot-Objekt erstellen
       const newSlot = {
         id: generateId(),
         name: discipline.name,
@@ -2312,65 +3292,65 @@
         notes: discipline.notes || ''
       };
 
-      // Add to plan
+      // Zum Plan hinzufügen
       plan[facilityIndex].allocations[dayIndex].push(newSlot);
 
-      // Sort slots by start time
+      // Slots nach Startzeit sortieren
       plan[facilityIndex].allocations[dayIndex].sort((a, b) => a.startHour - b.startHour);
 
-      // Redraw all slots
+      // Alle Slots neuzeichnen
       drawSlots();
 
-      // Save to localStorage
+      // In localStorage speichern
       saveToLocalStorage();
     }
 
-    // Move an existing slot to a new position
+    // Bestehenden Slot an eine neue Position verschieben
     function moveSlot(slotId, targetFacilityIndex, targetDayIndex, targetStartHour) {
       const slotInfo = findSlotById(slotId);
       if (!slotInfo) return;
 
       const { slot, facilityIndex, dayIndex, slotIndex } = slotInfo;
 
-      // Remove from source
+      // Von Quelle entfernen
       plan[facilityIndex].allocations[dayIndex].splice(slotIndex, 1);
 
-      // Clone the slot and update start hour
+      // Slot klonen und Startzeit aktualisieren
       const movedSlot = { ...slot, startHour: targetStartHour };
 
-      // Add to target
+      // Zum Ziel hinzufügen
       plan[targetFacilityIndex].allocations[targetDayIndex].push(movedSlot);
 
-      // Sort target day slots by start time
+      // Ziel-Tag-Slots nach Startzeit sortieren
       plan[targetFacilityIndex].allocations[targetDayIndex].sort((a, b) => a.startHour - b.startHour);
 
-      // Redraw all slots
+      // Alle Slots neuzeichnen
       drawSlots();
 
-      // Save to localStorage
+      // In localStorage speichern
       saveToLocalStorage();
     }
 
-    // Delete a slot by its ID
+    // Slot anhand seiner ID löschen
     function deleteSlot(slotId) {
       const slotInfo = findSlotById(slotId);
       if (!slotInfo) return;
 
       const { facilityIndex, dayIndex, slotIndex } = slotInfo;
 
-      // Remove the slot
+      // Slot entfernen
       plan[facilityIndex].allocations[dayIndex].splice(slotIndex, 1);
 
-      // Redraw all slots
+      // Alle Slots neuzeichnen
       drawSlots();
 
-      // Save to localStorage
+      // In localStorage speichern
       saveToLocalStorage();
     }
 
-    // Draw all slots onto the table
+    // Alle Slots auf die Tabelle zeichnen
     function drawSlots() {
-      // Remove all existing slots first
+      // Zuerst alle vorhandenen Slots entfernen
       document.querySelectorAll('.slot').forEach(s => s.remove());
 
       const startTime = parseTime(elements.settings.start.value);
@@ -2380,7 +3360,7 @@
 
       if (totalHours <= 0) return;
 
-      // Draw slots for each facility and day
+      // Slots für jede Anlage und jeden Tag zeichnen
       plan.forEach((facilityPlan, facilityIndex) => {
         const facilityRow = elements.tableBody.querySelector(`tr[data-facility-index="${facilityIndex}"]`);
         if (!facilityRow) return;
@@ -2389,24 +3369,24 @@
           const dayCell = facilityRow.querySelector(`td[data-day-index="${dayIndex}"]`);
           if (!dayCell) return;
 
-          // Sort slots by start time
+          // Slots nach Startzeit sortieren
           daySlots.sort((a, b) => a.startHour - b.startHour);
 
-          // Find all conflicts
+          // Alle Konflikte finden
           const conflictMap = checkSlotConflicts(daySlots);
 
-          // Draw each slot
+          // Jeden Slot zeichnen
           daySlots.forEach((slot, slotIndex) => {
             const slotElement = document.createElement('div');
             slotElement.className = 'slot';
 
-            // Has conflict?
+            // Hat Konflikt?
             const hasConflicts = conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0;
 
             if (hasConflicts) {
               slotElement.classList.add('conflict');
 
-              // Assign different z-indexes to conflicting slots for proper layering
+              // Verschiedene z-Indizes für konfliktierende Slots für korrektes Layering
               const conflictIndex = Array.from(conflictMap.get(slot.id)).indexOf(slot.id) % 3 + 1;
               slotElement.classList.add(`conflict-${conflictIndex}`);
             } else {
@@ -2417,11 +3397,11 @@
             slotElement.style.backgroundColor = slot.color;
             slotElement.dataset.id = slot.id;
 
-            // Speichere Slot-Daten für mobile Aktionen
+            // Slot-Daten für mobile Aktionen speichern
             slotElement.dataset.name = slot.name;
             slotElement.dataset.notes = slot.notes || '';
 
-            // Calculate position and width
+            // Position und Breite berechnen
             let adjustedStartHour = slot.startHour;
 
             // Für Übernacht-Zeiträume: Wenn der Slot nach Mitternacht und vor der Startzeit liegt
@@ -2435,13 +3415,13 @@
             slotElement.style.left = `${Math.max(0, leftPercent)}%`;
             slotElement.style.width = `${widthPercent}%`;
 
-            // Add content with a span for better styling
+            // Inhalt mit einem Span für besseres Styling hinzufügen
             const textSpan = document.createElement('span');
             textSpan.className = 'slot-text';
             textSpan.textContent = slot.name;
             slotElement.appendChild(textSpan);
 
-            // Add delete button (auf Desktop sichtbar, auf Mobilgeräten optional)
+            // Lösch-Button hinzufügen (auf Desktop sichtbar, auf Mobilgeräten optional)
             if (!isMobile || !isTouchDevice()) {
               const deleteBtn = document.createElement('button');
               deleteBtn.className = 'delete-slot';
@@ -2456,7 +3436,7 @@
               slotElement.appendChild(deleteBtn);
             }
 
-            // Add notes indicator if present
+            // Notizen-Indikator hinzufügen, falls vorhanden
             if (slot.notes && slot.notes.trim()) {
               const notesIndicator = document.createElement('span');
               notesIndicator.className = 'notes-indicator';
@@ -2465,7 +3445,7 @@
               slotElement.appendChild(notesIndicator);
             }
 
-            // Add tooltip (für Desktop)
+            // Tooltip hinzufügen (für Desktop)
             if (!isMobile || !isTouchDevice()) {
               slotElement.addEventListener('mouseenter', e => {
                 let tooltipContent = `
@@ -2475,7 +3455,7 @@
                   ${slot.tags.length > 0 ? `Tags: ${escapeHtml(slot.tags.join(', '))}` : ''}
                 `;
 
-                // Add notes to tooltip if they exist
+                // Notizen zum Tooltip hinzufügen, falls vorhanden
                 if (slot.notes && slot.notes.trim().length > 0) {
                   tooltipContent += `
                     <div class="tooltip-section">
@@ -2485,11 +3465,11 @@
                   `;
                 }
 
-                // Add conflict information if any
+                // Konfliktinformationen hinzufügen, falls vorhanden
                 if (hasConflicts) {
                   const conflictingSlots = [];
 
-                  // Get names of conflicting slots
+                  // Namen konfliktierender Slots abrufen
                   daySlots.forEach(otherSlot => {
                     if (conflictMap.get(slot.id).has(otherSlot.id)) {
                       conflictingSlots.push(otherSlot.name);
@@ -2528,20 +3508,20 @@
               slotElement.classList.remove('dragging');
             });
 
-            // Custom Touch Drag Events für mobile Geräte
+            // Custom Touch-Drag-Events für mobile Geräte
             if (isTouchDevice() && isMobile) {
               setupTouchDragEvents(slotElement, {
                 type: 'slot',
                 id: slot.id
               });
 
-              // Tap zur Anzeige des Aktionsmenüs
+              // Tap zum Anzeigen des Aktionsmenüs
               slotElement.addEventListener('click', function(e) {
                 e.stopPropagation();
                 slotActions.show(slot);
               });
             } else {
-              // Double-click to view notes in modal (für Desktop)
+              // Doppelklick zum Anzeigen von Notizen im Modal (für Desktop)
               if (slot.notes && slot.notes.trim().length > 0) {
                 slotElement.addEventListener('dblclick', () => {
                   notesModal.show(
@@ -2552,12 +3532,12 @@
               }
             }
 
-            // Check for time overflow (outside start/end time)
+            // Auf Zeitüberschreitung prüfen (außerhalb Start-/Endzeit)
             if (isOvernight) {
-              // Für Übernacht-Zeiträume: Überprüfe, ob der Slot außerhalb des Zeitbereichs liegt
+              // Für Übernacht-Zeiträume: Prüfen, ob Slot außerhalb des Zeitbereichs liegt
               const adjustedEndHour = slot.startHour + slot.duration;
 
-              // Bei Übernacht-Zeitbereich müssen wir prüfen, ob der Slot zwischen endTime und startTime liegt
+              // Bei Übernacht-Zeitbereich prüfen, ob Slot zwischen endTime und startTime liegt
               // oder außerhalb des gültigen Bereichs (startTime bis endTime+24) liegt
               const isOutsideTimeRange = (slot.startHour > endTime && slot.startHour < startTime) ||
                                          (adjustedEndHour > endTime && slot.startHour >= startTime) ||
@@ -2567,7 +3547,7 @@
                 slotElement.classList.add('overflow');
               }
             } else {
-              // Normale Überprüfung für Zeitbereiche innerhalb eines Tages
+              // Normale Prüfung für Zeitbereiche innerhalb eines Tages
               if (slot.startHour < startTime || slot.startHour + slot.duration > endTime) {
                 slotElement.classList.add('overflow');
               }
@@ -2579,25 +3559,25 @@
       });
     }
 
-    // --- Export Functions ---
+    // --- Export-Funktionen ---
 
-    // Export plan to CSV
+    // Plan als CSV exportieren
     function exportToCsv() {
       let csvContent = 'Anlage;Tag;Startzeit;Endzeit;Dauer (h);Disziplin;Tags;Notizen;Konflikte\n';
 
       plan.forEach(facilityPlan => {
         facilityPlan.allocations.forEach((daySlots, dayIndex) => {
-          // Get conflict information
+          // Konfliktinformationen abrufen
           const conflictMap = checkSlotConflicts(daySlots);
 
           daySlots.forEach(slot => {
             const startTimeStr = formatTime(slot.startHour);
             const endTimeStr = formatTime(slot.startHour + slot.duration);
             const tagsStr = `"${slot.tags.join(', ')}"`;
-            // Escape quotes in notes for CSV
+            // Anführungszeichen in Notizen für CSV escapen
             const notesStr = `"${(slot.notes || '').replace(/"/g, '""')}"`;
 
-            // Get conflict information
+            // Konfliktinformationen abrufen
             let conflictStr = '""';
             if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
               const conflictingSlots = [];
@@ -2614,8 +3594,8 @@
         });
       });
 
-      // Create download link
-      const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel
+      // Download-Link erstellen
+      const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // BOM für Excel
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -2626,7 +3606,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // Export plan to PDF
+    // Plan als PDF exportieren
     async function exportToPdf() {
       if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
         alert("PDF Export-Bibliotheken nicht geladen.");
@@ -2636,13 +3616,13 @@
       const { jsPDF } = window.jspdf;
       const tableElement = elements.planTable;
 
-      // Show loading indicator
+      // Ladeindikator anzeigen
       const originalButtonText = elements.exportPdf.textContent;
       elements.exportPdf.textContent = 'PDF...';
       elements.exportPdf.disabled = true;
 
       try {
-        // Stelle den Zoom für den Export zurück
+        // Zoom für den Export zurücksetzen
         const originalTransform = tableElement.style.transform;
         tableElement.style.transform = 'scale(1)';
 
@@ -2654,12 +3634,12 @@
           windowHeight: tableElement.scrollHeight
         });
 
-        // Stelle den ursprünglichen Zoom wieder her
+        // Ursprünglichen Zoom wiederherstellen
         tableElement.style.transform = originalTransform;
 
         const imgData = canvas.toDataURL('image/png');
 
-        // Create PDF with appropriate size
+        // PDF mit passender Größe erstellen
         const pdf = new jsPDF({
           orientation: 'landscape',
           unit: 'mm'
@@ -2671,16 +3651,16 @@
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
 
-        // Calculate scaling to fit page while maintaining aspect ratio
+        // Skalierung zur passenden Anzeige auf der Seite mit Beibehaltung des Seitenverhältnisses
         const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
 
-        // Center on page
+        // Auf Seite zentrieren
         const xPos = (pageWidth - imgWidth * ratio) / 2;
-        const yPos = 10; // Top margin
+        const yPos = 10; // Oberer Rand
 
         pdf.addImage(imgData, 'PNG', xPos, yPos, imgWidth * ratio, imgHeight * ratio);
 
-        // Add conflict information and notes
+        // Konfliktinformationen und Notizen hinzufügen
         let hasConflicts = false;
         let hasNotes = false;
 
@@ -2688,7 +3668,7 @@
           facilityPlan.allocations.forEach(daySlots => {
             const conflictMap = checkSlotConflicts(daySlots);
 
-            // Check for conflicts
+            // Auf Konflikte prüfen
             if (!hasConflicts) {
               for (let slot of daySlots) {
                 if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
@@ -2698,7 +3678,7 @@
               }
             }
 
-            // Check for notes
+            // Auf Notizen prüfen
             if (!hasNotes) {
               for (let slot of daySlots) {
                 if (slot.notes && slot.notes.trim()) {
@@ -2710,7 +3690,7 @@
           });
         });
 
-        // Add additional page if there are conflicts or notes
+        // Zusätzliche Seite bei Konflikten oder Notizen hinzufügen
         if (hasConflicts || hasNotes) {
           pdf.addPage();
           pdf.setFont('helvetica', 'bold');
@@ -2721,21 +3701,21 @@
 
           let yPosition = 30;
 
-          // Add conflicts section
+          // Konfliktbereich hinzufügen
           if (hasConflicts) {
             pdf.setFont('helvetica', 'bold');
             pdf.text('Zeitkonflikte:', 14, yPosition);
             pdf.setFont('helvetica', 'normal');
             yPosition += 10;
 
-            // List conflicts
+            // Konflikte auflisten
             let conflictListed = false;
 
             plan.forEach(facilityPlan => {
               facilityPlan.allocations.forEach((daySlots, dayIndex) => {
                 const conflictMap = checkSlotConflicts(daySlots);
 
-                // Process each slot for conflicts
+                // Jeden Slot auf Konflikte prüfen
                 daySlots.forEach(slot => {
                   if (conflictMap.has(slot.id) && conflictMap.get(slot.id).size > 0) {
                     const conflictingSlots = [];
@@ -2748,7 +3728,7 @@
                     if (conflictingSlots.length > 0) {
                       const conflictText = `${facilityPlan.facility}, Tag ${dayIndex + 1}: ${slot.name} ↔ ${conflictingSlots.join(', ')}`;
 
-                      // Check for page break
+                      // Auf Seitenumbruch prüfen
                       if (yPosition > pageHeight - 20) {
                         pdf.addPage();
                         yPosition = 20;
@@ -2768,20 +3748,20 @@
               yPosition += 6;
             }
 
-            yPosition += 10; // Add space before notes section
+            yPosition += 10; // Platz vor Notizenbereich hinzufügen
           }
 
-          // Add notes section
+          // Notizenbereich hinzufügen
           if (hasNotes) {
             pdf.setFont('helvetica', 'bold');
             pdf.text('Notizen zu Disziplinen:', 14, yPosition);
             pdf.setFont('helvetica', 'normal');
             yPosition += 10;
 
-            // List discipline notes
+            // Disziplin-Notizen auflisten
             disciplines.forEach(disc => {
               if (disc.notes && disc.notes.trim()) {
-                // Check for page break
+                // Auf Seitenumbruch prüfen
                 if (yPosition > pageHeight - 20) {
                   pdf.addPage();
                   yPosition = 20;
@@ -2791,11 +3771,11 @@
                 pdf.text(`${disc.name} (${disc.duration}h)`, 14, yPosition);
                 pdf.setFont('helvetica', 'normal');
 
-                // Split notes into lines to fit the page width
+                // Notizen in Zeilen aufteilen, um Seitenbreite einzuhalten
                 const textLines = pdf.splitTextToSize(disc.notes, pageWidth - 28);
                 pdf.text(textLines, 14, yPosition + 6);
 
-                yPosition += 6 + (textLines.length * 6) + 10; // Add space for title + text + margin
+                yPosition += 6 + (textLines.length * 6) + 10; // Platz für Titel + Text + Rand hinzufügen
               }
             });
           }
@@ -2806,14 +3786,15 @@
         console.error('Fehler beim PDF-Export:', error);
         alert('Fehler beim Erstellen des PDFs.');
       } finally {
-        // Restore button
+        // Button wiederherstellen
         elements.exportPdf.textContent = originalButtonText;
-              }
+        elements.exportPdf.disabled = false;
+      }
     }
 
-    // --- LocalStorage Functions ---
+    // --- LocalStorage-Funktionen ---
 
-    // Save state to localStorage
+    // Zustand in localStorage speichern
     function saveToLocalStorage() {
       try {
         localStorage.setItem('eventPlannerFacilities', JSON.stringify(facilities));
@@ -2824,7 +3805,7 @@
       }
     }
 
-    // Load state from localStorage
+    // Zustand aus localStorage laden
     function loadFromLocalStorage() {
       try {
         const savedFacilities = localStorage.getItem('eventPlannerFacilities');
@@ -2835,65 +3816,65 @@
         if (savedDisciplines) disciplines = JSON.parse(savedDisciplines);
         if (savedPlan) plan = JSON.parse(savedPlan);
 
-        // If nothing saved, use defaults
+        // Falls nichts gespeichert wurde, Standardwerte verwenden
         if (!facilities.length) {
           facilities = ['Halle A', 'Halle B', 'Sportplatz', 'Kraftraum'];
         }
 
         if (!disciplines.length) {
           disciplines = [
-             {
-            id: generateId(),
-            name: '50m_einbein',
-            duration: 1.5,
-            tags: ['RACE', 'Indoor'],
-            color: '#f44336',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '10K_Marathon',
-            duration: 1.5,
-            tags: ['RACE', 'Outdoor', 'Street'],
-            color: '#6850a4',
-            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
-          },
-          {
-            id: generateId(),
-            name: 'Freestyle_J1',
-            duration: 6,
-            tags: ['Freestyle', 'Indoor'],
-            color: '#1f525d',
-            notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
-          },
-          {
-            id: generateId(),
-            name: '100m_SPRINT',
-            duration: 2,
-            tags: ['RACE', 'Outdoor'],
-            color: '#9C27B0',
-            notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_HOCKEY',
-            duration: 1,
-            tags: ['Mannschaft', 'Indoor'],
-            color: '#4CAF50',
-            notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
-          },
-          {
-            id: generateId(),
-            name: 'UNI_BASKETBALL',
-            duration: 2.5,
-            tags: ['Mannschaft', 'Outdoor'],
-            color: '#2196F3',
-            notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
-          }
+            {
+              id: generateId(),
+              name: '50m_einbein',
+              duration: 1.5,
+              tags: ['RACE', 'Indoor'],
+              color: '#f44336',
+              notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+            },
+            {
+              id: generateId(),
+              name: '10K_Marathon',
+              duration: 1.5,
+              tags: ['RACE', 'Outdoor', 'Street'],
+              color: '#6850a4',
+              notes: 'Benötigt Startblöcke und Stoppuhren/Zeitnahme. Bei Regen auf Halle ausweichen?'
+            },
+            {
+              id: generateId(),
+              name: 'Freestyle_J1',
+              duration: 6,
+              tags: ['Freestyle', 'Indoor'],
+              color: '#1f525d',
+              notes: 'Benötigt Startblöcke und Stoppuhren. Bei Regen auf Halle ausweichen.'
+            },
+            {
+              id: generateId(),
+              name: '100m_SPRINT',
+              duration: 2,
+              tags: ['RACE', 'Outdoor'],
+              color: '#9C27B0',
+              notes: 'Gewichte müssen vorher aufgebaut werden. Max. 10 Teilnehmer.'
+            },
+            {
+              id: generateId(),
+              name: 'UNI_HOCKEY',
+              duration: 1,
+              tags: ['Mannschaft', 'Indoor'],
+              color: '#4CAF50',
+              notes: 'Matten bereitstellen. Umkleiden 30 min vorher öffnen.'
+            },
+            {
+              id: generateId(),
+              name: 'UNI_BASKETBALL',
+              duration: 2.5,
+              tags: ['Mannschaft', 'Outdoor'],
+              color: '#2196F3',
+              notes: 'Tore und Bälle vorbereiten. Schiedsrichter einplanen.'
+            }
           ];
         }
 
-        // Ensure plan structure matches current settings
+        // Sicherstellen, dass die Planstruktur mit den aktuellen Einstellungen übereinstimmt
         const numDays = parseInt(elements.settings.days.value, 10) || 1;
         if (!plan.length || plan.length !== facilities.length ||
             plan.some((f, i) => f.facility !== facilities[i] || f.allocations.length !== numDays)) {
@@ -2917,7 +3898,7 @@
             duration: 1.5,
             tags: ['RACE', 'Outdoor', 'Street'],
             color: '#6850a4',
-            notes: 'Benötigt Startblöcke und Stoppuhren/ Zeitnahme. Bei Regen auf Halle ausweichen?'
+            notes: 'Benötigt Startblöcke und Stoppuhren/Zeitnahme. Bei Regen auf Halle ausweichen?'
           },
           {
             id: generateId(),
@@ -2956,12 +3937,15 @@
       }
     }
 
-    // --- Initialize Application ---
+    // --- Anwendung initialisieren ---
     function initialize() {
-      // Initialisiere mobile Hilfsfunktionen
+      // Mobile Hilfsfunktionen initialisieren
       slotActions.initialize();
       zoomControls.initialize();
       disciplineSelector.initialize();
+
+      // Excel Preview Modal initialisieren
+      previewModal.initialize();
 
       // Mobile Drag & Drop aktivieren
       if (isTouchDevice()) {
@@ -2972,30 +3956,30 @@
         }, { passive: false });
       }
 
-      // Load saved data
+      // Gespeicherte Daten laden
       loadFromLocalStorage();
 
-      // Render UI components
+      // UI-Komponenten rendern
       renderSettingsLists();
       renderDiscPanel();
       renderTableStructure(parseInt(elements.settings.days.value, 10) || 1);
       drawSlots();
 
-      // Set up save on unload
+      // Speichern beim Verlassen einrichten
       window.addEventListener('beforeunload', saveToLocalStorage);
 
-      // Listen for orientation changes
+      // Auf Orientierungsänderungen hören
       window.addEventListener('orientationchange', function() {
-        // Kurze Verzögerung für das komplette Neuausrichten
+        // Kurze Verzögerung für vollständige Neuausrichtung
         setTimeout(function() {
-          // Setze Zoom zurück, wenn sich die Orientierung ändert
+          // Zoom zurücksetzen, wenn sich die Orientierung ändert
           currentZoom = 1;
           applyZoom();
         }, 300);
       });
     }
 
-    // Start the application
+    // Anwendung starten
     initialize();
   </script>
 </body>
