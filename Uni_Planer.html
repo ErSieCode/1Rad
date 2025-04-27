@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Event-Wettkampf Anlagen Belegungsplan</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -11,7 +11,7 @@
       --settings-width-open: 300px;
       --settings-width-closed: 0px;
       --settings-width: var(--settings-width-open);
-      --delete-btn-size: 16px;
+      --delete-btn-size: 24px; /* Vergrößert für bessere Touch-Bedienung */
       --primary-color: #2196F3;
       --success-color: #4CAF50;
       --danger-color: #F44336;
@@ -20,6 +20,7 @@
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: rgba(0,0,0,0); /* Entfernt blaues Highlight bei Tap */
     }
 
     body {
@@ -30,10 +31,44 @@
       height: 100vh;
       transition: grid-template-columns 0.3s ease;
       position: relative;
+      overscroll-behavior: none; /* Verhindert Pull-to-refresh auf mobilen Geräten */
+      touch-action: manipulation; /* Verbessert Touch-Reaktion */
     }
 
     body.settings-closed {
       --settings-width: var(--settings-width-closed);
+    }
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      body.settings-open {
+        grid-template-rows: 100vh 0fr;
+        overflow: hidden;
+      }
+
+      #toggle-settings {
+        z-index: 1002;
+      }
+
+      #settings {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1001;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      body.settings-open #settings {
+        transform: translateX(0);
+      }
     }
 
     #toggle-settings {
@@ -48,10 +83,25 @@
       cursor: pointer;
       z-index: 1001;
       transition: left 0.3s ease;
+      width: 44px; /* Größerer Tap-Bereich */
+      height: 44px; /* Größerer Tap-Bereich */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     body:not(.settings-closed) #toggle-settings {
       left: calc(var(--settings-width-open) + 10px);
+    }
+
+    @media (max-width: 768px) {
+      body.settings-open #toggle-settings {
+        left: 10px;
+      }
+
+      #toggle-settings {
+        left: 10px;
+      }
     }
 
     #exports {
@@ -70,6 +120,16 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      min-height: 44px; /* Größerer Tap-Bereich */
+      min-width: 44px; /* Größerer Tap-Bereich */
+    }
+
+    @media (max-width: 480px) {
+      #exports {
+        flex-direction: column;
+        top: 10px;
+        right: 10px;
+      }
     }
 
     #settings {
@@ -79,8 +139,9 @@
       overflow-y: auto;
       width: var(--settings-width-open);
       overflow-x: hidden;
-      transition: width 0.3s ease;
+      transition: width 0.3s ease, transform 0.3s ease;
       box-sizing: border-box;
+      -webkit-overflow-scrolling: touch; /* Glätteres Scrollen auf iOS */
     }
 
     body.settings-closed #settings {
@@ -104,16 +165,21 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       z-index: 10;
       flex-shrink: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .disc-item {
       background: var(--primary-color);
       color: #fff;
-      padding: 0.5rem;
+      padding: 0.75rem;
       border-radius: 4px;
       cursor: grab;
       user-select: none;
       transition: transform 0.1s ease;
+      min-height: 44px; /* Größerer Tap-Bereich */
+      min-width: 44px; /* Größerer Tap-Bereich */
+      touch-action: none; /* Verbessert Drag-Funktionalität auf Touch-Geräten */
     }
 
     .disc-item:active {
@@ -125,14 +191,22 @@
       flex-grow: 1;
       overflow: auto;
       background: #fafafa;
-      padding: 1rem;
+      padding: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+      user-select: none; /* Verhindert Textauswahl beim Scrollen */
+    }
+
+    @media (max-width: 768px) {
+      #planner {
+        padding: 0.25rem;
+      }
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
-      min-width: 800px;
+      min-width: auto; /* Entfernt min-width für responsive Anzeige */
       background: #fff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
       border-radius: 4px;
@@ -148,10 +222,10 @@
     }
 
     th:first-child, td:first-child {
-      width: 120px;
+      width: 80px; /* Reduziert für mobile Ansicht */
       background: #f5f5f5;
       font-weight: bold;
-      padding: 0.75rem 0.5rem;
+      padding: 0.75rem 0.25rem;
       text-align: left;
       position: sticky;
       left: 0;
@@ -163,13 +237,28 @@
       position: sticky;
       top: 0;
       z-index: 2;
-      padding: 0.75rem 0.5rem;
+      padding: 0.75rem 0.25rem;
       text-align: center;
       font-weight: bold;
     }
 
     td:not(:first-child) {
-      height: 90px;
+      height: 120px; /* Höher für bessere Touch-Bedienung */
+    }
+
+    @media (max-width: 768px) {
+      th, td {
+        font-size: 0.8rem;
+      }
+
+      th:first-child, td:first-child {
+        width: 60px;
+        padding: 0.5rem 0.25rem;
+      }
+
+      th:not(:first-child) {
+        padding: 0.5rem 0.25rem;
+      }
     }
 
     /* Time markers */
@@ -224,6 +313,14 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
       font-weight: 500;
       transition: opacity 0.2s ease;
+      touch-action: none; /* Verbessert Touch-Bedienung */
+      min-height: 40px; /* Höher für bessere Touch-Bedienung */
+    }
+
+    @media (max-width: 768px) {
+      .slot {
+        font-size: 0.7rem;
+      }
     }
 
     /* Improved conflict visualization */
@@ -264,7 +361,7 @@
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 14px;
       line-height: var(--delete-btn-size);
       text-align: center;
       padding: 0;
@@ -281,7 +378,7 @@
       position: absolute;
       right: 3px;
       bottom: 3px;
-      font-size: 10px;
+      font-size: 14px;
       cursor: pointer;
     }
 
@@ -299,11 +396,11 @@
     /* Tooltip */
     #tooltip {
       position: fixed;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.9);
       color: white;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 4px;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       z-index: 1000;
       pointer-events: none;
       opacity: 0;
@@ -348,9 +445,12 @@
     #settings input[type="color"],
     #settings textarea {
       width: calc(100% - 12px);
-      padding: 5px;
+      padding: 10px; /* Größer für Touch-Bedienung */
       margin-bottom: 0.5rem;
       box-sizing: border-box;
+      font-size: 16px; /* Verhindert Zoom auf iOS */
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
 
     #settings textarea {
@@ -359,38 +459,39 @@
     }
 
     #settings button {
-      padding: 0.5rem;
+      padding: 0.75rem;
       background: var(--primary-color);
       color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       margin-top: 5px;
+      min-height: 44px; /* Größerer Tap-Bereich */
     }
 
     #settings .list-item {
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
 
     #settings .list-item input[type="text"] { flex-grow: 1; margin-bottom: 0; }
-    #settings .list-item button { margin-top: 0; }
+    #settings .list-item button { margin-top: 0; min-width: 44px; }
 
     #settings #discipline-list div,
     #settings #facility-list div {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 0;
+      padding: 8px 0; /* Größer für Touch-Bedienung */
       word-break: break-all;
     }
 
     #settings #discipline-list div span {
       display: inline-block;
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
       margin-right: 5px;
       vertical-align: middle;
       border: 1px solid #ccc;
@@ -399,11 +500,13 @@
     #settings #discipline-list button,
     #settings #facility-list button {
       background: var(--danger-color);
-      padding: 2px 6px;
-      font-size: 12px;
+      padding: 6px 10px;
+      font-size: 14px;
       line-height: 1;
       margin-left: 10px;
       flex-shrink: 0;
+      min-width: 44px;
+      min-height: 44px;
     }
 
     #settings #generate {
@@ -439,6 +542,7 @@
       max-width: 500px;
       max-height: 80vh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .modal-header {
@@ -459,8 +563,9 @@
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      padding: 0;
+      padding: 10px; /* Größerer Tap-Bereich */
       line-height: 1;
+      margin: -10px; /* Kompensiert das größere Padding */
     }
 
     .modal-body {
@@ -471,16 +576,165 @@
       display: flex;
       justify-content: flex-end;
     }
+
+    .modal-footer button {
+      padding: 10px 20px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      min-height: 44px;
+      min-width: 80px;
+    }
+
+    /* Touch-friendly Features */
+    .touch-active {
+      background-color: rgba(33, 150, 243, 0.2) !important;
+    }
+
+    /* Mobile Action Menu für Slots */
+    #slot-actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      z-index: 1010;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+
+    #slot-actions.visible {
+      transform: translateY(0);
+    }
+
+    .slot-action-button {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .slot-action-delete {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .slot-action-cancel {
+      background: #ddd;
+    }
+
+    /* Overlay für Drag-Operationen auf Mobilgeräten */
+    #mobile-drag-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #mobile-drag-overlay.visible {
+      display: flex;
+    }
+
+    #mobile-drag-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 80%;
+    }
+
+    /* Swipe Indicator */
+    .swipe-indicator {
+      text-align: center;
+      padding: 10px;
+      background: rgba(33, 150, 243, 0.1);
+      font-size: 0.8rem;
+      color: #666;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .swipe-indicator {
+        display: block;
+      }
+    }
+
+    /* Zoom-Controls für mobile Ansicht */
+    #zoom-controls {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 990;
+    }
+
+    @media (max-width: 768px) {
+      #zoom-controls {
+        display: flex;
+      }
+    }
+
+    .zoom-button {
+      width: 44px;
+      height: 44px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body class="settings-closed">
   <button id="toggle-settings">☰</button>
   <div id="exports">
-    <button id="export-csv">CSV Export</button>
-    <button id="export-pdf">PDF Export</button>
+    <button id="export-csv">CSV</button>
+    <button id="export-pdf">PDF</button>
   </div>
 
   <div id="tooltip"></div>
+
+  <!-- Mobile-Action-Menu für Slots -->
+  <div id="slot-actions">
+    <button class="slot-action-button" id="slot-action-edit">Bearbeiten</button>
+    <button class="slot-action-button slot-action-delete" id="slot-action-delete">Löschen</button>
+    <button class="slot-action-button slot-action-cancel" id="slot-action-cancel">Abbrechen</button>
+  </div>
+
+  <!-- Mobile Drag Overlay -->
+  <div id="mobile-drag-overlay">
+    <div id="mobile-drag-content">
+      <p>Element verschieben...</p>
+      <p>Halte und ziehe zum Verschieben</p>
+    </div>
+  </div>
+
+  <!-- Zoom Controls für mobile Ansicht -->
+  <div id="zoom-controls">
+    <button class="zoom-button" id="zoom-in">+</button>
+    <button class="zoom-button" id="zoom-out">-</button>
+  </div>
 
   <!-- Modal for viewing notes -->
   <div id="notes-modal" class="modal">
@@ -512,7 +766,7 @@
     <div id="facility-list"></div>
     <div class="list-item">
       <input type="text" id="new-facility" placeholder="Neue Anlage">
-      <button id="add-facility">➕</button>
+      <button id="add-facility">+</button>
     </div>
 
     <h3>Disziplinen</h3>
@@ -536,12 +790,13 @@
       <textarea id="new-notes" placeholder="Zusätzliche Informationen zur Disziplin eingeben..."></textarea>
     </div>
     <div class="list-item">
-      <button id="add-disc">➕ Disziplin</button>
+      <button id="add-disc">+ Disziplin</button>
     </div>
   </div>
 
   <div id="main">
     <div id="disc-panel"></div>
+    <div class="swipe-indicator">← Nach links/rechts wischen für mehr Tage →</div>
     <div id="planner">
       <table id="plan-table">
         <thead>
@@ -608,7 +863,19 @@
       return div.innerHTML;
     }
 
+    // Detect Touch Device
+    function isTouchDevice() {
+      return ('ontouchstart' in window) ||
+             (navigator.maxTouchPoints > 0) ||
+             (navigator.msMaxTouchPoints > 0);
+    }
+
     // --- Global State ---
+    let isMobile = window.innerWidth <= 768;
+    let currentZoom = 1;
+    let activeSlot = null; // Für mobile Slot-Aktionen
+    let isDragging = false;
+    let touchTimeout = null;
 
     // Tooltip management
     const tooltip = {
@@ -616,6 +883,9 @@
       visible: false,
 
       show(e, content) {
+        // Don't show tooltips on touch devices
+        if (isTouchDevice() && isMobile) return;
+
         this.element.innerHTML = content;
         this.element.classList.add('visible');
         this.visible = true;
@@ -691,6 +961,94 @@
       }
     };
 
+    // Mobile slot actions
+    const slotActions = {
+      element: document.getElementById('slot-actions'),
+      editBtn: document.getElementById('slot-action-edit'),
+      deleteBtn: document.getElementById('slot-action-delete'),
+      cancelBtn: document.getElementById('slot-action-cancel'),
+
+      show(slot) {
+        this.element.classList.add('visible');
+        activeSlot = slot;
+
+        // Stelle sicher, dass Scrolling blockiert wird
+        document.body.style.overflow = 'hidden';
+      },
+
+      hide() {
+        this.element.classList.remove('visible');
+        activeSlot = null;
+
+        // Stelle Scrolling wieder her
+        document.body.style.overflow = '';
+      },
+
+      initialize() {
+        this.deleteBtn.addEventListener('click', () => {
+          if (activeSlot && confirm(`Möchten Sie "${activeSlot.name}" wirklich löschen?`)) {
+            deleteSlot(activeSlot.id);
+            this.hide();
+          }
+        });
+
+        this.editBtn.addEventListener('click', () => {
+          if (activeSlot) {
+            notesModal.show(
+              `Notizen: ${activeSlot.name}`,
+              `<div style="white-space: pre-wrap;">${escapeHtml(activeSlot.notes || '')}</div>`
+            );
+            this.hide();
+          }
+        });
+
+        this.cancelBtn.addEventListener('click', () => {
+          this.hide();
+        });
+      }
+    };
+
+    // Mobile drag overlay
+    const dragOverlay = {
+      element: document.getElementById('mobile-drag-overlay'),
+
+      show() {
+        this.element.classList.add('visible');
+      },
+
+      hide() {
+        this.element.classList.remove('visible');
+      }
+    };
+
+    // Zoom controls
+    const zoomControls = {
+      zoomIn: document.getElementById('zoom-in'),
+      zoomOut: document.getElementById('zoom-out'),
+
+      initialize() {
+        this.zoomIn.addEventListener('click', () => {
+          if (currentZoom < 2) {
+            currentZoom += 0.1;
+            applyZoom();
+          }
+        });
+
+        this.zoomOut.addEventListener('click', () => {
+          if (currentZoom > 0.5) {
+            currentZoom -= 0.1;
+            applyZoom();
+          }
+        });
+      }
+    };
+
+    function applyZoom() {
+      const table = document.getElementById('plan-table');
+      table.style.transform = `scale(${currentZoom})`;
+      table.style.transformOrigin = 'top left';
+    }
+
     // Application state
     let facilities = [];
     let disciplines = [];
@@ -730,8 +1088,26 @@
 
     // Toggle settings panel
     elements.toggleSettings.onclick = () => {
-      elements.body.classList.toggle('settings-closed');
+      if (isMobile) {
+        elements.body.classList.toggle('settings-open');
+      } else {
+        elements.body.classList.toggle('settings-closed');
+      }
     };
+
+    // Window resize handler
+    window.addEventListener('resize', () => {
+      isMobile = window.innerWidth <= 768;
+
+      // Wenn die Größe sich ändert, ggf. Settings-Panel anpassen
+      if (!isMobile && elements.body.classList.contains('settings-open')) {
+        elements.body.classList.remove('settings-open');
+        elements.body.classList.remove('settings-closed');
+      } else if (isMobile && !elements.body.classList.contains('settings-closed') &&
+                !elements.body.classList.contains('settings-open')) {
+        elements.body.classList.add('settings-closed');
+      }
+    });
 
     // Add Facility
     elements.settings.addFacility.onclick = () => {
@@ -909,7 +1285,7 @@
           div.appendChild(notesIndicator);
         }
 
-        // Add tooltip information
+        // Add tooltip information for desktop
         div.addEventListener('mouseenter', e => {
           let tooltipContent = `
             <strong>${escapeHtml(disc.name)}</strong><br>
@@ -934,6 +1310,39 @@
           tooltip.hide();
         });
 
+        // Touch Interaktionen für Smartphones
+        if (isTouchDevice()) {
+          // Long press to show notes on mobile
+          div.addEventListener('touchstart', function(e) {
+            if (isMobile) {
+              touchTimeout = setTimeout(() => {
+                if (disc.notes && disc.notes.trim()) {
+                  notesModal.show(
+                    `Notizen: ${disc.name}`,
+                    `<div style="white-space: pre-wrap;">${escapeHtml(disc.notes)}</div>`
+                  );
+                }
+              }, 800); // 800ms long press
+
+              div.classList.add('touch-active');
+            }
+          });
+
+          div.addEventListener('touchend', function() {
+            clearTimeout(touchTimeout);
+            div.classList.remove('touch-active');
+          });
+
+          div.addEventListener('touchmove', function() {
+            clearTimeout(touchTimeout);
+          });
+
+          div.addEventListener('touchcancel', function() {
+            clearTimeout(touchTimeout);
+            div.classList.remove('touch-active');
+          });
+        }
+
         // Set up drag & drop functionality
         div.addEventListener('dragstart', e => {
           // Store discipline data for the drop handler
@@ -941,6 +1350,16 @@
             type: 'discipline',
             id: disc.id
           }));
+
+          if (isMobile && isTouchDevice()) {
+            dragOverlay.show();
+          }
+        });
+
+        div.addEventListener('dragend', () => {
+          if (isMobile && isTouchDevice()) {
+            dragOverlay.hide();
+          }
         });
 
         elements.discPanel.appendChild(div);
@@ -986,6 +1405,10 @@
       renderTableStructure(numDays);
       drawSlots(); // Redraw existing slots
       saveToLocalStorage();
+
+      // Setze Zoom auf Standardwert zurück
+      currentZoom = 1;
+      applyZoom();
     }
 
     // Render the basic HTML table structure (headers, rows, cells)
@@ -1118,6 +1541,7 @@
       cell.addEventListener('drop', e => {
         e.preventDefault();
         cell.classList.remove('drop-target');
+        dragOverlay.hide(); // Verstecke das Overlay, wenn vorhanden
 
         try {
           // Get the data that was dragged
@@ -1163,6 +1587,48 @@
           console.error('Error during drop handling:', err);
         }
       });
+
+      // Touch-Tap zum Hinzufügen für Mobilgeräte
+      if (isTouchDevice()) {
+        cell.addEventListener('click', function(e) {
+          if (isMobile) {
+            // Wenn wir auf eine leere Stelle in der Zelle klicken und nicht auf einen Slot
+            if (e.target === cell) {
+              // Zeige Auswahldialog für Disziplinen
+              if (disciplines.length > 0) {
+                const rect = cell.getBoundingClientRect();
+                const tapX = e.clientX - rect.left;
+                const cellWidth = rect.width;
+
+                const startTime = parseTime(elements.settings.start.value);
+                const endTime = parseTime(elements.settings.end.value);
+                const totalHours = calculateTotalHours(startTime, endTime);
+
+                // Berechne Zielzeit basierend auf Tap-Position
+                let targetHour = startTime + (tapX / cellWidth) * totalHours;
+
+                // Auf 15-Minuten-Intervalle (0,25 Stunden) runden
+                targetHour = Math.round(targetHour * 4) / 4;
+
+                // Bei Übernacht-Zeiträumen korrigieren
+                const isOvernight = isOvernightRange(startTime, endTime);
+                if (isOvernight && targetHour >= 24) {
+                  targetHour = targetHour - 24;
+                }
+
+                // Erstelle Disziplinauswahl-Dialog
+                const facilityIndex = parseInt(cell.dataset.facilityIndex, 10);
+                const dayIndex = parseInt(cell.dataset.dayIndex, 10);
+
+                // Für dieses Beispiel nehmen wir die erste Disziplin
+                // In einer kompletten Implementation würde hier ein Auswahldialog gezeigt werden
+                const discipline = disciplines[0];
+                allocateSlot(facilityIndex, dayIndex, discipline, targetHour);
+              }
+            }
+          }
+        });
+      }
     }
 
     // Find a slot by ID
@@ -1336,6 +1802,10 @@
             slotElement.style.backgroundColor = slot.color;
             slotElement.dataset.id = slot.id;
 
+            // Speichere Slot-Daten für mobile Aktionen
+            slotElement.dataset.name = slot.name;
+            slotElement.dataset.notes = slot.notes || '';
+
             // Calculate position and width
             let adjustedStartHour = slot.startHour;
 
@@ -1356,85 +1826,128 @@
             textSpan.textContent = slot.name;
             slotElement.appendChild(textSpan);
 
-            // Add delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-slot';
-            deleteBtn.innerHTML = '✖';
-            deleteBtn.title = 'Löschen';
-            deleteBtn.onclick = e => {
-              e.stopPropagation();
-              if (confirm(`Möchten Sie "${slot.name}" wirklich löschen?`)) {
-                deleteSlot(slot.id);
-              }
-            };
-            slotElement.appendChild(deleteBtn);
+            // Add delete button (auf Desktop sichtbar, auf Mobilgeräten optional)
+            if (!isMobile || !isTouchDevice()) {
+              const deleteBtn = document.createElement('button');
+              deleteBtn.className = 'delete-slot';
+              deleteBtn.innerHTML = '✖';
+              deleteBtn.title = 'Löschen';
+              deleteBtn.onclick = e => {
+                e.stopPropagation();
+                if (confirm(`Möchten Sie "${slot.name}" wirklich löschen?`)) {
+                  deleteSlot(slot.id);
+                }
+              };
+              slotElement.appendChild(deleteBtn);
+            }
 
             // Add notes indicator if present
             if (slot.notes && slot.notes.trim()) {
               const notesIndicator = document.createElement('span');
               notesIndicator.className = 'notes-indicator';
               notesIndicator.innerHTML = '📝';
-              notesIndicator.title = 'Doppelklick zum Anzeigen der Notizen';
+              notesIndicator.title = 'Tippen zum Anzeigen der Notizen';
               slotElement.appendChild(notesIndicator);
             }
 
-            // Add tooltip
-            slotElement.addEventListener('mouseenter', e => {
-              let tooltipContent = `
-                <strong>${escapeHtml(slot.name)}</strong><br>
-                Zeit: ${formatTime(slot.startHour)} - ${formatTime(slot.startHour + slot.duration)}<br>
-                Dauer: ${slot.duration} Stunden<br>
-                ${slot.tags.length > 0 ? `Tags: ${escapeHtml(slot.tags.join(', '))}` : ''}
-              `;
-
-              // Add notes to tooltip if they exist
-              if (slot.notes && slot.notes.trim().length > 0) {
-                tooltipContent += `
-                  <div class="tooltip-section">
-                    <div class="tooltip-title">Notizen:</div>
-                    <div class="tooltip-notes">${escapeHtml(slot.notes)}</div>
-                  </div>
+            // Add tooltip (für Desktop)
+            if (!isMobile || !isTouchDevice()) {
+              slotElement.addEventListener('mouseenter', e => {
+                let tooltipContent = `
+                  <strong>${escapeHtml(slot.name)}</strong><br>
+                  Zeit: ${formatTime(slot.startHour)} - ${formatTime(slot.startHour + slot.duration)}<br>
+                  Dauer: ${slot.duration} Stunden<br>
+                  ${slot.tags.length > 0 ? `Tags: ${escapeHtml(slot.tags.join(', '))}` : ''}
                 `;
-              }
 
-              // Add conflict information if any
-              if (hasConflicts) {
-                const conflictingSlots = [];
+                // Add notes to tooltip if they exist
+                if (slot.notes && slot.notes.trim().length > 0) {
+                  tooltipContent += `
+                    <div class="tooltip-section">
+                      <div class="tooltip-title">Notizen:</div>
+                      <div class="tooltip-notes">${escapeHtml(slot.notes)}</div>
+                    </div>
+                  `;
+                }
 
-                // Get names of conflicting slots
-                daySlots.forEach(otherSlot => {
-                  if (conflictMap.get(slot.id).has(otherSlot.id)) {
-                    conflictingSlots.push(otherSlot.name);
-                  }
-                });
+                // Add conflict information if any
+                if (hasConflicts) {
+                  const conflictingSlots = [];
 
-                tooltipContent += `
-                  <div class="tooltip-conflict">
-                    Konflikt mit: ${escapeHtml(conflictingSlots.join(', '))}
-                  </div>
-                `;
-              }
+                  // Get names of conflicting slots
+                  daySlots.forEach(otherSlot => {
+                    if (conflictMap.get(slot.id).has(otherSlot.id)) {
+                      conflictingSlots.push(otherSlot.name);
+                    }
+                  });
 
-              tooltip.show(e, tooltipContent);
-            });
+                  tooltipContent += `
+                    <div class="tooltip-conflict">
+                      Konflikt mit: ${escapeHtml(conflictingSlots.join(', '))}
+                    </div>
+                  `;
+                }
 
-            slotElement.addEventListener('mouseleave', () => {
-              tooltip.hide();
-            });
-
-            // Double-click to view notes in modal if present
-            if (slot.notes && slot.notes.trim().length > 0) {
-              slotElement.addEventListener('dblclick', () => {
-                notesModal.show(
-                  `Notizen: ${slot.name}`,
-                  `<div style="white-space: pre-wrap;">${escapeHtml(slot.notes)}</div>`
-                );
+                tooltip.show(e, tooltipContent);
               });
+
+              slotElement.addEventListener('mouseleave', () => {
+                tooltip.hide();
+              });
+            }
+
+            // Touch-Interaktionen für Mobilgeräte
+            if (isTouchDevice()) {
+              slotElement.addEventListener('touchstart', function(e) {
+                if (isMobile) {
+                  touchTimeout = setTimeout(() => {
+                    isDragging = true;
+                    dragOverlay.show();
+                  }, 500); // 500ms für Drag-Start
+
+                  slotElement.classList.add('touch-active');
+                }
+              });
+
+              slotElement.addEventListener('touchend', function(e) {
+                clearTimeout(touchTimeout);
+                slotElement.classList.remove('touch-active');
+
+                if (!isDragging) {
+                  // Zeige Slot-Aktionsmenü
+                  slotActions.show(slot);
+                } else {
+                  isDragging = false;
+                  dragOverlay.hide();
+                }
+              });
+
+              slotElement.addEventListener('touchmove', function() {
+                clearTimeout(touchTimeout);
+                slotElement.classList.remove('touch-active');
+              });
+
+              slotElement.addEventListener('touchcancel', function() {
+                clearTimeout(touchTimeout);
+                slotElement.classList.remove('touch-active');
+                isDragging = false;
+                dragOverlay.hide();
+              });
+            } else {
+              // Double-click to view notes in modal (für Desktop)
+              if (slot.notes && slot.notes.trim().length > 0) {
+                slotElement.addEventListener('dblclick', () => {
+                  notesModal.show(
+                    `Notizen: ${slot.name}`,
+                    `<div style="white-space: pre-wrap;">${escapeHtml(slot.notes)}</div>`
+                  );
+                });
+              }
             }
 
             // Set up drag & drop for moving slots
             slotElement.addEventListener('dragstart', e => {
-              if (e.target === deleteBtn) {
+              if (e.target.classList.contains('delete-slot')) {
                 e.preventDefault();
                 return;
               }
@@ -1445,10 +1958,17 @@
               }));
 
               slotElement.style.opacity = '0.5';
+
+              if (isMobile && isTouchDevice()) {
+                dragOverlay.show();
+              }
             });
 
             slotElement.addEventListener('dragend', () => {
               slotElement.style.opacity = '1';
+              if (isMobile && isTouchDevice()) {
+                dragOverlay.hide();
+              }
             });
 
             // Check for time overflow (outside start/end time)
@@ -1537,10 +2057,14 @@
 
       // Show loading indicator
       const originalButtonText = elements.exportPdf.textContent;
-      elements.exportPdf.textContent = 'Erstelle PDF...';
+      elements.exportPdf.textContent = 'PDF...';
       elements.exportPdf.disabled = true;
 
       try {
+        // Stelle den Zoom für den Export zurück
+        const originalTransform = tableElement.style.transform;
+        tableElement.style.transform = 'scale(1)';
+
         const canvas = await html2canvas(tableElement, {
           scale: 1.5,
           useCORS: true,
@@ -1548,6 +2072,9 @@
           windowWidth: tableElement.scrollWidth,
           windowHeight: tableElement.scrollHeight
         });
+
+        // Stelle den ursprünglichen Zoom wieder her
+        tableElement.style.transform = originalTransform;
 
         const imgData = canvas.toDataURL('image/png');
 
@@ -1851,6 +2378,10 @@
 
     // --- Initialize Application ---
     function initialize() {
+      // Initialisiere mobile Hilfsfunktionen
+      slotActions.initialize();
+      zoomControls.initialize();
+
       // Load saved data
       loadFromLocalStorage();
 
@@ -1862,6 +2393,16 @@
 
       // Set up save on unload
       window.addEventListener('beforeunload', saveToLocalStorage);
+
+      // Listen for orientation changes
+      window.addEventListener('orientationchange', function() {
+        // Kurze Verzögerung für das komplette Neuausrichten
+        setTimeout(function() {
+          // Setze Zoom zurück, wenn sich die Orientierung ändert
+          currentZoom = 1;
+          applyZoom();
+        }, 300);
+      });
     }
 
     // Start the application
